@@ -8,21 +8,42 @@
   </head>
   <body>
     <header>
-      <input
-        id="q"
-        type="search"
-        autocomplete="off"
-        spellcheck="false"
-        placeholder="A phrase you remember"
-        autofocus
-      />
-      <p id="meta" class="meta"></p>
+      <div class="wrap">
+        <input
+          id="q"
+          type="search"
+          autocomplete="off"
+          spellcheck="false"
+          placeholder="A phrase you remember"
+          autofocus
+        />
+        <div class="controls">
+          <p id="meta" class="meta"></p>
+          <div id="filters" class="filters" hidden>
+            <select id="site" aria-label="Filter by site"></select>
+            <select id="when" aria-label="Filter by when you read it">
+              <option value="">Any time</option>
+              <option value="7">Past week</option>
+              <option value="30">Past month</option>
+              <option value="365">Past year</option>
+            </select>
+            <div class="sort" role="group" aria-label="Sort">
+              <button data-sort="relevance" class="on">Best match</button>
+              <button data-sort="recent">Newest</button>
+            </div>
+          </div>
+        </div>
+      </div>
     </header>
 
-    <main id="results" aria-live="polite"></main>
+    <main class="wrap">
+      <div id="results" aria-live="polite"></div>
+      <div id="sentinel"></div>
+      <button id="more" class="more" hidden>Show more</button>
+    </main>
 
-    <footer>
-      <span id="hint">↑ ↓ to move, enter to open. A result you already have open is brought forward and highlighted in place.</span>
+    <footer class="wrap">
+      <span>↑ ↓ to move, enter to open. A page you already have open is brought forward and highlighted in place.</span>
     </footer>
 
     <script type="module" src="search.js"></script>

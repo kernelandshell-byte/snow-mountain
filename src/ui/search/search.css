@@ -1,98 +1,140 @@
 :root {
   --bg: #fbfbfa;
-  --fg: #1a1a19;
-  --muted: #6b6b66;
-  --line: #e3e3df;
+  --raised: #ffffff;
+  --fg: #14140f;
+  --muted: #6b6b63;
+  --faint: #93938b;
+  --line: #e5e5df;
   --accent: #1f6f5c;
-  --mark: #fde68a;
-  --sel: #eef2f0;
+  --mark: #fbe38e;
+  --sel: #eef3f1;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --bg: #16171a;
-    --fg: #e8e8e4;
-    --muted: #9a9a94;
-    --line: #2a2c30;
-    --accent: #5eb79c;
-    --mark: #6b5a1f;
-    --sel: #21242a;
+    --bg: #141518;
+    --raised: #1b1d21;
+    --fg: #e9e9e4;
+    --muted: #9c9c95;
+    --faint: #77776f;
+    --line: #2a2c31;
+    --accent: #63bda2;
+    --mark: #6d5a20;
+    --sel: #1f2429;
   }
 }
 
 * { box-sizing: border-box; }
 
+/* An author rule that sets display wins over the user agent's [hidden]
+   rule, so anything hidden by attribute has to be told twice. */
+[hidden] { display: none !important; }
+
 body {
-  margin: 0 auto;
-  max-width: 720px;
-  padding: 28px 20px 80px;
+  margin: 0;
   background: var(--bg);
   color: var(--fg);
   font: 15px/1.6 system-ui, -apple-system, "Segoe UI", sans-serif;
+  padding-bottom: 64px;
+}
+
+.wrap { max-width: 700px; margin: 0 auto; padding: 0 20px; }
+
+header {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: var(--bg);
+  border-bottom: 1px solid var(--line);
+  padding: 22px 0 0;
 }
 
 input[type="search"] {
   width: 100%;
-  padding: 12px 14px;
+  padding: 12px 15px;
   font: inherit;
   font-size: 17px;
   color: var(--fg);
-  background: transparent;
+  background: var(--raised);
   border: 1px solid var(--line);
-  border-radius: 8px;
+  border-radius: 9px;
 }
-
 input[type="search"]:focus {
   outline: 2px solid var(--accent);
   outline-offset: -1px;
   border-color: transparent;
 }
 
-.meta { color: var(--muted); font-size: 13px; margin: 10px 2px 0; min-height: 20px; }
-
-article {
-  padding: 14px 12px;
-  border-radius: 8px;
-  border-bottom: 1px solid var(--line);
+.controls {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-height: 42px;
+  padding: 5px 2px 8px;
+  flex-wrap: wrap;
 }
+.meta { color: var(--muted); font-size: 13px; margin: 0; flex: 1; min-width: 180px; }
+.filters { display: flex; align-items: center; gap: 8px; }
 
-article.selected { background: var(--sel); }
-
-article h2 { font-size: 15px; font-weight: 600; margin: 0 0 2px; }
-
-article a { color: var(--fg); text-decoration: none; }
-article a:hover { text-decoration: underline; }
-
-.source { color: var(--muted); font-size: 12.5px; margin: 0 0 6px; }
-
-.snippet { color: var(--fg); margin: 0; font-size: 14px; }
-
-mark { background: var(--mark); color: inherit; padding: 0 1px; border-radius: 2px; }
-
-.pin {
-  float: right;
-  border: 0;
-  background: transparent;
-  color: var(--muted);
-  cursor: pointer;
+select {
   font: inherit;
   font-size: 12.5px;
-  padding: 2px 6px;
+  color: var(--muted);
+  background: var(--raised);
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  padding: 4px 6px;
+  max-width: 170px;
+}
+select:focus { outline: 2px solid var(--accent); outline-offset: -1px; }
+
+.sort { display: flex; border: 1px solid var(--line); border-radius: 7px; overflow: hidden; }
+.sort button {
+  font: inherit; font-size: 12.5px; padding: 4px 9px;
+  border: 0; background: var(--raised); color: var(--muted); cursor: pointer;
+}
+.sort button.on { background: var(--sel); color: var(--fg); font-weight: 600; }
+
+article {
+  padding: 15px 14px;
+  border-radius: 10px;
+  border: 1px solid transparent;
+  margin-top: 4px;
+}
+article + article { border-top: 1px solid var(--line); border-radius: 10px; }
+article.selected { background: var(--sel); border-color: var(--line); }
+
+article h2 { font-size: 15.5px; font-weight: 600; margin: 0 0 3px; line-height: 1.35; }
+article a { color: var(--fg); text-decoration: none; }
+article a:hover { text-decoration: underline; text-underline-offset: 2px; }
+
+.source { color: var(--faint); font-size: 12.5px; margin: 0 0 7px; }
+.source .dot { padding: 0 5px; }
+.snippet { margin: 0; font-size: 14px; color: var(--muted); }
+.snippet mark { background: var(--mark); color: var(--fg); padding: 0 2px; border-radius: 3px; }
+
+.pin {
+  float: right; margin-left: 10px;
+  border: 1px solid transparent; background: transparent;
+  color: var(--faint); cursor: pointer; font: inherit; font-size: 12px;
+  padding: 2px 8px; border-radius: 20px;
+}
+.pin:hover { border-color: var(--line); color: var(--muted); }
+.pin[aria-pressed="true"] { color: var(--accent); border-color: var(--accent); }
+
+.empty { color: var(--muted); padding: 48px 4px; }
+.empty strong { color: var(--fg); font-weight: 600; }
+
+.more {
+  display: block; margin: 20px auto 0; padding: 8px 18px;
+  font: inherit; font-size: 13px; color: var(--muted);
+  background: var(--raised); border: 1px solid var(--line);
+  border-radius: 8px; cursor: pointer;
 }
 
-.pin[aria-pressed="true"] { color: var(--accent); }
-
-.empty { color: var(--muted); padding: 40px 4px; }
-
 footer {
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  padding: 10px 20px;
-  background: var(--bg);
-  border-top: 1px solid var(--line);
-  color: var(--muted);
-  font-size: 12.5px;
-  text-align: center;
+  position: fixed; bottom: 0; left: 0; right: 0;
+  padding: 10px 20px; text-align: center;
+  background: var(--bg); border-top: 1px solid var(--line);
+  color: var(--faint); font-size: 12.5px;
 }

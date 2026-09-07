@@ -1,22 +1,31 @@
 import { MSG } from '../../shared/messages.js';
 import { phraseFrom } from '../../core/text-fragment.js';
 
+const PAGE_SIZE = 20;
+
 const input = document.getElementById('q');
 const meta = document.getElementById('meta');
 const list = document.getElementById('results');
+const filters = document.getElementById('filters');
+const siteSelect = document.getElementById('site');
+const whenSelect = document.getElementById('when');
+const moreButton = document.getElementById('more');
+const sentinel = document.getElementById('sentinel');
+
+const ask = (type, payload) => chrome.runtime.sendMessage({ type, payload });
 
 let rows = [];
 let selected = 0;
 let sequence = 0;
-
-const ask = (type, payload) => chrome.runtime.sendMessage({ type, payload });
+let loading = false;
+let state = { site: '', days: '', sort: 'relevance', total: 0, hasMore: false };
 
 const escapeHtml = (text) =>
-  text.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  String(text).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 
 // Highlights arrive as character ranges into the snippet, so the text is
-// escaped in pieces and the marks are inserted between them. Building the
-// string first and escaping afterwards would escape our own markup.
+// escaped in pieces and the marks inserted between them. Building the string
+// first and escaping afterwards would escape our own markup.
 function highlight(text, ranges) {
   if (!ranges || !ranges.length) return escapeHtml(text);
   const parts = [];
@@ -40,37 +49,97 @@ function whenText(timestamp) {
   return Math.round(days / 365) + ' years ago';
 }
 
-function render(result) {
-  rows = result.results;
-  selected = 0;
+function cardFor(row, index) {
+  return (
+    '<article class="' + (index === selected ? 'selected' : '') + '" data-index="' + index + '">' +
+    '<button class="pin" data-pin="' + index + '" aria-pressed="' + (row.pinned ? 'true' : 'false') + '">' +
+    (row.pinned ? 'pinned' : 'pin') + '</button>' +
+    '<h2><a href="#" data-open="' + index + '">' + escapeHtml(row.title || row.url) + '</a></h2>' +
+    '<p class="source">' + escapeHtml(row.domain || '') +
+    '<span class="dot">·</span>' + whenText(row.lastSeen) + '</p>' +
+    '<p class="snippet">' + highlight(row.snippet.text, row.snippet.ranges) + '</p>' +
+    '</article>'
+  );
+}
 
-  const relaxedTerms = Object.entries(result.relaxed || {});
+function renderMeta(result) {
   const notes = [];
-  if (result.total) notes.push(result.total + (result.total === 1 ? ' page' : ' pages'));
+  if (result.total) notes.push(result.total === 1 ? '1 page' : result.total + ' pages');
   if (result.tookMs !== undefined) notes.push(result.tookMs + 'ms');
-  if (result.mode === 'or') notes.push('not every word matched, showing the closest');
-  for (const [asked, used] of relaxedTerms) notes.push('searched "' + used + '" for "' + asked + '"');
+  if (result.mode === 'or') notes.push('not every word matched');
+  for (const [asked, used] of Object.entries(result.relaxed || {})) {
+    notes.push('searched "' + used + '" for "' + asked + '"');
+  }
   meta.textContent = notes.join(' · ');
+}
 
-  if (!rows.length) {
-    list.innerHTML = '<p class="empty">' +
-      (input.value.trim() ? 'Nothing matched.' : 'Type a phrase you remember.') +
-      '</p>';
+function renderSites(domains) {
+  const previous = siteSelect.value;
+  siteSelect.innerHTML =
+    '<option value="">All sites</option>' +
+    domains
+      .map((entry) => '<option value="' + escapeHtml(entry.domain) + '">' +
+        escapeHtml(entry.domain) + ' (' + entry.count + ')</option>')
+      .join('');
+  // Keep a chosen site selected even when it is no longer in the top few.
+  if (previous) {
+    if (![...siteSelect.options].some((option) => option.value === previous)) {
+      siteSelect.insertAdjacentHTML('beforeend',
+        '<option value="' + escapeHtml(previous) + '">' + escapeHtml(previous) + '</option>');
+    }
+    siteSelect.value = previous;
+  }
+}
+
+function filterPayload() {
+  return {
+    site: state.site || null,
+    after: state.days ? Date.now() - Number(state.days) * 86400000 : null,
+    sort: state.sort,
+  };
+}
+
+async function run({ append = false } = {}) {
+  const query = input.value;
+  if (!query.trim()) {
+    rows = [];
+    filters.hidden = true;
+    moreButton.hidden = true;
+    meta.textContent = '';
+    list.innerHTML = '<p class="empty">Type a phrase you remember.</p>';
     return;
   }
 
-  list.innerHTML = rows
-    .map(
-      (row, index) =>
-        '<article class="' + (index === 0 ? 'selected' : '') + '" data-index="' + index + '">' +
-        '<button class="pin" data-pin="' + index + '" aria-pressed="' + (row.pinned ? 'true' : 'false') + '">' +
-        (row.pinned ? 'pinned' : 'pin') + '</button>' +
-        '<h2><a href="#" data-open="' + index + '">' + escapeHtml(row.title || row.url) + '</a></h2>' +
-        '<p class="source">' + escapeHtml(row.domain || '') + ' · ' + whenText(row.lastSeen) + '</p>' +
-        '<p class="snippet">' + highlight(row.snippet.text, row.snippet.ranges) + '</p>' +
-        '</article>'
-    )
-    .join('');
+  const mine = ++sequence;
+  loading = true;
+  const result = await ask(MSG.SEARCH, {
+    query,
+    limit: PAGE_SIZE,
+    offset: append ? rows.length : 0,
+    filters: filterPayload(),
+  });
+  loading = false;
+  // A slower earlier query must never overwrite a newer one's results.
+  if (mine !== sequence || !result) return;
+
+  state.total = result.total;
+  state.hasMore = result.hasMore;
+
+  if (append) {
+    rows = rows.concat(result.results);
+    list.insertAdjacentHTML('beforeend', result.results.map((row, i) => cardFor(row, rows.length - result.results.length + i)).join(''));
+  } else {
+    rows = result.results;
+    selected = 0;
+    list.innerHTML = rows.length
+      ? rows.map(cardFor).join('')
+      : '<p class="empty"><strong>Nothing matched.</strong><br />Try fewer words, or a phrase you are more sure of.</p>';
+  }
+
+  renderMeta(result);
+  renderSites(result.domains || []);
+  filters.hidden = rows.length === 0 && !state.site && !state.days;
+  moreButton.hidden = !state.hasMore;
 }
 
 function select(next) {
@@ -79,12 +148,13 @@ function select(next) {
   for (const article of list.querySelectorAll('article')) {
     article.classList.toggle('selected', Number(article.dataset.index) === selected);
   }
-  list.querySelector('article.selected').scrollIntoView({ block: 'nearest' });
+  const current = list.querySelector('article.selected');
+  if (current) current.scrollIntoView({ block: 'nearest' });
 }
 
 // The worker decides how to open it: a text fragment for a fresh tab, the
-// highlight script for a tab already sitting on the page or for content that
-// arrives after load. All this page has to do is say which passage matched.
+// highlight script for a tab already sitting on the page. All this page has
+// to do is say which passage matched.
 function open(index) {
   const row = rows[index];
   if (!row) return;
@@ -94,26 +164,39 @@ function open(index) {
   });
 }
 
-async function run() {
-  const query = input.value;
-  const mine = ++sequence;
-  const result = await ask(MSG.SEARCH, { query, limit: 25 });
-  // A slower earlier query must never overwrite a newer one's results.
-  if (mine !== sequence) return;
-  render(result || { results: [], total: 0 });
-}
-
 let debounce;
 input.addEventListener('input', () => {
   clearTimeout(debounce);
-  debounce = setTimeout(run, 90);
+  debounce = setTimeout(() => run(), 90);
 });
 
 input.addEventListener('keydown', (event) => {
   if (event.key === 'ArrowDown') { event.preventDefault(); select(selected + 1); }
   else if (event.key === 'ArrowUp') { event.preventDefault(); select(selected - 1); }
   else if (event.key === 'Enter') { event.preventDefault(); open(selected); }
+  else if (event.key === 'Escape') { input.value = ''; run(); }
 });
+
+siteSelect.addEventListener('change', () => { state.site = siteSelect.value; run(); });
+whenSelect.addEventListener('change', () => { state.days = whenSelect.value; run(); });
+
+document.querySelector('.sort').addEventListener('click', (event) => {
+  const button = event.target.closest('[data-sort]');
+  if (!button || button.dataset.sort === state.sort) return;
+  state.sort = button.dataset.sort;
+  for (const other of document.querySelectorAll('[data-sort]')) {
+    other.classList.toggle('on', other === button);
+  }
+  run();
+});
+
+moreButton.addEventListener('click', () => run({ append: true }));
+
+// Loading the next page on scroll, with the button as the fallback for
+// anyone who prefers to ask for it.
+new IntersectionObserver((entries) => {
+  if (entries[0].isIntersecting && state.hasMore && !loading) run({ append: true });
+}).observe(sentinel);
 
 list.addEventListener('click', async (event) => {
   const openTarget = event.target.closest('[data-open]');
@@ -134,9 +217,5 @@ list.addEventListener('click', async (event) => {
 });
 
 const initial = new URLSearchParams(location.search).get('q');
-if (initial) {
-  input.value = initial;
-  run();
-} else {
-  render({ results: [], total: 0 });
-}
+if (initial) input.value = initial;
+run();

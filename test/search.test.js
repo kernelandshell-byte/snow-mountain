@@ -97,3 +97,50 @@ test('recency breaks ties without overturning a better match', async () => {
   const r = await search('postings buckets', { store });
   assert.equal(r.results[0].domain, 'old.example');
 });
+
+test('a site filter from the interface narrows the results', async () => {
+  const store = await corpus();
+  const all = await search('retrospectives', { store });
+  assert.ok(all.results.length > 1, 'the query should match more than one page');
+  const narrowed = await search('retrospectives', { store, filters: { site: 'gamma.example' } });
+  assert.equal(narrowed.results.length, 1);
+  assert.equal(narrowed.results[0].domain, 'gamma.example');
+});
+
+test('a date filter drops pages read outside the window', async () => {
+  const store = await corpus();
+  const recent = await search('retrospectives', {
+    store,
+    filters: { after: Date.now() - 7 * 86400000 },
+  });
+  assert.ok(
+    recent.results.every((r) => r.lastSeen >= Date.now() - 7 * 86400000),
+    'everything returned should be inside the window'
+  );
+});
+
+test('sorting by recency puts the newest first without changing what matched', async () => {
+  const store = await corpus();
+  const byScore = await search('retrospectives', { store });
+  const byDate = await search('retrospectives', { store, filters: { sort: 'recent' } });
+  assert.equal(byScore.total, byDate.total, 'the same pages matched');
+  const dates = byDate.results.map((r) => r.lastSeen);
+  assert.deepEqual(dates, [...dates].sort((a, b) => b - a), 'newest first');
+});
+
+test('results report the domains that matched, for a filter that means something', async () => {
+  const store = await corpus();
+  const result = await search('retrospectives', { store });
+  assert.ok(result.domains.length >= 2, JSON.stringify(result.domains));
+  assert.ok(result.domains.every((entry) => entry.count > 0));
+});
+
+test('paging reports whether there is more and never repeats a result', async () => {
+  const store = await corpus();
+  const first = await search('retrospectives', { store, limit: 1, offset: 0 });
+  assert.equal(first.hasMore, true);
+  const second = await search('retrospectives', { store, limit: 1, offset: 1 });
+  assert.notEqual(first.results[0].id, second.results[0].id);
+  const past = await search('retrospectives', { store, limit: 20, offset: 0 });
+  assert.equal(past.hasMore, false);
+});

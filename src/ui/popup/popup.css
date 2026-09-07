@@ -9,6 +9,10 @@
   }
 }
 * { box-sizing: border-box; }
+
+/* An author rule that sets display wins over the user agent's [hidden]
+   rule, so anything hidden by attribute has to be told twice. */
+[hidden] { display: none !important; }
 body {
   width: 304px; margin: 0; padding: 14px;
   background: var(--bg); color: var(--fg);

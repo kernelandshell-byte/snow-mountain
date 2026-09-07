@@ -27,10 +27,18 @@ await seed.goto('chrome-extension://' + extensionId + '/src/ui/options/options.h
 await seed.evaluate(async () => {
   const { CORPUS } = await import('/test/fixtures/corpus.js');
   const { MSG } = await import('/src/shared/messages.js');
+  let age = 0;
   for (const doc of CORPUS) {
     await chrome.runtime.sendMessage({
       type: MSG.PAGE_CONTENT,
-      payload: { url: doc.url, title: doc.title, text: doc.text, capturedAt: Date.now() },
+      payload: {
+        url: doc.url,
+        title: doc.title,
+        text: doc.text,
+        // Spread out in time so the date filter and the recency sort have
+        // something real to work on.
+        capturedAt: Date.now() - age++ * 40 * 86400000,
+      },
     });
   }
 });
@@ -61,6 +69,8 @@ check('matched words are highlighted', marks.length > 0 && marks.every((m) => 'r
 
 const meta = await page.textContent('#meta');
 check('the result count and timing are shown', /page|pages/.test(meta) && /ms/.test(meta), meta);
+check('nothing offers to show more when there is no more',
+  !(await page.isVisible('#more')), 'the show more button was visible');
 
 // Keyboard navigation, which needs a query with more than one result.
 await page.fill('#q', 'retention');
@@ -121,6 +131,75 @@ if (shotPath) {
   await page.waitForTimeout(300);
   await page.screenshot({ path: shotPath });
 }
+
+// --- filters, sorting and paging -----------------------------------------
+// A word common enough to match across several sites, which is what the
+// filters need in order to be doing anything.
+await page.fill('#q', 'the');
+await page
+  .waitForFunction(() => document.querySelectorAll('article').length > 1, null, { timeout: 4000 })
+  .catch(() => {});
+const beforeFilter = await page.$$eval('article', (nodes) => nodes.length);
+check('a broad query returns several results again', beforeFilter > 1, beforeFilter);
+
+const siteOptions = await page.$$eval('#site option', (nodes) => nodes.map((n) => n.value));
+check('the site filter is built from what actually matched',
+  siteOptions[0] === '' && siteOptions.length > 1, JSON.stringify(siteOptions));
+
+await page.selectOption('#site', siteOptions[1]);
+await page.waitForTimeout(400);
+const domains = await page.$$eval('article .source', (nodes) => nodes.map((n) => n.textContent.split('·')[0].trim()));
+check('choosing a site narrows the results to it',
+  domains.length > 0 && domains.every((d) => d === siteOptions[1]), JSON.stringify(domains));
+
+await page.selectOption('#site', '');
+await page.waitForTimeout(400);
+
+await page.click('[data-sort="recent"]');
+await page.waitForTimeout(400);
+const order = await page.$$eval('article .source', (nodes) =>
+  nodes.map((n) => n.textContent.split('·')[1].trim())
+);
+check('sorting by newest changes the order', order.length > 1, JSON.stringify(order));
+check('and the newest result is the most recent one',
+  /today|yesterday|days ago/.test(order[0]), order[0]);
+
+await page.click('[data-sort="relevance"]');
+await page.waitForTimeout(300);
+
+await page.selectOption('#when', '7');
+await page.waitForTimeout(400);
+const recentOnly = await page.$$eval('article .source', (nodes) =>
+  nodes.map((n) => n.textContent.split('·')[1].trim())
+);
+check('a time filter drops everything older',
+  recentOnly.every((text) => /today|yesterday|[1-7] days ago/.test(text)), JSON.stringify(recentOnly));
+await page.selectOption('#when', '');
+await page.waitForTimeout(300);
+
+// Paging: a query that matches more than one screenful.
+await page.fill('#q', 'the');
+await page.waitForTimeout(600);
+const firstPage = await page.$$eval('article', (nodes) => nodes.length);
+const moreVisible = await page.isVisible('#more');
+if (moreVisible) {
+  await page.click('#more');
+  await page.waitForTimeout(500);
+  const secondPage = await page.$$eval('article', (nodes) => nodes.length);
+  check('showing more appends rather than replacing', secondPage > firstPage, firstPage + ' then ' + secondPage);
+  const ids = await page.$$eval('article', (nodes) => nodes.map((n) => n.dataset.index));
+  check('and never repeats a result', new Set(ids).size === ids.length, JSON.stringify(ids));
+} else {
+  check('paging is offered when there is more', firstPage <= 20, firstPage);
+}
+
+// Escape clears
+await page.fill('#q', 'retro fatigue');
+await page.waitForTimeout(300);
+await page.focus('#q');
+await page.keyboard.press('Escape');
+await page.waitForTimeout(300);
+check('escape clears the query', (await page.inputValue('#q')) === '', await page.inputValue('#q'));
 
 await context.close();
 

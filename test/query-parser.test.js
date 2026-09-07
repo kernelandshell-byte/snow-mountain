@@ -25,3 +25,22 @@ test('an empty query is flagged rather than searched', () => {
   assert.equal(parseQuery('   ').isEmpty, true);
   assert.equal(parseQuery('').isEmpty, true);
 });
+
+test('reads a date range written as dates', () => {
+  const q = parseQuery('churn after:2026-01-01 before:2026-06-30');
+  assert.equal(new Date(q.after).getUTCFullYear(), 2026);
+  assert.ok(q.before > q.after);
+  assert.deepEqual(q.terms, ['churn']);
+});
+
+test('accepts a plain number of days, so nobody counts back to a date', () => {
+  const q = parseQuery('churn after:30');
+  const days = Math.round((Date.now() - q.after) / 86400000);
+  assert.equal(days, 30);
+});
+
+test('a date that makes no sense is ignored rather than breaking the query', () => {
+  const q = parseQuery('churn after:soonish');
+  assert.equal(q.after, null);
+  assert.deepEqual(q.terms, ['churn']);
+});

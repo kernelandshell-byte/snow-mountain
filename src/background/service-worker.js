@@ -499,6 +499,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
             store,
             limit: payload.limit || 20,
             offset: payload.offset || 0,
+            filters: payload.filters || {},
           })
         )
       );

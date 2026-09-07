@@ -24,7 +24,10 @@ function phraseHit(phrase, postingsByTerm, docId) {
   );
 }
 
-export async function search(input, { store, limit = 20, offset = 0, now = Date.now() } = {}) {
+export async function search(
+  input,
+  { store, limit = 20, offset = 0, now = Date.now(), filters = {} } = {}
+) {
   const started = Date.now();
   const q = parseQuery(input);
   if (q.isEmpty) return { results: [], total: 0, mode: 'empty', relaxed: {}, tookMs: 0, query: q };
@@ -97,11 +100,20 @@ export async function search(input, { store, limit = 20, offset = 0, now = Date.
 
   const docs = await store.readDocs(shortlist);
 
+  // A filter typed into the query wins over the same filter set in the
+  // interface, on the grounds that the more specific instruction is the one
+  // the person just wrote.
+  const site = q.site || filters.site || null;
+  const after = q.after || filters.after || null;
+  const before = q.before || filters.before || null;
+
   const scored = [];
   for (const id of shortlist) {
     const doc = docs.get(id);
     if (!doc) continue;
-    if (q.site && doc.domain !== q.site) continue;
+    if (site && doc.domain !== site) continue;
+    if (after && doc.lastSeen < after) continue;
+    if (before && doc.lastSeen > before) continue;
     if (q.phrases.length && !q.phrases.every((p) => phraseHit(p, postingsByTerm, id))) continue;
 
     let score = 0;
@@ -124,13 +136,28 @@ export async function search(input, { store, limit = 20, offset = 0, now = Date.
     scored.push({ id, score, doc });
   }
 
-  scored.sort((a, b) => b.score - a.score);
+  if (filters.sort === 'recent') scored.sort((a, b) => b.doc.lastSeen - a.doc.lastSeen);
+  else scored.sort((a, b) => b.score - a.score);
+
   const page = scored.slice(offset, offset + limit);
+
+  // Domains of everything that matched, not just this page of it, so the
+  // interface can offer a site filter that means something.
+  const domains = new Map();
+  for (const { doc } of scored) {
+    domains.set(doc.domain, (domains.get(doc.domain) || 0) + 1);
+  }
 
   return {
     mode,
     relaxed,
     total: scored.length,
+    hasMore: offset + limit < scored.length,
+    domains: [...domains.entries()]
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 8)
+      .map(([domain, count]) => ({ domain, count })),
+    appliedFilters: { site, after, before, sort: filters.sort || 'relevance' },
     tookMs: Date.now() - started,
     query: q,
     results: page.map(({ id, score, doc }) => ({
