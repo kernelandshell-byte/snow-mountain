@@ -29,7 +29,9 @@ paragraph that matched.
   is not, and one click to keep it, forget it, or never keep that site again
 - Settings with exclusion bundles, custom rules, the storage meter, the
   deletion log, export, import and delete everything
-- 154 Node tests and 143 browser checks across nine suites
+- 157 Node tests and 212 browser checks across twelve suites, including an
+  adversarial suite, a whole session end to end, and a consistency check that
+  churns the index and then verifies it has not drifted
 
 ## Tests
 

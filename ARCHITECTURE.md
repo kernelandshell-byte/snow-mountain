@@ -353,17 +353,40 @@ The browser suites need Playwright (`npm install --no-save playwright`):
 | Command | What it holds down |
 |---|---|
 | `test:browser` | the store contract against real IndexedDB |
+| `test:capture` | a page read with real dwell and scrolling, plus pause, rules and a single page app changing route |
+| `test:journey` | one whole session: setup, read, popup, search, open, pin, sweep, export |
 | `test:e2e` | capture, revisit, search, pin, forget, eviction, through the worker |
-| `test:capture` | the real thing: a page read with real dwell and scrolling, ending up in the index |
 | `test:extraction` | Readability against a page full of navigation, banners and footers |
 | `test:highlight` | jump to passage when a fragment cannot fire |
 | `test:setup` | the setup flow, including a refused permission |
-| `test:options` | settings, export, and delete everything |
+| `test:options` | settings, and the export to import round trip |
 | `test:popup` | the current page controls, including strict mode granting |
-| `test:ui` | the search page: typing, highlighting, keyboard, opening a result |
+| `test:ui` | the search page: typing, filters, sorting, paging, keyboard |
+| `test:adversarial` | awkward content, hostile queries, concurrency, a stopped worker |
+| `test:consistency` | randomised churn, then the invariants that must always hold |
 
 `run-benchmark.mjs` is not a test. It answers "what does this cost", and it
 is where the numbers above come from.
+
+Two of these deserve explaining.
+
+**The adversarial suite** goes looking for trouble rather than confirming
+the happy path: right to left text, a language without spaces between words,
+a page that is one 50,000 character word, emoji, queries made of regular
+expression metacharacters, a lone surrogate, six operations at once, the
+same page captured twice simultaneously, an import full of rubbish, and the
+background worker being stopped underneath everything. It found five real
+bugs the first time it ran.
+
+**The consistency suite** runs a randomised but reproducible sequence of
+writes, rewrites, deletes and pins, then opens the database directly and
+checks what must always be true: the running totals match the pages that
+exist, no posting points at a deleted page, no empty posting records are
+left behind, every page sits in the bucket its id belongs to, and every word
+of every page is findable while nothing else is. That last pair is the one
+that matters. An index that has drifted does not throw; it just quietly
+stops finding things, or starts returning pages that no longer contain the
+word.
 
 Two notes on how these are built.
 
