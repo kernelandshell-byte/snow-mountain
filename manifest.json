@@ -1,0 +1,21 @@
+{
+  "manifest_version": 3,
+  "name": "Snow Mountain",
+  "version": "0.1.0",
+  "description": "Search everything you have read. Stored locally, never sent anywhere.",
+  "minimum_chrome_version": "116",
+  "background": {
+    "service_worker": "src/background/service-worker.js",
+    "type": "module"
+  },
+  "action": {
+    "default_popup": "src/ui/popup/popup.html"
+  },
+  "options_page": "src/ui/options/options.html",
+  "permissions": ["storage", "tabs", "alarms", "scripting", "favicon"],
+  "optional_host_permissions": ["*://*/*"],
+  "omnibox": { "keyword": "sm" },
+  "content_security_policy": {
+    "extension_pages": "script-src 'self'; object-src 'self'; connect-src 'none'"
+  }
+}
