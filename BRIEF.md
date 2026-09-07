@@ -2,7 +2,7 @@
 
 A local full text memory for your browser. Everything you actually read gets indexed on your own machine, so you can find it later by any phrase you remember.
 
-Working title only. Naming comes later.
+Working title only. See "Naming" at the end.
 
 ## The problem
 
@@ -29,10 +29,69 @@ It also completes a set. SafeClip remembers what you copied, Form Recovery remem
 ## Non negotiables
 
 1. **Local only.** No account, no server, no sync, no telemetry, no analytics.
-2. **No network calls anywhere in the codebase.** Extension pages ship a CSP with `connect-src 'none'`. The honest version of the claim: capture needs broad host permissions to inject content scripts, so exfiltration is not technically impossible the way a sandbox would make it impossible. What we can say instead, and prove, is that no line of this code contacts the network, the extension pages are locked down, and the whole thing is open source so verifying it is one grep away. Write the threat model down and do not overclaim.
+2. **No network calls anywhere in the codebase.** Extension pages ship a CSP with `connect-src 'none'`. The honest version of the claim: capture needs host permissions to inject content scripts, so exfiltration is not technically impossible the way a sandbox would make it impossible. What we can say instead, and prove, is that no line of this code contacts the network, the extension pages are locked down, and the whole thing is open source so verifying it is one grep away. Write the threat model down and do not overclaim.
 3. **Quiet.** No badges, no nags, no upsell, no onboarding carousel.
 4. **Your data is yours.** Full export to a readable format, import back, one click wipe.
-5. **Never surprise the user.** Any future storage migration takes a backup first and tells the user. Session Buddy has a million users and lost years of their saved sessions in a silent Web SQL to IndexedDB migration. That is the mistake to design against from day one.
+5. **Never surprise the user.** Nothing is ever deleted silently, and any future storage migration takes a backup first. Session Buddy has a million users and lost years of their saved sessions in a silent Web SQL to IndexedDB migration. That is the mistake to design against from day one.
+
+## First run setup
+
+Four screens, no account, no carousel.
+
+1. **What this does.** Plain language: what gets stored, where it lives, what leaves the machine (nothing).
+2. **Capture mode.** Everywhere except exclusions (recommended), or only sites I allow.
+3. **Exclusions**, if the user picked the broad mode. Preset bundles shown with the sensible ones already on.
+4. **Budget.** Time limit and size limit, both with recommended defaults and a plain explanation of what they mean in pages.
+
+Permissions are requested at step 2, not at install. If the user picks the broad mode we ask for the wide host permission right then, in context, where the reason is obvious. If they pick strict mode we never ask for it at all.
+
+## Capture model
+
+Two modes, and the difference between them is enforced by Chrome, not by our own good behaviour.
+
+**Broad mode (default).** Wide host permission, capture everywhere, minus the exclusion rules.
+
+**Strict mode.** No wide host permission at all. The user grants access per site through `optional_host_permissions`, and content scripts are registered dynamically with `chrome.scripting.registerContentScripts` for exactly those origins. The extension is not able to read anything else, because Chrome will not let it.
+
+That distinction is worth the extra complexity. Every competitor's privacy mode is a promise. This one is enforced by the browser, and switching from broad to strict later actually calls `permissions.remove()` so the access is really gone.
+
+### Exclusion rules
+
+Preset bundles, each toggled as a group, maintained in the repo:
+
+- Webmail (on by default)
+- Banking and finance (on by default)
+- Health and medical (on by default)
+- Adult (on by default)
+- Government and ID portals (on by default)
+- Local and intranet, meaning private IP ranges and `.local` (on by default)
+
+Custom rules on top, using simple patterns rather than regex to avoid footguns: `example.com`, `*.example.com`, `example.com/private/*`.
+
+Plus two rules that always apply regardless of mode: never capture a page that contains a password field, and never capture in incognito.
+
+Excluding a site retroactively deletes everything already captured from it. That should be the visible, obvious behaviour, not a hidden extra step.
+
+## Storage budget
+
+Two independent caps, both set during setup, whichever binds first wins.
+
+- **Age cap**, default 12 months
+- **Size cap**, default 500MB
+
+500MB is roughly 20,000 pages. Average extracted article text runs 10 to 20KB, and the index adds somewhere between 30 and 60 percent on top, so call it 25KB per page all in. Compute this from observed averages rather than hardcoding it, and show it in the setup screen as a real number so the choice means something.
+
+The behaviour model is a mobile data plan, which is the right mental model because people already understand it:
+
+- A storage meter that is always visible in the popup and never shouts
+- One notice at 80 percent, saying what it will cost them and what they can do: raise the budget, or let old pages roll off
+- Once the extension has a few weeks of history it knows the user's actual pace, so that notice can say something concrete like "at your pace you will hit this around 12 March"
+- One notice when eviction actually starts, saying what was removed, with a link to a storage log
+- Never a modal, never a repeated daily nag
+
+Eviction removes the pages you have not opened in the longest time. **Pinned pages are never evicted.** A pin is one click from the search results and it is what makes the whole budget idea safe: anything you care about, you keep, forever, regardless of caps.
+
+Storage accounting has to be honest, which means tracking our own byte counts per record. `navigator.storage.estimate()` is approximate and includes things that are not ours, so it is fine for a sanity check and useless as the number we show the user.
 
 ## Architecture
 
@@ -46,7 +105,7 @@ Heuristic for a page worth keeping:
 - Tab was actually focused, which rules out background tabs and prefetch
 - Foreground dwell past a threshold, roughly 8 to 10 seconds
 - Plus either meaningful scroll depth, or a short enough page that scrolling was never needed
-- Not excluded by the blocklist or by a password field on the page
+- Not excluded by the rules above
 
 Revisits update the existing record rather than duplicating: keep first seen, last seen, visit count, and re-index only when a content hash shows the page materially changed.
 
@@ -54,7 +113,7 @@ Revisits update the existing record rather than duplicating: keep first seen, la
 
 Mozilla Readability on a cloned DOM gives main text, title, byline and excerpt without the nav, footer and cookie banner noise. Non article pages fall back to visible text from the main landmarks, capped.
 
-Stored per page: url, canonical url, title, extracted text (capped, roughly 200KB), excerpt, domain, first seen, last seen, visit count, word count, content hash. Favicons come from Chrome's local favicon API, never fetched.
+Stored per page: url, canonical url, title, extracted text (capped, roughly 200KB), excerpt, domain, first seen, last seen, visit count, word count, content hash, pinned flag. Favicons come from Chrome's local favicon API, never fetched.
 
 ### Storage and index
 
@@ -67,14 +126,7 @@ Tokenizer is lowercase, unicode aware, diacritic normalising, punctuation stripp
 
 Ranking is BM25, plus a recency boost and a small boost for matches in the title or headings. Positions in the postings list give us exact phrase search.
 
-All indexing runs in a Web Worker with batched writes, so nothing ever blocks the UI.
-
-Storage discipline, which is where projects like this usually die:
-
-- User visible storage meter showing real usage
-- A budget, defaulting to something like 12 months or 500MB, whichever comes first
-- Eviction oldest and least visited first, announced before it happens, never silent
-- `navigator.storage.persist()` so Chrome does not quietly evict the database under pressure
+All indexing runs in a Web Worker with batched writes, so nothing ever blocks the UI. Request `navigator.storage.persist()` so Chrome does not quietly evict the database under pressure, and warn if it is refused.
 
 ### Search
 
@@ -93,28 +145,21 @@ First thing to prototype: Chrome's native scroll to text fragments (`#:~:text=`)
 
 Fallback if that does not hold up: the anchoring approach from Form Recovery, quote plus position with fuzzy matching.
 
-## Privacy model
-
-- A first run screen that states plainly what is stored, where, and what leaves the machine, which is nothing
-- Default exclusions: banking, health portals, webmail, adult sites, and any page carrying a password field
-- Pause, for an hour or until resumed
-- Exclude this site, from the popup, which also deletes everything already captured from that domain
-- Forget this page, forget this day, forget this site
-- Export everything, wipe everything
-
-This is the scariest of the three extensions permission wise, since it reads content on every site. That is also the opportunity. The security review process that SafeClip went through is the thing that makes this one credible, so plan for a written threat model and an external review before release.
-
 ## v1 scope
 
 In:
 
+- Four screen setup flow, with permissions requested in context
+- Both capture modes, strict mode enforced through optional host permissions
+- Preset exclusion bundles plus custom rules
 - Capture with the dwell and scroll heuristic
 - Readability extraction
 - IndexedDB inverted index with BM25 in a worker
 - Search page with snippets and site/date filters
 - Omnibox search
-- Exclusions, pause, per site delete
-- Retention policy, storage meter, eviction with warning
+- Pinning
+- Both budget caps, storage meter, threshold notices, announced eviction, storage log
+- Pause, per site delete, forget this page
 - Export and wipe
 - Jump to passage if the text fragment prototype holds
 
@@ -123,26 +168,26 @@ Out of v1, deliberately:
 - PDF capture
 - Language aware stemming and typo tolerance
 - Semantic or embedding based search
-- Allowlist only capture mode
+- Import (export first, import once the format has settled)
 - Firefox port
 
 ## Known risks
 
 | Risk | Handling |
 |---|---|
-| Storage grows without bound | Budget, retention, visible meter, announced eviction |
-| Search returns junk and feels useless | Build a fixed test corpus and about 30 known item queries, measure whether the right page lands in the top 3, treat relevance as a number that has to stay green |
-| Chrome evicts the database | Request persistent storage, warn if it is refused |
-| Users find the concept creepy | Lead with the threat model, ship the exclusions on by default, keep it open source |
+| Storage grows without bound | Two caps, pinning, visible meter, announced eviction |
+| Search returns junk and feels useless | Fixed test corpus and about 30 known item queries, measure whether the right page lands in the top 3, treat relevance as a number that has to stay green |
+| Chrome evicts the database | Request persistent storage, warn if refused |
+| Users find the concept creepy | Lead with the threat model, exclusions on by default, strict mode that Chrome enforces, open source |
 | Extraction quality varies wildly across sites | Fixture set of saved real pages, news, docs, forums, SPAs, and assert on extraction output |
+| Two permission models double the surface area | Route everything through one capture policy module, so mode is a parameter and not a fork in the codebase |
 
 ## Testing
 
-The core of this project is pure functions, which is unusually testable for an extension. Tokeniser, index, BM25 scoring and snippet generation all get unit tests. Capture heuristics get jsdom tests the way Form Recovery's did. Relevance gets its own eval corpus with a pass threshold, because "does search feel good" is otherwise unanswerable and quietly rots.
+The core of this project is pure functions, which is unusually testable for an extension. Tokeniser, index, BM25 scoring and snippet generation all get unit tests. Capture heuristics and exclusion matching get jsdom tests the way Form Recovery's did. Relevance gets its own eval corpus with a pass threshold, because "does search feel good" is otherwise unanswerable and quietly rots.
 
-## Open questions
+## Naming
 
-1. Default retention: 12 months, or size based, or both?
-2. Should webmail be excluded by default? Indexing Gmail is powerful and also the single creepiest thing this could do.
-3. Is capture broad by default with exclusions, or is there also a strict allowlist mode in v1?
-4. Name.
+Not settled, and it does not need to be. The name only appears in three places: `manifest.json`, the store listing, and the repo name. All three are trivial to change right up until publication.
+
+The one rule that keeps it cheap: **keep the name out of the code.** No `SnowMountain` prefixes on classes, storage keys, database names or CSS classes. Put the display name in one constant and read it from there. Renaming then costs a single line instead of a refactor.
