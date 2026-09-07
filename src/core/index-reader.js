@@ -11,6 +11,7 @@ import { parseQuery } from './query-parser.js';
 import { termScore, recencyBoost, idf } from './bm25.js';
 import { buildSnippet } from './snippet.js';
 import { terms as termsOf } from './tokenizer.js';
+import { variantsOf } from './morphology.js';
 
 const PRESCORE_LIMIT = 500;
 
@@ -26,15 +27,29 @@ function phraseHit(phrase, postingsByTerm, docId) {
 export async function search(input, { store, limit = 20, offset = 0, now = Date.now() } = {}) {
   const started = Date.now();
   const q = parseQuery(input);
-  if (q.isEmpty) return { results: [], total: 0, mode: 'empty', tookMs: 0, query: q };
+  if (q.isEmpty) return { results: [], total: 0, mode: 'empty', relaxed: {}, tookMs: 0, query: q };
 
   const stats = await store.readStats();
   const postingsByTerm = new Map();
   const dfByTerm = new Map();
 
+  // A term that matches nothing gets one cheap second chance at its
+  // singular. Recorded so the interface can say what it actually searched.
+  const relaxed = {};
+
   await Promise.all(
     q.lookup.map(async (term) => {
-      const list = await store.readTerm(term);
+      let list = await store.readTerm(term);
+      if (list.length === 0) {
+        for (const variant of variantsOf(term)) {
+          const alternative = await store.readTerm(variant);
+          if (alternative.length) {
+            list = alternative;
+            relaxed[term] = variant;
+            break;
+          }
+        }
+      }
       const map = new Map();
       for (const entry of list) map.set(entry.id, entry);
       postingsByTerm.set(term, map);
@@ -63,7 +78,7 @@ export async function search(input, { store, limit = 20, offset = 0, now = Date.
     for (const s of sets) for (const id of s.keys()) candidates.add(id);
   }
   if (candidates.size === 0) {
-    return { results: [], total: 0, mode, tookMs: Date.now() - started, query: q };
+    return { results: [], total: 0, mode, relaxed, tookMs: Date.now() - started, query: q };
   }
 
   // Stage one: cheap ranking with no document loads, to bound how many
@@ -114,6 +129,7 @@ export async function search(input, { store, limit = 20, offset = 0, now = Date.
 
   return {
     mode,
+    relaxed,
     total: scored.length,
     tookMs: Date.now() - started,
     query: q,
