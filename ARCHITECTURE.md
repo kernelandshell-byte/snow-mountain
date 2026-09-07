@@ -6,26 +6,36 @@ Everything here is meant to be implementable by someone who has not read the con
 
 ## Assumption log
 
-Design work that rests on an unverified browser behaviour is a trap, so assumptions are tracked explicitly with their status.
+Design work that rests on an unverified browser behaviour is a trap, so assumptions are tracked with their status and the evidence behind them.
 
-### Verified
+### Verified: the whole jump to passage mechanism
 
-**Scroll to text fragments work, on a real page, in this Chrome.** Loading `https://en.wikipedia.org/wiki/Okapi_BM25#:~:text=long%20documents%20which%20do%20match%20the%20query%20term` in a fresh tab scrolled to `scrollY 1581` on a 5792px page, landing on the matching passage. Chrome strips the directive from the URL afterwards: `location.href` came back as the plain article URL, and `'fragmentDirective' in document` is true.
+Tested with a real Manifest V3 extension calling `chrome.tabs.create`, driven by Playwright against a local test page. Reproducible in about fifteen seconds: `spikes/text-fragment/`.
 
-Two consequences follow directly:
+Page is 4727px tall, the target sentence sits at document offset 3829, viewport is 800px.
 
-1. The extension cannot read back whether the match succeeded, because the directive is gone from the URL by the time any script sees it. Firing it is blind unless a content script separately checks where the page ended up.
-2. The directive is processed on document load. Re-pointing an already open tab at the same URL with a different directive is a same document navigation and does not re-fire it. Jumping to a passage in a tab that is already open therefore needs the fallback path, not the fragment.
+| Case | scrollY | Reading |
+|---|---|---|
+| `tabs.create`, no directive | 0 | control |
+| `tabs.create`, phrase present | 3433 | works, match centred in the viewport |
+| `tabs.create`, phrase absent | 0 | opens at the top, nothing thrown |
+| `tabs.update` on an open tab, same URL plus directive | 0 | does not fire |
+| `tabs.create`, target inserted 800ms after load | 0 | does not wait for late content |
 
-### Unverified, and how to close it
+In every case Chrome stripped the directive from the URL before any script could read it.
 
-**Whether `chrome.tabs.create({url})` activates the directive the same way.** The browser pane's navigations are a close proxy but not the same code path, and the follow up runs that would have confirmed it were invalidated: the pane stopped rendering (`window.innerHeight` reported 0), and a tab that is not laid out cannot scroll, so every later measurement was meaningless rather than negative.
+Four consequences, all settled:
 
-Close it in the first build session with a throwaway extension: a manifest, a background script that calls `chrome.tabs.create` with a fragment URL, and a content script that reports `window.scrollY` after load. Twenty minutes, and it decides whether jump to passage is nearly free or a week of anchoring code. Do this before building anything that depends on it.
+1. **The happy path is free.** Opening a search result in a new tab with `#:~:text=` lands on the passage. No anchoring code, no content script, no work.
+2. **Failure is silent and harmless.** A page whose text changed since capture simply opens at the top. That is the right behaviour and it needs no handling at all.
+3. **The extension cannot tell whether it worked.** The directive is gone before scripts run, so never build UI that claims "jumped to your passage". Say nothing and let the result speak.
+4. **Exactly two cases need the fallback**, and both are detectable in advance rather than being error paths: the URL is already open in a tab, or capture recorded that the page renders late, which covers most SPAs. In those two cases, send `HIGHLIGHT` to the content script and skip the fragment entirely.
 
-**Whether the fragment survives late rendering content.** Untested on SPAs and pages that hydrate after load. Assume it does not, and let the fallback cover it.
+The fallback is the quote plus position matching that Form Recovery already uses, so it is a port rather than a new problem.
 
-**Whether a service worker can spawn a dedicated `Worker`.** The brief claimed indexing would run in a Web Worker. That claim was written before checking, and MV3 service workers have historically not been allowed to create dedicated workers. Do not build on it either way, because the design below does not need it.
+### Unverified
+
+**Whether a service worker can spawn a dedicated `Worker`.** An earlier draft of the brief claimed indexing would run in a Web Worker. That was written before checking, and MV3 service workers have historically not been permitted to create dedicated workers. Nothing below depends on the answer, so this is worth knowing but not worth blocking on.
 
 ## Execution contexts
 
