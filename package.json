@@ -11,6 +11,9 @@
     "test:extraction": "node test/browser/run-extraction.mjs",
     "test:setup": "node test/browser/run-setup.mjs",
     "test:options": "node test/browser/run-options.mjs",
-    "test:popup": "node test/browser/run-popup.mjs"
+    "test:popup": "node test/browser/run-popup.mjs",
+    "test:highlight": "node test/browser/run-highlight.mjs",
+    "test:capture": "node test/browser/run-capture.mjs",
+    "test:ui": "node test/browser/run-ui-smoke.mjs"
   }
 }

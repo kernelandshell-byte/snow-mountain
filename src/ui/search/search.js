@@ -1,5 +1,5 @@
 import { MSG } from '../../shared/messages.js';
-import { textFragmentUrl } from '../../core/text-fragment.js';
+import { phraseFrom } from '../../core/text-fragment.js';
 
 const input = document.getElementById('q');
 const meta = document.getElementById('meta');
@@ -82,15 +82,15 @@ function select(next) {
   list.querySelector('article.selected').scrollIntoView({ block: 'nearest' });
 }
 
-// The spike settled this: a fragment only fires on a fresh document load, so
-// results always open in a new tab. Whether the passage was found is not
-// something we can know, and not something worth claiming.
-function open(index, background) {
+// The worker decides how to open it: a text fragment for a fresh tab, the
+// highlight script for a tab already sitting on the page or for content that
+// arrives after load. All this page has to do is say which passage matched.
+function open(index) {
   const row = rows[index];
   if (!row) return;
-  chrome.tabs.create({
-    url: textFragmentUrl(row.url, row.snippet.text, row.snippet.ranges),
-    active: !background,
+  ask(MSG.OPEN_RESULT, {
+    url: row.url,
+    quote: phraseFrom(row.snippet.text, row.snippet.ranges),
   });
 }
 
@@ -112,14 +112,14 @@ input.addEventListener('input', () => {
 input.addEventListener('keydown', (event) => {
   if (event.key === 'ArrowDown') { event.preventDefault(); select(selected + 1); }
   else if (event.key === 'ArrowUp') { event.preventDefault(); select(selected - 1); }
-  else if (event.key === 'Enter') { event.preventDefault(); open(selected, event.metaKey || event.ctrlKey); }
+  else if (event.key === 'Enter') { event.preventDefault(); open(selected); }
 });
 
 list.addEventListener('click', async (event) => {
   const openTarget = event.target.closest('[data-open]');
   if (openTarget) {
     event.preventDefault();
-    open(Number(openTarget.dataset.open), event.metaKey || event.ctrlKey);
+    open(Number(openTarget.dataset.open));
     return;
   }
   const pinTarget = event.target.closest('[data-pin]');

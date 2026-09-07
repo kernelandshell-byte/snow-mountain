@@ -11,6 +11,7 @@ import { decide, MODE } from '../core/capture-policy.js';
 import { isRead } from '../core/read-heuristic.js';
 import { search } from '../core/index-reader.js';
 import { planEviction, budgetStatus, projectExhaustion, paceFrom } from '../core/eviction.js';
+import { fragmentUrl } from '../core/text-fragment.js';
 import { openStore } from '../db/idb-store.js';
 import { loadSettings, saveSettings, isPaused } from '../shared/settings.js';
 import { rulesFor } from '../shared/presets.js';
@@ -169,6 +170,66 @@ async function collectStats() {
 // What the popup needs to say something true about the page in front of you:
 // whether it is kept, and if not, why not. The reason strings come straight
 // out of the capture policy, which is why they were written to be read.
+async function runHighlight(tabId, quote, onlyIfUnscrolled) {
+  try {
+    // A content script takes no arguments, so the quote is handed over in a
+    // global in the same isolated world.
+    await chrome.scripting.executeScript({
+      target: { tabId },
+      func: (text, only) => {
+        window.__snowMountainQuote = text;
+        window.__snowMountainOnlyIfUnscrolled = only;
+      },
+      args: [quote, onlyIfUnscrolled === true],
+    });
+    await chrome.scripting.executeScript({
+      target: { tabId },
+      files: ['src/content/highlight.js'],
+    });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+// Opening a result, with the two facts the spike established. A text
+// fragment only fires on a fresh document load, so a tab that is already
+// open on the page needs the highlight script instead. And a fragment does
+// not wait for content that arrives after load, so a new tab that ends up
+// unscrolled gets the same treatment as a second attempt.
+async function openResult({ url, quote }) {
+  const bare = url.split('#')[0];
+  const existing = await chrome.tabs.query({ url: bare }).catch(() => []);
+
+  if (existing.length) {
+    const tab = existing[0];
+    await chrome.tabs.update(tab.id, { active: true });
+    await chrome.windows.update(tab.windowId, { focused: true }).catch(() => {});
+    const highlighted = quote ? await runHighlight(tab.id, quote, false) : false;
+    return { opened: 'existing', tabId: tab.id, highlighted };
+  }
+
+  const tab = await chrome.tabs.create({ url: quote ? fragmentUrl(bare, quote) : bare });
+  if (!quote) return { opened: 'new', tabId: tab.id, highlighted: false };
+
+  // Wait for the load to finish before checking whether the fragment took.
+  await new Promise((resolve) => {
+    const done = (tabId, info) => {
+      if (tabId !== tab.id || info.status !== 'complete') return;
+      chrome.tabs.onUpdated.removeListener(done);
+      resolve();
+    };
+    chrome.tabs.onUpdated.addListener(done);
+    setTimeout(() => {
+      chrome.tabs.onUpdated.removeListener(done);
+      resolve();
+    }, 8000);
+  });
+
+  await runHighlight(tab.id, quote, true);
+  return { opened: 'new', tabId: tab.id, highlighted: 'ifNeeded' };
+}
+
 async function pageStatus(url) {
   const settings = await loadSettings();
   const store = await getStore();
@@ -471,6 +532,9 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
     case MSG.WIPE:
       return reply(wipeEverything());
+
+    case MSG.OPEN_RESULT:
+      return reply(openResult(payload));
 
     case MSG.PAGE_STATUS:
       return reply(pageStatus(payload.url));

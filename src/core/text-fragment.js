@@ -37,11 +37,13 @@ export function phraseFrom(snippetText, ranges = []) {
   return words.join(' ');
 }
 
-export function textFragmentUrl(url, snippetText, ranges = []) {
-  const phrase = phraseFrom(snippetText, ranges);
+export function fragmentUrl(url, phrase) {
   if (!phrase) return url;
   // Strip any fragment the stored URL already carries: two directives on one
   // URL is not a thing, and a stale #section would win the scroll.
-  const base = url.split('#')[0];
-  return base + '#:~:text=' + encodeURIComponent(phrase);
+  return url.split('#')[0] + '#:~:text=' + encodeURIComponent(phrase);
+}
+
+export function textFragmentUrl(url, snippetText, ranges = []) {
+  return fragmentUrl(url, phraseFrom(snippetText, ranges));
 }

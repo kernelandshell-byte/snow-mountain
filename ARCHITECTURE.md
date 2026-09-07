@@ -335,34 +335,40 @@ What is deliberately not done:
 
 ## Testing
 
-Four suites, in increasing order of how much they cost to run.
+Ten suites. One runs in Node, the rest drive a real Chromium with the
+extension loaded.
 
-**`npm test`** runs the Node suite: every pure module, plus the store
-contract against `memory-store`, plus the relevance harness. No
-dependencies, no browser, about a second. This is the one that runs on every
-change.
+**`npm test`** is the Node suite: every pure module, the store contract
+against `memory-store`, and the relevance harness. No dependencies, about a
+second, runs on every change.
 
-**`npm run test:browser`** runs the same store contract against
-`idb-store` in a real Chromium with the extension loaded. One contract, two
-implementations. It has already earned its place: `memory-store` returned
-eviction log entries written in the same millisecond in the wrong order,
-which IndexedDB gets right for free by walking the primary key backwards,
-and the contract is what caught the disagreement.
+The browser suites need Playwright (`npm install --no-save playwright`):
 
-**`npm run test:e2e`** drives the real service worker: capture, revisit,
-search, pin, forget a site, run maintenance under a budget small enough to
-force eviction, and check the pinned page survived it. This is the suite
-that would notice a broken import or a message type nobody handles.
+| Command | What it holds down |
+|---|---|
+| `test:browser` | the store contract against real IndexedDB |
+| `test:e2e` | capture, revisit, search, pin, forget, eviction, through the worker |
+| `test:capture` | the real thing: a page read with real dwell and scrolling, ending up in the index |
+| `test:extraction` | Readability against a page full of navigation, banners and footers |
+| `test:highlight` | jump to passage when a fragment cannot fire |
+| `test:setup` | the setup flow, including a refused permission |
+| `test:options` | settings, export, and delete everything |
+| `test:popup` | the current page controls, including strict mode granting |
+| `test:ui` | the search page: typing, highlighting, keyboard, opening a result |
 
-**`node test/browser/run-ui-smoke.mjs`** types into the search page, checks
-the highlighting, the keyboard selection, the relaxation notice and that
-opening a result carries a text fragment. Pass `--screenshot out.png` to
-look at it.
+`run-benchmark.mjs` is not a test. It answers "what does this cost", and it
+is where the numbers above come from.
 
-`test/browser/run-benchmark.mjs` is not a test. It answers "what does this
-cost" and it is what the numbers above come from.
+Two notes on how these are built.
 
-The relevance harness deserves a note. "Does search feel good" is
+`test/browser/harness.mjs` copies the extension to a temporary directory and
+adds `host_permissions` before loading it. Granting an optional permission
+needs a click on a Chrome dialog that automation cannot reach, so the two
+suites that inject into real pages use that copy. The code under test is the
+real code; only the grant is shortcut. The shipped manifest still asks for
+nothing at install.
+
+The relevance harness deserves its own note. "Does search feel good" is
 unanswerable, so it is replaced by 44 known item queries against a corpus
 written as prose with deliberately overlapping vocabulary. The target has to
 come back in the top three, and the suite gates on mean reciprocal rank so a
