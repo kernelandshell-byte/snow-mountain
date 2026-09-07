@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Set up Snow Mountain</title>
+    <link rel="stylesheet" href="setup.css" />
+  </head>
+  <body>
+    <main>
+      <ol class="dots" aria-hidden="true">
+        <li class="on"></li><li></li><li></li><li></li>
+      </ol>
+
+      <section data-step="0">
+        <h1>A memory for your browser</h1>
+        <p>Pages you actually read get their text indexed on this computer, so you can find them later by any phrase you remember.</p>
+        <ul class="plain">
+          <li><strong>Everything stays here.</strong> No account, no server, no sync. Nothing is uploaded, because no code in this extension makes a network request.</li>
+          <li><strong>Not everything is kept.</strong> A page has to hold your attention for a few seconds and be scrolled before it counts as read.</li>
+          <li><strong>Some pages are never touched.</strong> Anything with a password field on it, and whole categories you choose in a moment.</li>
+        </ul>
+        <button class="primary" data-next>Continue</button>
+      </section>
+
+      <section data-step="1" hidden>
+        <h1>What should it watch?</h1>
+        <p>You can change this later, and switching to the second option actively gives the access back.</p>
+        <div class="choice">
+          <label>
+            <input type="radio" name="mode" value="broad" checked />
+            <span class="label">Everywhere, minus your exclusions</span>
+            <span class="note">Asks for access to all sites. What you exclude on the next screen is never read at all.</span>
+          </label>
+          <label>
+            <input type="radio" name="mode" value="strict" />
+            <span class="label">Only sites I add myself</span>
+            <span class="note">Asks for nothing now. Each site you add is granted one at a time, so Chrome itself stops this extension from seeing anything else.</span>
+          </label>
+        </div>
+        <p id="permissionNote" class="warn" hidden></p>
+        <div class="row">
+          <button class="link" data-back>Back</button>
+          <button class="primary" id="chooseMode">Continue</button>
+        </div>
+      </section>
+
+      <section data-step="2" hidden>
+        <h1>Never read these</h1>
+        <p>Whole categories, off by default in the sense that pages matching them are not captured at all. You can add your own patterns later in settings.</p>
+        <div id="presets" class="presets"></div>
+        <div class="row">
+          <button class="link" data-back>Back</button>
+          <button class="primary" data-next>Continue</button>
+        </div>
+      </section>
+
+      <section data-step="3" hidden>
+        <h1>How much should it keep?</h1>
+        <p>Two limits, and whichever runs out first is the one that applies. Nothing is ever removed silently, and anything you pin is kept regardless.</p>
+        <label class="field">
+          <span>Keep pages for</span>
+          <select id="months">
+            <option value="6">6 months</option>
+            <option value="12" selected>12 months</option>
+            <option value="24">2 years</option>
+            <option value="120">as long as it fits</option>
+          </select>
+        </label>
+        <label class="field">
+          <span>Use at most</span>
+          <select id="size">
+            <option value="250">250MB</option>
+            <option value="500" selected>500MB</option>
+            <option value="1000">1GB</option>
+            <option value="2000">2GB</option>
+          </select>
+        </label>
+        <p id="capacity" class="note"></p>
+        <div class="row">
+          <button class="link" data-back>Back</button>
+          <button class="primary" id="finish">Start remembering</button>
+        </div>
+      </section>
+
+      <section data-step="4" hidden>
+        <h1>Done</h1>
+        <p id="doneNote"></p>
+        <p class="note">Press <kbd>Ctrl</kbd> <kbd>Shift</kbd> <kbd>F</kbd> to search, or type <kbd>sm</kbd> then space in the address bar.</p>
+        <button class="primary" id="close">Close</button>
+      </section>
+    </main>
+    <script type="module" src="setup.js"></script>
+  </body>
+</html>

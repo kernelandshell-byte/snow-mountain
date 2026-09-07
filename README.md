@@ -10,40 +10,50 @@ Working title. See the naming note at the end of `BRIEF.md`.
 
 ## State
 
-It works end to end. Capture a page, search it back, open the result on the paragraph that matched.
+It works. Set it up, read some pages, search them back, land on the
+paragraph that matched.
 
-What is real:
+- The pure core: tokenising, capture policy, read heuristic, BM25, query
+  parsing, snippets, the storage budget, text fragment URLs
+- Two stores, `memory-store` and `idb-store`, held to one contract that runs
+  against both
+- Search, with an AND to OR fallback and a singular fallback for plurals
+- A service worker that captures, indexes, searches, pins, forgets, exports
+  and evicts
+- Extraction through vendored Readability, injected only into pages that
+  have earned it
+- A four screen setup flow that requests host access at the moment it is
+  explained, and asks for nothing at all in strict mode
+- Search page, popup, and a settings page with exclusion bundles, custom
+  rules, the storage meter, the deletion log, export and wipe
+- 134 Node tests and 88 browser checks across six suites
 
-- The whole pure core: tokenising, capture policy, read heuristic, BM25, query parsing, snippets, the storage budget, text fragment URLs
-- Two stores, `memory-store` and `idb-store`, held to one contract that runs against both
-- Search, with an AND to OR fallback and a singular fallback for plural queries
-- A service worker that captures, indexes, searches, pins, forgets and evicts
-- A working search page and popup
-- 134 Node tests, 14 store contract cases against real IndexedDB, 14 end to end checks through the real extension, 9 interface checks
-
-What is not done:
-
-- Extraction is still `document.body.innerText`. Readability needs vendoring, and until then captured text includes navigation and footer noise
-- No setup flow yet, so capture mode and the budget use their defaults
-- No export, no storage log screen, no per site controls in the interface
-- The search page works and has had no design pass
+Not done, and listed at the end of `ARCHITECTURE.md` with the reasons:
+import, one click site granting in strict mode, a design pass on the search
+page, and the highlight fallback for the two cases where a text fragment
+cannot fire.
 
 ## Tests
 
 ```
-npm test                              # Node suite, no dependencies, about a second
-npm install --no-save playwright      # only needed for the three below
+npm test                              # 134 Node tests, no dependencies, about a second
+npm install --no-save playwright      # only needed for the browser suites
+
 npm run test:browser                  # the store contract against real IndexedDB
 npm run test:e2e                      # capture, search, pin, forget, evict, through the real worker
-node test/browser/run-ui-smoke.mjs    # drives the search page; --screenshot out.png to look
-node test/browser/run-benchmark.mjs 1500   # what it costs, not a test
+npm run test:extraction               # Readability against a page full of clutter
+npm run test:setup                    # the setup flow, including a refused permission
+npm run test:options                  # settings, export and delete everything
+node test/browser/run-ui-smoke.mjs    # the search page; --screenshot out.png to look at it
+
+node test/browser/run-benchmark.mjs 1500   # what it costs; not a test
 ```
 
 ## Loading it
 
 `chrome://extensions`, developer mode on, load unpacked, pick this folder. It installs and asks for nothing: host access is requested during setup rather than at install time, and content scripts are registered at runtime.
 
-Until the setup flow exists, grant the broad permission by hand from the extension's details page if you want it to capture anything.
+Setup opens by itself on a fresh install. Until you finish it nothing is captured, which is deliberate: the permission is requested on the screen that explains what it is for, not at install time.
 
 ## The two rules
 

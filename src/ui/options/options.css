@@ -1,0 +1,45 @@
+:root {
+  --bg: #fbfbfa; --fg: #1a1a19; --muted: #6b6b66; --line: #e3e3df;
+  --accent: #1f6f5c; --warn: #b45309; --danger: #a33a2e; --card: #fff;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #16171a; --fg: #e8e8e4; --muted: #9a9a94; --line: #2a2c30;
+    --accent: #5eb79c; --warn: #d19a4a; --danger: #d9705f; --card: #1c1e22;
+  }
+}
+* { box-sizing: border-box; }
+body { margin: 0; padding: 40px 20px 90px; background: var(--bg); color: var(--fg);
+       font: 15px/1.6 system-ui, -apple-system, "Segoe UI", sans-serif; }
+main { max-width: 620px; margin: 0 auto; }
+h1 { font-size: 22px; margin: 0 0 28px; }
+h2 { font-size: 13px; text-transform: uppercase; letter-spacing: .05em;
+     color: var(--muted); margin: 0 0 10px; }
+section { padding: 20px 0; border-top: 1px solid var(--line); }
+.note { color: var(--muted); font-size: 13.5px; margin: 8px 0 0; }
+.rows label { display: flex; align-items: center; gap: 10px;
+              padding: 9px 0; border-bottom: 1px solid var(--line); }
+.rows .desc { color: var(--muted); font-size: 13px; margin-left: auto; }
+.field { display: flex; align-items: center; gap: 12px; margin: 14px 0; }
+.field span { min-width: 130px; }
+.field.block { display: block; }
+.field.block span { display: block; margin-bottom: 6px; }
+textarea, select {
+  font: inherit; color: var(--fg); background: var(--card);
+  border: 1px solid var(--line); border-radius: 7px; padding: 8px 10px;
+}
+textarea { width: 100%; font-family: ui-monospace, monospace; font-size: 13px; }
+.bar { height: 5px; background: var(--line); border-radius: 3px; overflow: hidden; margin-bottom: 4px; }
+.bar span { display: block; height: 100%; background: var(--accent); }
+.bar span.warn { background: var(--warn); }
+.row { display: flex; gap: 10px; align-items: center; margin-top: 6px; }
+button { font: inherit; border-radius: 7px; cursor: pointer; padding: 8px 14px; }
+.secondary { background: var(--card); color: var(--fg); border: 1px solid var(--line); }
+.danger { background: transparent; color: var(--danger); border: 1px solid var(--danger); }
+.log { list-style: none; padding: 0; margin: 10px 0 0; }
+.log li { padding: 7px 0; border-bottom: 1px solid var(--line); font-size: 13.5px; }
+.log .when { color: var(--muted); }
+code { font-size: 12.5px; background: var(--card); border: 1px solid var(--line);
+       border-radius: 4px; padding: 0 4px; }
+.saved { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+         background: var(--accent); color: #fff; padding: 7px 16px; border-radius: 20px; }

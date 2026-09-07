@@ -305,25 +305,33 @@ Nothing except the service worker writes to the database.
 
 ## Build order
 
-Steps 1 to 5 are done. Steps 2 to 4 needed no browser at all, which is what
-made the test suite worth having before any of the fiddly parts existed.
+Everything through step 10 is done. Steps 2 to 4 needed no browser at all,
+which is what made the test suite worth having before any of the fiddly
+parts existed.
 
-1. ~~The text fragment spike~~ (done, see the assumption log)
-2. ~~`core/` with tests~~ (done: tokenizer, url-key, capture-policy,
-   read-heuristic, bm25, query-parser, snippet, morphology, eviction,
-   text-fragment)
-3. ~~`db/`~~ (done: schema, memory-store, idb-store, one contract for both)
-4. ~~Index and search with a relevance harness~~ (done: 44 known item
-   queries, gated on mean reciprocal rank)
-5. ~~Capture pipeline and service worker wiring~~ (done, end to end through
-   the real extension), except that extraction is still
-   `document.body.innerText` rather than Readability
-6. The search page (a working version exists, it has had no design pass)
-7. Setup flow and the two permission modes
-8. Budget notices in the interface, and the storage log
-9. Omnibox polish
-10. Export, and forget by day in the interface
-11. Vendoring Readability, replacing the placeholder extraction
+1. ~~The text fragment spike~~ (see the assumption log)
+2. ~~`core/` with tests~~
+3. ~~`db/`, one contract run against both stores~~
+4. ~~Index, search and the relevance harness~~
+5. ~~Capture pipeline and service worker wiring~~
+6. ~~The search page~~ (works, keyboard first, no design pass yet)
+7. ~~Setup flow and the two permission modes~~
+8. ~~Budget, meter, eviction, storage log~~
+9. ~~Omnibox~~
+10. ~~Export, pause, forget~~
+11. ~~Readability, replacing the placeholder extraction~~
+
+What is deliberately not done:
+
+- **Import.** Export ships first; the format should settle in real use
+  before anything promises to read it back.
+- **Adding a site from the popup in strict mode.** Strict mode saves the
+  choice but there is no one click way to grant an origin yet, so it is
+  currently only usable by editing settings.
+- **A design pass** on the search page.
+- **The `HIGHLIGHT` fallback** for jump to passage. The two cases that need
+  it are known and detectable; the content script side is not written.
+- **Language aware stemming, PDF capture, semantic search, a Firefox port.**
 
 ## Testing
 

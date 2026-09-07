@@ -2,13 +2,66 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Snow Mountain settings</title>
-    <style>
-      body { font: 14px/1.6 system-ui, sans-serif; margin: 0 auto; max-width: 620px; padding: 32px; }
-    </style>
+    <link rel="stylesheet" href="options.css" />
   </head>
   <body>
-    <h1>Settings</h1>
-    <p>Capture modes, exclusion presets, custom rules and the storage budget live here. See build order step 7 in ARCHITECTURE.md.</p>
+    <main>
+      <h1>Settings</h1>
+
+      <section>
+        <h2>What gets read</h2>
+        <p id="modeLine" class="note"></p>
+        <div id="presets" class="rows"></div>
+        <label class="field block">
+          <span>Never read these, one pattern per line</span>
+          <textarea id="rules" rows="5" spellcheck="false" placeholder="example.com&#10;*.internal.example&#10;example.com/private/*"></textarea>
+        </label>
+        <p class="note">Patterns match a host and its subdomains. <code>*.example.com</code> matches only subdomains, and a trailing <code>/path/*</code> narrows it further.</p>
+      </section>
+
+      <section>
+        <h2>How much is kept</h2>
+        <div class="bar"><span id="fill"></span></div>
+        <p id="usage" class="note"></p>
+        <label class="field"><span>Keep pages for</span>
+          <select id="months">
+            <option value="6">6 months</option>
+            <option value="12">12 months</option>
+            <option value="24">2 years</option>
+            <option value="120">as long as it fits</option>
+          </select>
+        </label>
+        <label class="field"><span>Use at most</span>
+          <select id="size">
+            <option value="250">250MB</option>
+            <option value="500">500MB</option>
+            <option value="1000">1GB</option>
+            <option value="2000">2GB</option>
+          </select>
+        </label>
+        <button id="sweep" class="secondary">Apply limits now</button>
+      </section>
+
+      <section>
+        <h2>What has been removed</h2>
+        <p class="note">Nothing is deleted without an entry here.</p>
+        <ul id="log" class="log"></ul>
+      </section>
+
+      <section>
+        <h2>Your data</h2>
+        <p class="note">The export is plain JSON with the full text of every page, readable without this extension.</p>
+        <div class="row">
+          <button id="export" class="secondary">Export everything</button>
+          <button id="wipe" class="danger">Delete everything</button>
+        </div>
+        <p id="dataNote" class="note"></p>
+      </section>
+
+      <p id="saved" class="saved" hidden>Saved</p>
+    </main>
+    <script type="module" src="options.js"></script>
   </body>
 </html>

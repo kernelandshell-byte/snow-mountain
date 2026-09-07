@@ -161,8 +161,49 @@ async function collectStats() {
     exhaustsAt: pace.daysObserved >= 7 ? exhaustsAt : null,
     paused: isPaused(settings),
     mode: settings.mode,
+    setupComplete: settings.setupComplete,
     recentEvictions: log,
   };
+}
+
+async function buildExport() {
+  const store = await getStore();
+  const settings = await loadSettings();
+  const meta = await store.listPageMeta();
+  const docs = await store.readDocs(meta.map((page) => page.id));
+
+  // Plain JSON with the full text, not an opaque blob. The point of an
+  // export is that it is readable without this extension existing.
+  return {
+    format: 'snow-mountain-export',
+    version: 1,
+    exportedAt: new Date().toISOString(),
+    settings: {
+      mode: settings.mode,
+      retentionMonths: settings.retentionMonths,
+      sizeCapBytes: settings.sizeCapBytes,
+      presets: settings.presets,
+      customRules: settings.customRules,
+    },
+    pages: [...docs.values()].map((page) => ({
+      url: page.url,
+      title: page.title,
+      domain: page.domain,
+      firstSeen: new Date(page.firstSeen).toISOString(),
+      lastSeen: new Date(page.lastSeen).toISOString(),
+      visitCount: page.visitCount,
+      pinned: !!page.pinned,
+      text: page.text,
+    })),
+  };
+}
+
+async function wipeEverything() {
+  const store = await getStore();
+  const meta = await store.listPageMeta();
+  const result = await store.deletePages(meta.map((page) => page.id));
+  await store.logEviction({ reason: 'manual', count: result.deleted, bytesFreed: result.bytesFreed });
+  return result;
 }
 
 async function forget(payload) {
@@ -218,9 +259,19 @@ async function runMaintenance() {
   return { evicted: plan.ids.length, budget: stats.budget.level };
 }
 
-chrome.runtime.onInstalled.addListener(async () => {
+chrome.runtime.onInstalled.addListener(async (details) => {
   await syncContentScripts();
   chrome.alarms.create('maintenance', { periodInMinutes: 60 });
+
+  // Nothing is captured until someone has chosen a mode and granted access,
+  // so a fresh install that never opens setup would sit there doing nothing
+  // and look broken.
+  if (details.reason === 'install') {
+    const settings = await loadSettings();
+    if (!settings.setupComplete) {
+      chrome.tabs.create({ url: chrome.runtime.getURL('src/ui/setup/setup.html') });
+    }
+  }
 });
 
 chrome.runtime.onStartup.addListener(syncContentScripts);
@@ -315,6 +366,15 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
     case MSG.MAINTENANCE:
       return reply(runMaintenance());
+
+    case MSG.EXPORT:
+      return reply(buildExport());
+
+    case MSG.WIPE:
+      return reply(wipeEverything());
+
+    case MSG.LOG:
+      return reply(getStore().then((store) => store.readEvictionLog(payload?.limit || 20)));
 
     default:
       return false;

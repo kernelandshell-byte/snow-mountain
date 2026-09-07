@@ -8,6 +8,8 @@
     "test": "node --test test/*.test.js",
     "test:browser": "node test/browser/run-store-contract.mjs",
     "test:e2e": "node test/browser/run-e2e.mjs",
-    "test:extraction": "node test/browser/run-extraction.mjs"
+    "test:extraction": "node test/browser/run-extraction.mjs",
+    "test:setup": "node test/browser/run-setup.mjs",
+    "test:options": "node test/browser/run-options.mjs"
   }
 }

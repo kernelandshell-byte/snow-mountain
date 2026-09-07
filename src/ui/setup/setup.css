@@ -1,0 +1,52 @@
+:root {
+  --bg: #fbfbfa; --fg: #1a1a19; --muted: #6b6b66;
+  --line: #e3e3df; --accent: #1f6f5c; --warn: #b45309; --card: #fff;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #16171a; --fg: #e8e8e4; --muted: #9a9a94;
+    --line: #2a2c30; --accent: #5eb79c; --warn: #d19a4a; --card: #1c1e22;
+  }
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0; padding: 48px 20px 80px; background: var(--bg); color: var(--fg);
+  font: 15px/1.65 system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+main { max-width: 560px; margin: 0 auto; }
+h1 { font-size: 24px; line-height: 1.25; margin: 0 0 10px; letter-spacing: -0.01em; }
+p { margin: 0 0 16px; }
+.note, .warn { color: var(--muted); font-size: 13.5px; }
+.warn { color: var(--warn); }
+.dots { display: flex; gap: 6px; list-style: none; padding: 0; margin: 0 0 32px; }
+.dots li { width: 26px; height: 3px; border-radius: 2px; background: var(--line); }
+.dots li.on { background: var(--accent); }
+ul.plain { list-style: none; padding: 0; margin: 0 0 24px; }
+ul.plain li { padding: 12px 0; border-top: 1px solid var(--line); }
+ul.plain li:last-child { border-bottom: 1px solid var(--line); }
+.choice { display: grid; gap: 10px; margin-bottom: 20px; }
+.choice label {
+  display: grid; grid-template-columns: 20px 1fr; gap: 4px 10px;
+  padding: 14px; border: 1px solid var(--line); border-radius: 10px;
+  background: var(--card); cursor: pointer;
+}
+.choice label:has(input:checked) { border-color: var(--accent); }
+.choice input { grid-row: span 2; align-self: start; margin-top: 7px; }
+.choice .label { font-weight: 600; }
+.choice .note { grid-column: 2; }
+.presets { display: grid; gap: 2px; margin-bottom: 20px; }
+.presets label {
+  display: flex; align-items: center; gap: 10px;
+  padding: 11px 12px; border-bottom: 1px solid var(--line);
+}
+.presets .desc { color: var(--muted); font-size: 13px; margin-left: auto; }
+.field { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
+.field span { min-width: 120px; }
+select { font: inherit; padding: 7px 9px; border-radius: 7px;
+         border: 1px solid var(--line); background: var(--card); color: var(--fg); }
+.row { display: flex; align-items: center; gap: 16px; margin-top: 26px; }
+.primary { padding: 10px 18px; font: inherit; font-weight: 600; color: #fff;
+           background: var(--accent); border: 0; border-radius: 8px; cursor: pointer; }
+.link { border: 0; background: 0; color: var(--muted); font: inherit; cursor: pointer; padding: 0; }
+kbd { font: inherit; font-size: 12.5px; border: 1px solid var(--line);
+      border-bottom-width: 2px; border-radius: 5px; padding: 1px 6px; }

@@ -16,6 +16,17 @@ byId('options').addEventListener('click', () => {
 
 const stats = await ask(MSG.STATS).catch(() => null);
 
+// An install that never finished setup captures nothing, so saying "0 pages
+// kept" would be true and useless.
+if (stats && !stats.setupComplete) {
+  const open = byId('open');
+  open.textContent = 'Finish setting up';
+  open.onclick = () => {
+    chrome.tabs.create({ url: chrome.runtime.getURL('src/ui/setup/setup.html') });
+    window.close();
+  };
+}
+
 if (!stats || stats.error) {
   byId('status').textContent = 'Storage is not available right now.';
 } else {

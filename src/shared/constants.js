@@ -25,6 +25,12 @@ export const MAX_TEXT_BYTES = 200 * 1024;
 
 export const BM25 = { k1: 1.2, b: 0.75 };
 
+// Measured, not guessed: 1500 documents averaging 800 tokens came out at
+// about 15KB each including their share of the index. Used to turn a
+// megabyte figure into a number of pages, which is the only form of the
+// question anyone can answer.
+export const BYTES_PER_PAGE_ESTIMATE = 15 * 1024;
+
 export const DEFAULTS = {
   retentionMonths: 12,
   sizeCapBytes: 500 * 1024 * 1024,

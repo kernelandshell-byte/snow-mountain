@@ -23,6 +23,17 @@ export const PRESETS = {
   intranet: ['localhost', '*.local', '*.internal', '*.lan'],
 };
 
+// Shown in setup. Kept beside the lists so a bundle can never be added
+// without a human readable description of what it stops.
+export const PRESET_LABELS = {
+  webmail: { title: 'Webmail', example: 'Gmail, Outlook, Proton' },
+  banking: { title: 'Banking and payments', example: 'PayPal, Revolut, your bank' },
+  health: { title: 'Health and medical', example: 'patient portals, booking' },
+  adult: { title: 'Adult sites', example: '' },
+  government: { title: 'Government and ID portals', example: 'tax, registration' },
+  intranet: { title: 'Local and internal', example: 'localhost, company intranets' },
+};
+
 export function rulesFor(presets = {}, custom = []) {
   const out = [];
   for (const [name, enabled] of Object.entries(presets)) {
