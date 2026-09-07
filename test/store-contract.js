@@ -97,6 +97,38 @@ export const contractCases = [
     },
   },
   {
+    name: 'the byte total is kept as a running number, not recomputed',
+    async run(store) {
+      assertEqual((await store.readStats()).totalBytes, 0, 'starts empty');
+
+      const { id } = await store.putPage(PAGE);
+      const afterOne = (await store.readStats()).totalBytes;
+      assert(afterOne > 0, 'counted the first page');
+
+      // A revisit with identical content must not count the page twice.
+      await store.putPage(PAGE);
+      assertEqual((await store.readStats()).totalBytes, afterOne, 'a revisit changes nothing');
+
+      // A rewrite replaces the old size rather than adding to it.
+      await store.putPage({ ...PAGE, text: 'Much shorter now.' });
+      const afterRewrite = (await store.readStats()).totalBytes;
+      assert(afterRewrite < afterOne, 'shrinking the page shrinks the total: ' + afterRewrite);
+
+      await store.deletePages([id]);
+      assertEqual((await store.readStats()).totalBytes, 0, 'back to nothing');
+    },
+  },
+  {
+    name: 'the oldest page can be found without reading every page',
+    async run(store) {
+      assertEqual(await store.oldestFirstSeen(), null, 'nothing stored yet');
+      const old = Date.now() - 400 * 86400000;
+      await store.putPage({ url: 'https://a.example/1', title: 'Old', text: 'An old page.', lastSeen: old });
+      await store.putPage({ url: 'https://b.example/2', title: 'New', text: 'A new page.' });
+      assertEqual(await store.oldestFirstSeen(), old, 'the oldest first seen');
+    },
+  },
+  {
     name: 'deleting a page removes its postings and its share of the statistics',
     async run(store) {
       const { id } = await store.putPage(PAGE);

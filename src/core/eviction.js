@@ -79,14 +79,10 @@ export function projectExhaustion({ usedBytes, sizeCapBytes, bytesPerDay, now = 
   return now + days * 24 * 60 * 60 * 1000;
 }
 
-export function paceFrom(pages, now = Date.now()) {
-  if (!pages.length) return { bytesPerDay: 0, daysObserved: 0 };
-  let oldest = now;
-  let bytes = 0;
-  for (const page of pages) {
-    if (page.firstSeen < oldest) oldest = page.firstSeen;
-    bytes += page.bytes || 0;
-  }
-  const days = Math.max(1, (now - oldest) / (24 * 60 * 60 * 1000));
-  return { bytesPerDay: bytes / days, daysObserved: Math.round(days) };
+// Takes totals rather than a list of pages, so the interface can ask for
+// this without the store reading every record it has.
+export function paceFrom({ totalBytes = 0, oldestFirstSeen = null }, now = Date.now()) {
+  if (!totalBytes || !oldestFirstSeen) return { bytesPerDay: 0, daysObserved: 0 };
+  const days = Math.max(1, (now - oldestFirstSeen) / (24 * 60 * 60 * 1000));
+  return { bytesPerDay: totalBytes / days, daysObserved: Math.round(days) };
 }

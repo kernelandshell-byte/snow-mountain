@@ -40,7 +40,10 @@ await context.route('**/*', (route) => {
   const url = route.request().url();
   if (!/^https?:/.test(url)) return route.continue();
   const login = url.includes('login') ? '<form><input type="password" name="p" /></form>' : '';
-  route.fulfill({ status: 200, contentType: 'text/html; charset=utf-8', body: page(login) });
+  // Each path gets a distinguishing sentence, so two captures can be told
+  // apart by what is in them rather than only by their address.
+  const marker = '<p>Path marker ' + new URL(url).pathname.replace(/[^a-z-]/g, '') + ' appears here.</p>';
+  route.fulfill({ status: 200, contentType: 'text/html; charset=utf-8', body: page(login + marker) });
 });
 
 const checks = [];
@@ -132,6 +135,57 @@ check('a page glanced at for three seconds is not kept', glanceStatus.kept === n
 
 const finalStats = await ask('STATS');
 check('exactly one page was kept out of four visited', finalStats.docCount === 1, finalStats.docCount);
+
+// --- pause actually pauses -------------------------------------------------
+await ask('SETTINGS_SET', { pausedUntil: Date.now() + 3600000 });
+const pausedTab = await read('https://reader.example/while-paused', 14);
+await driver.bringToFront();
+await driver.waitForTimeout(1200);
+const pausedStatus = await ask('PAGE_STATUS', { url: 'https://reader.example/while-paused' });
+check('nothing is captured while paused', pausedStatus.kept === null, JSON.stringify(pausedStatus));
+check('and the popup says why', /paused/.test(pausedStatus.reason), pausedStatus.reason);
+await pausedTab.close();
+await ask('SETTINGS_SET', { pausedUntil: 0 });
+
+// --- a rule added mid session takes effect straight away -------------------
+await ask('SETTINGS_SET', { customRules: ['excluded.example', 'banned.example'] });
+const bannedTab = await read('https://banned.example/article', 14);
+await driver.bringToFront();
+await driver.waitForTimeout(1200);
+const bannedStatus = await ask('PAGE_STATUS', { url: 'https://banned.example/article' });
+check('a rule added while running blocks capture immediately', bannedStatus.kept === null, JSON.stringify(bannedStatus));
+await bannedTab.close();
+
+// --- a single page app changing route without navigating -------------------
+const spa = await context.newPage();
+await spa.goto('https://reader.example/spa-first');
+await spa.bringToFront();
+for (let i = 0; i < 14; i++) {
+  await spa.mouse.wheel(0, 400);
+  await spa.waitForTimeout(1000);
+}
+// The route changes and the article is replaced, with no navigation at all.
+await spa.evaluate(() => {
+  history.pushState({}, '', '/spa-second');
+  document.querySelector('article').innerHTML =
+    '<h1>The second view</h1><p>Path marker spa-second appears here, on a view that was never loaded as a document.</p>';
+});
+for (let i = 0; i < 14; i++) {
+  await spa.mouse.wheel(0, 400);
+  await spa.waitForTimeout(1000);
+}
+await driver.bringToFront();
+await driver.waitForTimeout(1500);
+
+const firstView = await ask('PAGE_STATUS', { url: 'https://reader.example/spa-first' });
+const secondView = await ask('PAGE_STATUS', { url: 'https://reader.example/spa-second' });
+check('the first view of a single page app is kept', firstView.kept !== null, JSON.stringify(firstView));
+check('and the second view is kept as its own page',
+  secondView.kept !== null && secondView.kept.id !== (firstView.kept && firstView.kept.id),
+  JSON.stringify({ first: firstView.kept, second: secondView.kept }));
+const spaHit = await ask('SEARCH', { query: 'never loaded as a document' });
+check('the second view is searchable by what was on it', spaHit.results.length === 1, JSON.stringify(spaHit.results.map((r) => r.url)));
+await spa.close();
 
 await context.close();
 await granted.cleanup();

@@ -17,6 +17,7 @@ export function createMemoryStore() {
   const evictionLog = [];
   let nextId = 1;
   let totalTokens = 0;
+  let totalBytes = 0;
 
   const bucketKey = (term, bucket) => term + ' ' + bucket;
 
@@ -72,6 +73,7 @@ export function createMemoryStore() {
       if (existing) {
         dropPostings(existing);
         totalTokens -= existing.wordCount || 0;
+        totalBytes -= existing.bytes || 0;
       }
 
       const tokens = tokenize(title + '\n\n' + text);
@@ -98,6 +100,7 @@ export function createMemoryStore() {
       byUrlKey.set(key, id);
       writePostings(id, tokens);
       totalTokens += tokens.length;
+      totalBytes += record.bytes;
 
       return { id, created: !existing, reindexed: !!existing };
     },
@@ -129,6 +132,7 @@ export function createMemoryStore() {
       return {
         docCount,
         totalTokens,
+        totalBytes,
         avgDocLength: docCount ? totalTokens / docCount : 0,
       };
     },
@@ -143,6 +147,7 @@ export function createMemoryStore() {
         pages.delete(id);
         byUrlKey.delete(page.urlKey);
         totalTokens -= page.wordCount || 0;
+        totalBytes -= page.bytes || 0;
         bytesFreed += page.bytes || 0;
         deleted += 1;
       }
@@ -158,6 +163,14 @@ export function createMemoryStore() {
 
     async listRecent(limit = 20) {
       return [...pages.values()].sort((a, b) => b.lastSeen - a.lastSeen).slice(0, limit);
+    },
+
+    async oldestFirstSeen() {
+      let oldest = null;
+      for (const page of pages.values()) {
+        if (oldest === null || page.firstSeen < oldest) oldest = page.firstSeen;
+      }
+      return oldest;
     },
 
     async listPageMeta() {

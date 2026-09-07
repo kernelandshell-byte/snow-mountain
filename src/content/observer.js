@@ -16,6 +16,7 @@
   let maxScroll = 0;
   let lastTick = Date.now();
   let offered = false;
+  let captured = false;
   let currentUrl = location.href;
 
   const scrollDepth = () => {
@@ -26,9 +27,18 @@
 
   const hasPasswordField = () => !!document.querySelector('input[type="password"]');
 
+  // innerText forces layout, and this runs on every page the person opens,
+  // so the answer is cached. It only has to be roughly right: it decides
+  // whether a page is short enough to excuse not scrolling.
+  let cachedWords = 0;
+  let cachedAt = 0;
   const wordCount = () => {
+    const now = Date.now();
+    if (now - cachedAt < 15000 && cachedWords) return cachedWords;
     const text = document.body ? document.body.innerText : '';
-    return text ? text.split(/\s+/).length : 0;
+    cachedWords = text ? text.split(/\s+/).length : 0;
+    cachedAt = now;
+    return cachedWords;
   };
 
   function reset() {
@@ -36,6 +46,9 @@
     maxScroll = 0;
     lastTick = Date.now();
     offered = false;
+    captured = false;
+    cachedWords = 0;
+    cachedAt = 0;
     currentUrl = location.href;
   }
 
@@ -60,18 +73,24 @@
 
     // "Still reading" is not a refusal, so let the next tick try again.
     if (!reply || (!reply.capture && reply.reason === 'still reading')) offered = false;
+    else captured = true;
   }
 
   setInterval(() => {
+    // An SPA route change is a new page even though nothing navigated, and
+    // it is the only thing worth checking once this page has been decided.
+    if (location.href !== currentUrl) {
+      reset();
+      return;
+    }
+    if (captured) return;
+
     const now = Date.now();
     if (document.visibilityState === 'visible' && document.hasFocus()) {
       focusedMs += now - lastTick;
     }
     lastTick = now;
     maxScroll = Math.max(maxScroll, scrollDepth());
-
-    // An SPA route change is a new page even though nothing navigated.
-    if (location.href !== currentUrl) reset();
 
     if (focusedMs >= FLOOR_MS) offer();
   }, TICK_MS);

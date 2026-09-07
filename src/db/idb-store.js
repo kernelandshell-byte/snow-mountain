@@ -55,7 +55,7 @@ export function openDatabase({
 }
 
 export function createIdbStore(db) {
-  const emptyStats = { key: 'stats', docCount: 0, totalTokens: 0 };
+  const emptyStats = { key: 'stats', docCount: 0, totalTokens: 0, totalBytes: 0 };
 
   // Removing a document's postings needs to know which terms it had. Rather
   // than storing a term list on every page, which would cost roughly 40% on
@@ -131,6 +131,7 @@ export function createIdbStore(db) {
       return {
         docCount: stats.docCount,
         totalTokens: stats.totalTokens,
+        totalBytes: stats.totalBytes || 0,
         avgDocLength: stats.docCount ? stats.totalTokens / stats.docCount : 0,
       };
     },
@@ -171,6 +172,7 @@ export function createIdbStore(db) {
       if (existing) {
         await dropPostings(postings, existing);
         stats.totalTokens -= existing.wordCount || 0;
+        stats.totalBytes = (stats.totalBytes || 0) - (existing.bytes || 0);
       }
 
       const tokens = tokenize(title + '\n\n' + text);
@@ -203,6 +205,7 @@ export function createIdbStore(db) {
 
       await writePostings(postings, id, tokens);
       stats.totalTokens += tokens.length;
+      stats.totalBytes = (stats.totalBytes || 0) + record.bytes;
       await req(meta.put(stats));
       await txDone(tx);
 
@@ -226,6 +229,7 @@ export function createIdbStore(db) {
         await req(pages.delete(id));
         stats.docCount -= 1;
         stats.totalTokens -= page.wordCount || 0;
+        stats.totalBytes = (stats.totalBytes || 0) - (page.bytes || 0);
         bytesFreed += page.bytes || 0;
         deleted += 1;
       }
@@ -263,6 +267,18 @@ export function createIdbStore(db) {
         cursorRequest.onerror = () => reject(cursorRequest.error);
       });
       return out;
+    },
+
+    // One cursor step on an index, rather than reading every page, because
+    // this is on the path that opens the popup.
+    async oldestFirstSeen() {
+      const tx = db.transaction('pages', 'readonly');
+      const index = tx.objectStore('pages').index('firstSeen');
+      return new Promise((resolve, reject) => {
+        const request = index.openCursor();
+        request.onsuccess = () => resolve(request.result ? request.result.value.firstSeen : null);
+        request.onerror = () => reject(request.error);
+      });
     },
 
     // Deliberately lightweight: the eviction planner needs four fields per

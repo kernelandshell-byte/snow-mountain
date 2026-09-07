@@ -108,7 +108,14 @@ test('a pace that would take a decade is not worth showing', () => {
 });
 
 test('pace is measured from the oldest page, not from today', () => {
-  const pace = paceFrom([page(1, 10, 1000), page(2, 5, 1000)], now);
+  const pace = paceFrom({ totalBytes: 2000, oldestFirstSeen: now - 10 * DAY }, now);
   assert.equal(pace.daysObserved, 10);
   assert.equal(Math.round(pace.bytesPerDay), 200);
+});
+
+test('an empty archive has no pace rather than a pace of zero over zero days', () => {
+  assert.deepEqual(paceFrom({ totalBytes: 0, oldestFirstSeen: null }, now), {
+    bytesPerDay: 0,
+    daysObserved: 0,
+  });
 });

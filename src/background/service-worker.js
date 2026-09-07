@@ -12,6 +12,7 @@ import { isRead } from '../core/read-heuristic.js';
 import { search } from '../core/index-reader.js';
 import { planEviction, budgetStatus, projectExhaustion, paceFrom } from '../core/eviction.js';
 import { fragmentUrl } from '../core/text-fragment.js';
+import { urlKey } from '../core/url-key.js';
 import { openStore } from '../db/idb-store.js';
 import { loadSettings, saveSettings, isPaused } from '../shared/settings.js';
 import { rulesFor } from '../shared/presets.js';
@@ -22,14 +23,29 @@ const CONTENT_SCRIPT_ID = 'observer';
 // worker is restarted the module is re-evaluated and the handle is reopened.
 let storePromise = null;
 const getStore = () => {
-  if (!storePromise) storePromise = openStore();
+  if (!storePromise) {
+    storePromise = openStore().catch((error) => {
+      // Never keep a rejected promise: one transient failure would
+      // otherwise disable storage until the worker happened to restart.
+      storePromise = null;
+      throw error;
+    });
+  }
   return storePromise;
 };
 
 // Content scripts are registered at runtime rather than declared in the
 // manifest, so install time asks for no host access at all. Broad mode gets
 // the wide permission during setup, strict mode gets one origin at a time.
-async function syncContentScripts() {
+let syncing = null;
+function syncContentScripts() {
+  // Serialised, because a settings save and a permission event can arrive
+  // together and the second registration would fail on a duplicate id.
+  syncing = (syncing || Promise.resolve()).then(doSyncContentScripts, doSyncContentScripts);
+  return syncing;
+}
+
+async function doSyncContentScripts() {
   const settings = await loadSettings();
   const existing = await chrome.scripting
     .getRegisteredContentScripts({ ids: [CONTENT_SCRIPT_ID] })
@@ -40,7 +56,8 @@ async function syncContentScripts() {
     const granted = await chrome.permissions.contains({ origins: ['*://*/*'] });
     matches = granted ? ['http://*/*', 'https://*/*'] : [];
   } else {
-    matches = settings.allowlist.map((host) => 'https://*.' + host.replace(/^\*\./, '') + '/*');
+    // Both schemes, to match the permission the popup actually requests.
+    matches = settings.allowlist.map((host) => '*://*.' + host.replace(/^\*\./, '') + '/*');
   }
 
   if (existing.length) {
@@ -48,15 +65,20 @@ async function syncContentScripts() {
   }
   if (!matches.length) return;
 
-  await chrome.scripting.registerContentScripts([
-    {
-      id: CONTENT_SCRIPT_ID,
-      js: ['src/content/observer.js'],
-      matches,
-      runAt: 'document_idle',
-      allFrames: false,
-    },
-  ]);
+  await chrome.scripting
+    .registerContentScripts([
+      {
+        id: CONTENT_SCRIPT_ID,
+        js: ['src/content/observer.js'],
+        matches,
+        runAt: 'document_idle',
+        allFrames: false,
+      },
+    ])
+    .catch(() => {
+      // Registration can lose a race with an unregister that has not landed
+      // yet. The next settings change or startup registers it again.
+    });
 }
 
 // Extraction is injected only once a page has earned it. Putting 90KB of
@@ -133,19 +155,22 @@ async function onPageContent(payload) {
 async function collectStats() {
   const store = await getStore();
   const settings = await loadSettings();
-  const [stats, meta, log] = await Promise.all([
+  // Deliberately not listPageMeta: this runs every time the popup opens, and
+  // summing bytes across every stored page would make that scale with the
+  // size of the archive.
+  const [stats, oldestFirstSeen, log] = await Promise.all([
     store.readStats(),
-    store.listPageMeta(),
+    store.oldestFirstSeen(),
     store.readEvictionLog(5),
   ]);
 
-  const usedBytes = meta.reduce((sum, page) => sum + (page.bytes || 0), 0);
+  const usedBytes = stats.totalBytes;
   const budget = budgetStatus({
     usedBytes,
     sizeCapBytes: settings.sizeCapBytes,
     warnAtFraction: settings.warnAtFraction || 0.8,
   });
-  const pace = paceFrom(meta);
+  const pace = paceFrom({ totalBytes: usedBytes, oldestFirstSeen });
   const exhaustsAt = projectExhaustion({
     usedBytes,
     sizeCapBytes: settings.sizeCapBytes,
@@ -199,7 +224,14 @@ async function runHighlight(tabId, quote, onlyIfUnscrolled) {
 // unscrolled gets the same treatment as a second attempt.
 async function openResult({ url, quote }) {
   const bare = url.split('#')[0];
-  const existing = await chrome.tabs.query({ url: bare }).catch(() => []);
+
+  // Matching on the normalised key rather than handing the URL to
+  // chrome.tabs.query as a match pattern. A pattern cannot express "the same
+  // page carrying different tracking parameters", and that is the common
+  // case: the stored URL and the one in the open tab rarely agree exactly.
+  const wanted = urlKey(bare);
+  const tabs = wanted ? await chrome.tabs.query({}).catch(() => []) : [];
+  const existing = tabs.filter((tab) => tab.url && urlKey(tab.url) === wanted);
 
   if (existing.length) {
     const tab = existing[0];
