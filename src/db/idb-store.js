@@ -1,0 +1,257 @@
+// IndexedDB implementation of the store interface that core/index-reader
+// consumes, and that db/memory-store implements in memory. Anything added
+// here has to be added there too, or the tests stop meaning anything.
+//
+// Transaction discipline: every await in this file resolves from an
+// IndexedDB request. Awaiting anything else, a timer or a fetch, lets the
+// transaction auto commit underneath you and the rest of the writes vanish.
+
+import { DB_NAME, DB_VERSION, createStores } from './schema.js';
+import { tokenize } from '../core/tokenizer.js';
+import { buildPostings, bucketOf, upsertDoc, removeDoc } from '../core/index-writer.js';
+import { urlKey, domainOf } from '../core/url-key.js';
+import { contentHash, byteLength } from '../core/hash.js';
+
+const req = (request) =>
+  new Promise((resolve, reject) => {
+    request.onsuccess = () => resolve(request.result);
+    request.onerror = () => reject(request.error);
+  });
+
+const txDone = (tx) =>
+  new Promise((resolve, reject) => {
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error);
+    tx.onabort = () => reject(tx.error || new Error('transaction aborted'));
+  });
+
+// All buckets for one term. Arrays sort after numbers in IndexedDB key
+// order, so [term, []] is an upper bound above every [term, <number>].
+const termRange = (term) => IDBKeyRange.bound([term], [term, []]);
+
+function upgrade(db, tx, oldVersion) {
+  // Migration policy, from ARCHITECTURE.md: never transform a store in
+  // place, build the new shape alongside the old, verify, then remove.
+  // Version 1 has nothing to migrate from, so it only creates stores.
+  if (oldVersion < 1) {
+    createStores(db);
+    tx.objectStore('meta').put({ key: 'stats', docCount: 0, totalTokens: 0 });
+    tx.objectStore('meta').put({ key: 'schema', version: DB_VERSION, createdAt: Date.now() });
+  }
+}
+
+export function openDatabase({
+  factory = globalThis.indexedDB,
+  name = DB_NAME,
+  version = DB_VERSION,
+} = {}) {
+  return new Promise((resolve, reject) => {
+    const request = factory.open(name, version);
+    request.onupgradeneeded = (event) => upgrade(request.result, request.transaction, event.oldVersion);
+    request.onsuccess = () => resolve(request.result);
+    request.onerror = () => reject(request.error);
+    request.onblocked = () => reject(new Error('upgrade blocked by another open tab'));
+  });
+}
+
+export function createIdbStore(db) {
+  const emptyStats = { key: 'stats', docCount: 0, totalTokens: 0 };
+
+  // Removing a document's postings needs to know which terms it had. Rather
+  // than storing a term list on every page, which would cost roughly 40% on
+  // top of the text, the terms are recomputed from the text we already keep.
+  async function dropPostings(postings, page) {
+    const tokens = tokenize((page.title || '') + '\n\n' + (page.text || ''));
+    const bucket = bucketOf(page.id);
+    const terms = [...new Set(tokens.map((t) => t.term))];
+
+    // Every request is issued before any of them is awaited, so IndexedDB
+    // pipelines them. Awaiting each read in turn costs one round trip per
+    // term, and a normal article has well over a thousand of them.
+    const records = await Promise.all(terms.map((term) => req(postings.get([term, bucket]))));
+
+    const writes = [];
+    for (let i = 0; i < terms.length; i++) {
+      const record = records[i];
+      if (!record) continue;
+      const docs = removeDoc(record.docs, page.id);
+      if (docs.length) writes.push(req(postings.put({ ...record, docs })));
+      else writes.push(req(postings.delete([terms[i], bucket])));
+    }
+    await Promise.all(writes);
+  }
+
+  async function writePostings(postings, id, tokens) {
+    const bucket = bucketOf(id);
+    const entries = [...buildPostings(tokens)];
+
+    // Same pipelining as above: read everything, then write everything.
+    const records = await Promise.all(entries.map(([term]) => req(postings.get([term, bucket]))));
+
+    const writes = [];
+    for (let i = 0; i < entries.length; i++) {
+      const [term, entry] = entries[i];
+      const record = records[i] || { term, bucket, docs: [] };
+      record.docs = upsertDoc(record.docs, { id, tf: entry.tf, pos: entry.pos });
+      writes.push(req(postings.put(record)));
+    }
+    await Promise.all(writes);
+  }
+
+  return {
+    async readTerm(term) {
+      const tx = db.transaction('postings', 'readonly');
+      const records = await req(tx.objectStore('postings').getAll(termRange(term)));
+      const out = [];
+      for (const record of records) out.push(...record.docs);
+      out.sort((a, b) => a.id - b.id);
+      return out;
+    },
+
+    async readDocs(ids) {
+      const tx = db.transaction('pages', 'readonly');
+      const store = tx.objectStore('pages');
+      const rows = await Promise.all(ids.map((id) => req(store.get(id))));
+      const out = new Map();
+      for (const row of rows) if (row) out.set(row.id, row);
+      return out;
+    },
+
+    async readStats() {
+      const tx = db.transaction('meta', 'readonly');
+      const stats = (await req(tx.objectStore('meta').get('stats'))) || emptyStats;
+      return {
+        docCount: stats.docCount,
+        totalTokens: stats.totalTokens,
+        avgDocLength: stats.docCount ? stats.totalTokens / stats.docCount : 0,
+      };
+    },
+
+    async putPage({ url, title = '', text = '', lastSeen = Date.now(), pinned = false }) {
+      const key = urlKey(url);
+      if (!key) throw new Error('not an indexable url: ' + url);
+      const hash = contentHash(title + '\n\n' + text);
+
+      const tx = db.transaction(['pages', 'postings', 'meta'], 'readwrite');
+      const pages = tx.objectStore('pages');
+      const postings = tx.objectStore('postings');
+      const meta = tx.objectStore('meta');
+
+      const existing = await req(pages.index('urlKey').get(key));
+      const stats = (await req(meta.get('stats'))) || { ...emptyStats };
+
+      // Same page, same content: this is a revisit, not new material.
+      if (existing && existing.contentHash === hash) {
+        existing.lastSeen = lastSeen;
+        existing.visitCount = (existing.visitCount || 0) + 1;
+        await req(pages.put(existing));
+        await txDone(tx);
+        return { id: existing.id, created: false, reindexed: false };
+      }
+
+      if (existing) {
+        await dropPostings(postings, existing);
+        stats.totalTokens -= existing.wordCount || 0;
+      }
+
+      const tokens = tokenize(title + '\n\n' + text);
+      const record = {
+        url,
+        urlKey: key,
+        title,
+        domain: domainOf(url),
+        text,
+        excerpt: text.slice(0, 400),
+        wordCount: tokens.length,
+        contentHash: hash,
+        firstSeen: existing ? existing.firstSeen : lastSeen,
+        lastSeen,
+        visitCount: existing ? (existing.visitCount || 0) + 1 : 1,
+        pinned: existing ? existing.pinned : pinned ? 1 : 0,
+        bytes: byteLength(text) + byteLength(title),
+        lang: null,
+      };
+
+      let id;
+      if (existing) {
+        record.id = existing.id;
+        await req(pages.put(record));
+        id = existing.id;
+      } else {
+        id = await req(pages.add(record));
+        stats.docCount += 1;
+      }
+
+      await writePostings(postings, id, tokens);
+      stats.totalTokens += tokens.length;
+      await req(meta.put(stats));
+      await txDone(tx);
+
+      return { id, created: !existing, reindexed: !!existing };
+    },
+
+    async deletePages(ids) {
+      if (!ids.length) return { deleted: 0, bytesFreed: 0 };
+      const tx = db.transaction(['pages', 'postings', 'meta'], 'readwrite');
+      const pages = tx.objectStore('pages');
+      const postings = tx.objectStore('postings');
+      const meta = tx.objectStore('meta');
+      const stats = (await req(meta.get('stats'))) || { ...emptyStats };
+
+      let deleted = 0;
+      let bytesFreed = 0;
+      for (const id of ids) {
+        const page = await req(pages.get(id));
+        if (!page) continue;
+        await dropPostings(postings, page);
+        await req(pages.delete(id));
+        stats.docCount -= 1;
+        stats.totalTokens -= page.wordCount || 0;
+        bytesFreed += page.bytes || 0;
+        deleted += 1;
+      }
+      await req(meta.put(stats));
+      await txDone(tx);
+      return { deleted, bytesFreed };
+    },
+
+    async setPinned(id, pinned) {
+      const tx = db.transaction('pages', 'readwrite');
+      const pages = tx.objectStore('pages');
+      const page = await req(pages.get(id));
+      if (!page) {
+        await txDone(tx);
+        return false;
+      }
+      page.pinned = pinned ? 1 : 0;
+      await req(pages.put(page));
+      await txDone(tx);
+      return true;
+    },
+
+    async listRecent(limit = 20) {
+      const tx = db.transaction('pages', 'readonly');
+      const index = tx.objectStore('pages').index('lastSeen');
+      const out = [];
+      await new Promise((resolve, reject) => {
+        const cursorRequest = index.openCursor(null, 'prev');
+        cursorRequest.onsuccess = () => {
+          const cursor = cursorRequest.result;
+          if (!cursor || out.length >= limit) return resolve();
+          out.push(cursor.value);
+          cursor.continue();
+        };
+        cursorRequest.onerror = () => reject(cursorRequest.error);
+      });
+      return out;
+    },
+
+    close() {
+      db.close();
+    },
+  };
+}
+
+export async function openStore(options) {
+  return createIdbStore(await openDatabase(options));
+}

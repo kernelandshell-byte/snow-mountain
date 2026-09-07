@@ -1,54 +1,100 @@
-// In-memory implementation of the Store interface that index-reader expects.
-// Used by the unit tests and by the relevance harness, so search can be
-// exercised without a browser. The IndexedDB implementation has to satisfy
-// exactly this contract and nothing more.
+// In-memory reference implementation of the store interface.
+//
+// It exists so search can be exercised without a browser, and so the same
+// contract suite can run against both implementations. Its semantics are the
+// specification: if this and idb-store ever disagree, one of them is wrong,
+// and the contract test is what says which.
 
 import { tokenize } from '../core/tokenizer.js';
-import { buildPostings, bucketOf, upsertDoc } from '../core/index-writer.js';
+import { buildPostings, bucketOf, upsertDoc, removeDoc } from '../core/index-writer.js';
 import { urlKey, domainOf } from '../core/url-key.js';
+import { contentHash, byteLength } from '../core/hash.js';
 
 export function createMemoryStore() {
   const pages = new Map();
-  const buckets = new Map(); // `${term}:${bucket}` -> docs[]
+  const byUrlKey = new Map();
+  const buckets = new Map();
   let nextId = 1;
   let totalTokens = 0;
 
-  const key = (term, bucket) => term + ':' + bucket;
+  const bucketKey = (term, bucket) => term + ' ' + bucket;
+
+  function dropPostings(page) {
+    const tokens = tokenize((page.title || '') + '\n\n' + (page.text || ''));
+    const bucket = bucketOf(page.id);
+    const seen = new Set();
+    for (const { term } of tokens) {
+      if (seen.has(term)) continue;
+      seen.add(term);
+      const key = bucketKey(term, bucket);
+      const docs = buckets.get(key);
+      if (!docs) continue;
+      const next = removeDoc(docs, page.id);
+      if (next.length) buckets.set(key, next);
+      else buckets.delete(key);
+    }
+  }
+
+  function writePostings(id, tokens) {
+    const bucket = bucketOf(id);
+    for (const [term, entry] of buildPostings(tokens)) {
+      const key = bucketKey(term, bucket);
+      buckets.set(key, upsertDoc(buckets.get(key) || [], { id, tf: entry.tf, pos: entry.pos }));
+    }
+  }
 
   return {
-    addPage({ url, title = '', text = '', lastSeen = Date.now(), pinned = false }) {
-      const id = nextId++;
-      // Title and body are one token stream, so a title match is simply a
-      // match. Weighting happens at score time, not at index time.
+    async putPage({ url, title = '', text = '', lastSeen = Date.now(), pinned = false }) {
+      const key = urlKey(url);
+      if (!key) throw new Error('not an indexable url: ' + url);
+      const hash = contentHash(title + '\n\n' + text);
+      const existingId = byUrlKey.get(key);
+      const existing = existingId ? pages.get(existingId) : null;
+
+      if (existing && existing.contentHash === hash) {
+        existing.lastSeen = lastSeen;
+        existing.visitCount = (existing.visitCount || 0) + 1;
+        return { id: existing.id, created: false, reindexed: false };
+      }
+
+      if (existing) {
+        dropPostings(existing);
+        totalTokens -= existing.wordCount || 0;
+      }
+
       const tokens = tokenize(title + '\n\n' + text);
-      const doc = {
+      const id = existing ? existing.id : nextId++;
+      const record = {
         id,
         url,
-        urlKey: urlKey(url),
-        domain: domainOf(url),
+        urlKey: key,
         title,
+        domain: domainOf(url),
         text,
+        excerpt: text.slice(0, 400),
         wordCount: tokens.length,
+        contentHash: hash,
+        firstSeen: existing ? existing.firstSeen : lastSeen,
         lastSeen,
-        firstSeen: lastSeen,
-        visitCount: 1,
-        pinned: pinned ? 1 : 0,
+        visitCount: existing ? (existing.visitCount || 0) + 1 : 1,
+        pinned: existing ? existing.pinned : pinned ? 1 : 0,
+        bytes: byteLength(text) + byteLength(title),
+        lang: null,
       };
-      pages.set(id, doc);
+
+      pages.set(id, record);
+      byUrlKey.set(key, id);
+      writePostings(id, tokens);
       totalTokens += tokens.length;
 
-      for (const [term, entry] of buildPostings(tokens)) {
-        const b = bucketOf(id);
-        const k = key(term, b);
-        buckets.set(k, upsertDoc(buckets.get(k) || [], { id, tf: entry.tf, pos: entry.pos }));
-      }
-      return id;
+      return { id, created: !existing, reindexed: !!existing };
     },
 
     async readTerm(term) {
       const out = [];
-      for (const [k, docs] of buckets) {
-        if (k.slice(0, k.lastIndexOf(':')) === term) out.push(...docs);
+      const prefix = term + ' ';
+      for (const [key, docs] of buckets) {
+        if (key.startsWith(prefix)) out.push(...docs);
       }
       return out.sort((a, b) => a.id - b.id);
     },
@@ -63,10 +109,38 @@ export function createMemoryStore() {
       const docCount = pages.size;
       return {
         docCount,
+        totalTokens,
         avgDocLength: docCount ? totalTokens / docCount : 0,
       };
     },
 
-    _pages: pages,
+    async deletePages(ids) {
+      let deleted = 0;
+      let bytesFreed = 0;
+      for (const id of ids) {
+        const page = pages.get(id);
+        if (!page) continue;
+        dropPostings(page);
+        pages.delete(id);
+        byUrlKey.delete(page.urlKey);
+        totalTokens -= page.wordCount || 0;
+        bytesFreed += page.bytes || 0;
+        deleted += 1;
+      }
+      return { deleted, bytesFreed };
+    },
+
+    async setPinned(id, pinned) {
+      const page = pages.get(id);
+      if (!page) return false;
+      page.pinned = pinned ? 1 : 0;
+      return true;
+    },
+
+    async listRecent(limit = 20) {
+      return [...pages.values()].sort((a, b) => b.lastSeen - a.lastSeen).slice(0, limit);
+    },
+
+    close() {},
   };
 }

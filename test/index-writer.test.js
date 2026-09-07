@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { buildPostings, upsertDoc, removeDoc, bucketOf } from '../src/core/index-writer.js';
 import { tokenize } from '../src/core/tokenizer.js';
-import { MAX_POSITIONS_PER_TERM } from '../src/shared/constants.js';
+import { MAX_POSITIONS_PER_TERM, BUCKET_SHIFT } from '../src/shared/constants.js';
 
 test('counts term frequency and records positions', () => {
   const p = buildPostings(tokenize('cat dog cat'));
@@ -18,10 +18,12 @@ test('caps stored positions but keeps counting frequency', () => {
   assert.equal(entry.pos.length, MAX_POSITIONS_PER_TERM);
 });
 
-test('documents land in buckets of 4096', () => {
+test('documents land in fixed size buckets', () => {
+  const size = 1 << BUCKET_SHIFT;
   assert.equal(bucketOf(1), 0);
-  assert.equal(bucketOf(4095), 0);
-  assert.equal(bucketOf(4096), 1);
+  assert.equal(bucketOf(size - 1), 0);
+  assert.equal(bucketOf(size), 1);
+  assert.equal(bucketOf(size * 3 + 7), 3);
 });
 
 test('upsert replaces an existing document and keeps the bucket sorted', () => {
