@@ -51,7 +51,9 @@ await page.goto('chrome-extension://' + extensionId + '/src/ui/options/options.h
 await page.waitForFunction(() => document.getElementById('usage').textContent.length > 0);
 
 const usage = await page.textContent('#usage');
-check('usage is reported in pages and megabytes', /6 pages/.test(usage) && /MB of/.test(usage), usage);
+check('usage is reported in pages and a sensible unit',
+  /6 pages/.test(usage) && /\d+(\.\d+)?(B|KB|MB|GB) of \d+/.test(usage), usage);
+check('a small corpus is not described as 0.0MB', !/0\.0MB of/.test(usage), usage);
 check('capacity is expressed in pages', /room for roughly/.test(usage), usage);
 
 const readSettings = () =>

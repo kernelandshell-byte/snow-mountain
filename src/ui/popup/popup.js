@@ -1,8 +1,8 @@
 import { MSG } from '../../shared/messages.js';
+import { bytes as mb, pageCount } from '../../shared/format.js';
 
 const ask = (type, payload) => chrome.runtime.sendMessage({ type, payload });
 const byId = (id) => document.getElementById(id);
-const mb = (bytes) => (bytes / 1048576).toFixed(bytes < 10485760 ? 1 : 0) + 'MB';
 
 byId('open').addEventListener('click', () => {
   chrome.tabs.create({ url: chrome.runtime.getURL('src/ui/search/search.html') });
@@ -30,7 +30,7 @@ if (stats && !stats.setupComplete) {
 if (!stats || stats.error) {
   byId('status').textContent = 'Storage is not available right now.';
 } else {
-  const pages = stats.docCount === 1 ? '1 page kept' : stats.docCount + ' pages kept';
+  const pages = pageCount(stats.docCount) + ' kept';
   byId('status').textContent = stats.paused ? pages + ' · paused' : pages;
 
   if (stats.docCount > 0) {

@@ -1,10 +1,10 @@
 import { MSG } from '../../shared/messages.js';
 import { PRESET_LABELS } from '../../shared/presets.js';
 import { BYTES_PER_PAGE_ESTIMATE } from '../../shared/constants.js';
+import { bytes as mb, pageCount } from '../../shared/format.js';
 
 const ask = (type, payload) => chrome.runtime.sendMessage({ type, payload });
 const byId = (id) => document.getElementById(id);
-const mb = (bytes) => (bytes / 1048576).toFixed(bytes < 10485760 ? 1 : 0) + 'MB';
 
 let settings = await ask(MSG.SETTINGS_GET);
 let saveTimer;
@@ -72,7 +72,7 @@ async function refreshUsage() {
 
   const capacity = Math.round(stats.budget.sizeCapBytes / BYTES_PER_PAGE_ESTIMATE / 1000) * 1000;
   const parts = [
-    stats.docCount.toLocaleString() + ' pages, ' + mb(stats.usedBytes) + ' of ' + mb(stats.budget.sizeCapBytes),
+    pageCount(stats.docCount) + ', ' + mb(stats.usedBytes) + ' of ' + mb(stats.budget.sizeCapBytes),
     'room for roughly ' + capacity.toLocaleString(),
   ];
   if (stats.exhaustsAt) {

@@ -26,7 +26,7 @@ paragraph that matched.
   explained, and asks for nothing at all in strict mode
 - Search page, popup, and a settings page with exclusion bundles, custom
   rules, the storage meter, the deletion log, export and wipe
-- 134 Node tests and 88 browser checks across six suites
+- 138 Node tests and 90 browser checks across six suites
 
 Not done, and listed at the end of `ARCHITECTURE.md` with the reasons:
 import, one click site granting in strict mode, a design pass on the search
@@ -36,7 +36,7 @@ cannot fire.
 ## Tests
 
 ```
-npm test                              # 134 Node tests, no dependencies, about a second
+npm test                              # 138 Node tests, no dependencies, about a second
 npm install --no-save playwright      # only needed for the browser suites
 
 npm run test:browser                  # the store contract against real IndexedDB
