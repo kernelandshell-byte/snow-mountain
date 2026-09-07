@@ -321,17 +321,23 @@ parts existed.
 10. ~~Export, pause, forget~~
 11. ~~Readability, replacing the placeholder extraction~~
 
+12. ~~Import, and the current page controls in the popup~~
+13. ~~Search filters, sorting and paging~~
+
 What is deliberately not done:
 
-- **Import.** Export ships first; the format should settle in real use
-  before anything promises to read it back.
-- **Adding a site from the popup in strict mode.** Strict mode saves the
-  choice but there is no one click way to grant an origin yet, so it is
-  currently only usable by editing settings.
-- **A design pass** on the search page.
-- **The `HIGHLIGHT` fallback** for jump to passage. The two cases that need
-  it are known and detectable; the content script side is not written.
-- **Language aware stemming, PDF capture, semantic search, a Firefox port.**
+- **Language aware stemming.** The singular fallback covers the common
+  English case. German and Dutch compounds need real morphology, and doing
+  that badly is worse than not doing it.
+- **PDF capture.** A different extraction path entirely.
+- **Semantic search.** A local embedding model is a large dependency for a
+  gain that BM25 plus the OR fallback already approximates on a personal
+  corpus.
+- **A Firefox port.** Nothing in `core/` blocks it; the manifest and the
+  permission model would need work.
+- **Splitting positions into their own store.** The benchmark says this is
+  the fix if queries made entirely of very common words ever become a real
+  complaint. They are not one yet.
 
 ## Testing
 

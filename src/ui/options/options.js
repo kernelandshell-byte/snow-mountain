@@ -120,6 +120,54 @@ byId('export').addEventListener('click', async () => {
   byId('dataNote').textContent = 'Exported ' + data.pages.length + ' pages.';
 });
 
+// Imported in batches so a large archive shows progress rather than
+// freezing, and so no single message has to survive the whole job.
+const IMPORT_BATCH = 25;
+
+byId('import').addEventListener('click', () => byId('importFile').click());
+
+byId('importFile').addEventListener('change', async (event) => {
+  const file = event.target.files && event.target.files[0];
+  if (!file) return;
+  const note = byId('dataNote');
+
+  let archive;
+  try {
+    archive = JSON.parse(await file.text());
+  } catch {
+    note.textContent = 'That file is not valid JSON.';
+    return;
+  }
+  if (archive.format !== 'snow-mountain-export' || !Array.isArray(archive.pages)) {
+    note.textContent = 'That does not look like an export from this extension.';
+    return;
+  }
+
+  const progress = byId('progress');
+  const fill = byId('progressFill');
+  progress.hidden = false;
+
+  const totals = { imported: 0, skipped: 0, failed: 0 };
+  for (let start = 0; start < archive.pages.length; start += IMPORT_BATCH) {
+    const batch = archive.pages.slice(start, start + IMPORT_BATCH);
+    const result = await ask(MSG.IMPORT, { pages: batch });
+    totals.imported += result.imported;
+    totals.skipped += result.skipped;
+    totals.failed += result.failed;
+    fill.style.width = Math.round(((start + batch.length) / archive.pages.length) * 100) + '%';
+    note.textContent = 'Importing… ' + (start + batch.length) + ' of ' + archive.pages.length;
+  }
+
+  progress.hidden = true;
+  fill.style.width = '0%';
+  const parts = [totals.imported + ' imported'];
+  if (totals.skipped) parts.push(totals.skipped + ' already here');
+  if (totals.failed) parts.push(totals.failed + ' could not be read');
+  note.textContent = parts.join(', ');
+  event.target.value = '';
+  await refreshUsage();
+});
+
 byId('wipe').addEventListener('click', async () => {
   // Two clicks, no dialog. A confirm() in an extension page is easy to
   // dismiss by accident and this is the one irreversible button here.

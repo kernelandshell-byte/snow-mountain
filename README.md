@@ -14,24 +14,22 @@ It works. Set it up, read some pages, search them back, land on the
 paragraph that matched.
 
 - The pure core: tokenising, capture policy, read heuristic, BM25, query
-  parsing, snippets, the storage budget, text fragment URLs
+  parsing, snippets, the storage budget, quote matching, text fragment URLs
 - Two stores, `memory-store` and `idb-store`, held to one contract that runs
   against both
-- Search, with an AND to OR fallback and a singular fallback for plurals
-- A service worker that captures, indexes, searches, pins, forgets, exports
-  and evicts
+- Search with an AND to OR fallback, a singular fallback for plurals, site
+  and date filters, sorting, and paging
+- Jump to passage: a text fragment for a new tab, and a highlight in place
+  for a tab already open or a page that renders late
 - Extraction through vendored Readability, injected only into pages that
   have earned it
 - A four screen setup flow that requests host access at the moment it is
   explained, and asks for nothing at all in strict mode
-- Search page, popup, and a settings page with exclusion bundles, custom
-  rules, the storage meter, the deletion log, export and wipe
-- 138 Node tests and 90 browser checks across six suites
-
-Not done, and listed at the end of `ARCHITECTURE.md` with the reasons:
-import, one click site granting in strict mode, a design pass on the search
-page, and the highlight fallback for the two cases where a text fragment
-cannot fire.
+- A popup about the page in front of you: whether it is kept, why not if it
+  is not, and one click to keep it, forget it, or never keep that site again
+- Settings with exclusion bundles, custom rules, the storage meter, the
+  deletion log, export, import and delete everything
+- 154 Node tests and 143 browser checks across nine suites
 
 ## Tests
 

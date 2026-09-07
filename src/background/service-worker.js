@@ -358,6 +358,41 @@ async function buildExport() {
   };
 }
 
+// Import takes one batch at a time. The interface does the chunking, so a
+// large archive reports progress instead of sitting silent for ten minutes,
+// and no single message has to survive that long.
+async function importPages(pages) {
+  const store = await getStore();
+  let imported = 0;
+  let skipped = 0;
+  let failed = 0;
+
+  for (const page of pages || []) {
+    if (!page || !page.url || !page.text) {
+      failed += 1;
+      continue;
+    }
+    try {
+      const result = await store.putPage({
+        url: page.url,
+        title: page.title || '',
+        text: page.text,
+        lastSeen: Date.parse(page.lastSeen) || Date.now(),
+        firstSeen: Date.parse(page.firstSeen) || null,
+        visitCount: page.visitCount || null,
+        pinned: !!page.pinned,
+      });
+      // Already there, unchanged: importing the same archive twice should
+      // not look like it did something.
+      if (!result.created && !result.reindexed) skipped += 1;
+      else imported += 1;
+    } catch {
+      failed += 1;
+    }
+  }
+  return { imported, skipped, failed };
+}
+
 async function wipeEverything() {
   const store = await getStore();
   const meta = await store.listPageMeta();
@@ -530,6 +565,9 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
     case MSG.EXPORT:
       return reply(buildExport());
+
+    case MSG.IMPORT:
+      return reply(importPages(payload.pages));
 
     case MSG.WIPE:
       return reply(wipeEverything());

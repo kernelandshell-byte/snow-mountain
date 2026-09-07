@@ -135,7 +135,18 @@ export function createIdbStore(db) {
       };
     },
 
-    async putPage({ url, title = '', text = '', lastSeen = Date.now(), pinned = false }) {
+    // firstSeen, visitCount and pinned are overrides for import, which is
+    // restoring history rather than recording a visit. Everything else
+    // leaves them alone and lets the store maintain them.
+    async putPage({
+      url,
+      title = '',
+      text = '',
+      lastSeen = Date.now(),
+      pinned = false,
+      firstSeen = null,
+      visitCount = null,
+    }) {
       const key = urlKey(url);
       if (!key) throw new Error('not an indexable url: ' + url);
       const hash = contentHash(title + '\n\n' + text);
@@ -172,9 +183,9 @@ export function createIdbStore(db) {
         excerpt: text.slice(0, 400),
         wordCount: tokens.length,
         contentHash: hash,
-        firstSeen: existing ? existing.firstSeen : lastSeen,
+        firstSeen: firstSeen || (existing ? existing.firstSeen : lastSeen),
         lastSeen,
-        visitCount: existing ? (existing.visitCount || 0) + 1 : 1,
+        visitCount: visitCount || (existing ? (existing.visitCount || 0) + 1 : 1),
         pinned: existing ? existing.pinned : pinned ? 1 : 0,
         bytes: byteLength(text) + byteLength(title),
         lang: null,

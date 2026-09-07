@@ -5,7 +5,7 @@
 import { chromium } from 'playwright';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { readFile } from 'node:fs/promises';
+import { readFile, writeFile } from 'node:fs/promises';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 
@@ -112,6 +112,44 @@ check('the second click deletes everything', afterWipe === 0, afterWipe);
 
 const logText = await page.textContent('#log');
 check('the deletion is in the log', /deleted by you/.test(logText), logText);
+
+// --- the round trip: export, delete everything, import it back ------------
+await page.setInputFiles('#importFile', exportPath);
+await page.waitForFunction(() => /imported/.test(document.getElementById('dataNote').textContent), null, { timeout: 15000 });
+const importNote = await page.textContent('#dataNote');
+check('importing reports what it restored', /6 imported/.test(importNote), importNote);
+
+const restored = await page.evaluate(async () => {
+  const { MSG } = await import('/src/shared/messages.js');
+  const stats = await chrome.runtime.sendMessage({ type: MSG.STATS });
+  const found = await chrome.runtime.sendMessage({
+    type: MSG.SEARCH,
+    payload: { query: 'retro fatigue' },
+  });
+  const recent = await chrome.runtime.sendMessage({ type: MSG.RECENT, payload: { limit: 20 } });
+  return { docCount: stats.docCount, hits: found.results.length, recent };
+});
+check('the pages are back', restored.docCount === 6, restored.docCount);
+check('and searchable again', restored.hits === 1, restored.hits);
+
+const oldest = restored.recent.find((p) => /retro-fatigue/.test(p.url));
+check('history came back with them, not today\'s date',
+  oldest && oldest.visitCount >= 1 && oldest.firstSeen <= oldest.lastSeen,
+  JSON.stringify(oldest && { firstSeen: oldest.firstSeen, lastSeen: oldest.lastSeen }));
+
+// Importing the same archive again should look like it did nothing.
+await page.setInputFiles('#importFile', exportPath);
+await page.waitForFunction(() => /already here/.test(document.getElementById('dataNote').textContent), null, { timeout: 15000 });
+const secondNote = await page.textContent('#dataNote');
+check('importing the same archive twice changes nothing', /6 already here/.test(secondNote), secondNote);
+
+// And something that is not an export at all.
+const junk = path.join(path.dirname(exportPath), 'not-an-export.json');
+await writeFile(junk, JSON.stringify({ hello: 'world' }));
+await page.setInputFiles('#importFile', junk);
+await page.waitForTimeout(500);
+check('a file that is not an export is refused clearly',
+  /does not look like an export/.test(await page.textContent('#dataNote')), await page.textContent('#dataNote'));
 
 await context.close();
 

@@ -188,6 +188,26 @@ export const contractCases = [
     },
   },
   {
+    name: 'history can be restored rather than recorded as a visit today',
+    async run(store) {
+      const when = Date.now() - 200 * 86400000;
+      const { id } = await store.putPage({
+        url: 'https://restored.example/a',
+        title: 'From an export',
+        text: 'This page was read a long time ago and is being put back.',
+        lastSeen: when,
+        firstSeen: when - 86400000,
+        visitCount: 7,
+        pinned: true,
+      });
+      const doc = (await store.readDocs([id])).get(id);
+      assertEqual(doc.visitCount, 7, 'visit count preserved');
+      assertEqual(doc.firstSeen, when - 86400000, 'first seen preserved');
+      assertEqual(doc.lastSeen, when, 'last seen preserved');
+      assertEqual(doc.pinned, 1, 'pin preserved');
+    },
+  },
+  {
     name: 'an unindexable url is refused rather than stored badly',
     async run(store) {
       let threw = false;
