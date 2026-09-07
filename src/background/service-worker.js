@@ -58,6 +58,24 @@ async function syncContentScripts() {
   ]);
 }
 
+// Extraction is injected only once a page has earned it. Putting 90KB of
+// parser into every page a person opens would be a strange thing to do to
+// their browser, and most pages never qualify.
+async function injectExtractor(tabId) {
+  if (typeof tabId !== 'number') return false;
+  try {
+    await chrome.scripting.executeScript({
+      target: { tabId },
+      files: ['src/vendor/readability/Readability.js', 'src/content/extract.js'],
+    });
+    return true;
+  } catch {
+    // A tab that navigated away, or a page the extension has no access to.
+    // Nothing to recover: the next visit will offer the page again.
+    return false;
+  }
+}
+
 async function onPageCandidate(payload, sender) {
   const settings = await loadSettings();
   const verdict = decide({
@@ -76,7 +94,23 @@ async function onPageCandidate(payload, sender) {
     scrollDepth: payload.scrollDepth,
     wordCount: payload.wordCount,
   });
-  return read ? { capture: true, reason: 'read' } : { capture: false, reason: 'still reading' };
+  if (!read) return { capture: false, reason: 'still reading' };
+
+  const injected = await injectExtractor(sender && sender.tab ? sender.tab.id : null);
+  return { capture: true, reason: injected ? 'read' : 'read, but extraction could not be injected' };
+}
+
+// A canonical URL is only trusted when it stays on the same host. Plenty of
+// sites point canonical at a syndication partner, and following that would
+// file the page under someone else's domain.
+function preferredUrl(url, canonicalUrl) {
+  if (!canonicalUrl) return url;
+  try {
+    if (new URL(canonicalUrl).hostname === new URL(url).hostname) return canonicalUrl;
+  } catch {
+    return url;
+  }
+  return url;
 }
 
 async function onPageContent(payload) {
@@ -84,8 +118,10 @@ async function onPageContent(payload) {
   // The cap is on stored text, not on what was extracted, so a very long
   // page is truncated rather than refused.
   const text = (payload.text || '').slice(0, MAX_TEXT_BYTES);
+  if (!text.trim()) return { ok: false, reason: 'nothing to index' };
+
   const result = await store.putPage({
-    url: payload.url,
+    url: preferredUrl(payload.url, payload.canonicalUrl),
     title: payload.title || '',
     text,
     lastSeen: payload.capturedAt || Date.now(),
