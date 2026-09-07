@@ -64,7 +64,9 @@ export function buildSnippet(text, queryTerms, { maxChars = 260, windowTokens = 
   }
 
   if (from > 0) out = '…' + out;
-  if (to < text.length) out = out + '…';
+  // An ellipsis after a full stop reads as a typo. The sentence ended; that
+  // is already the signal that the snippet stopped somewhere sensible.
+  if (to < text.length && !/[.!?]$/.test(out)) out = out + '…';
   const shift = from > 0 ? 1 : 0;
 
   return { text: out, ranges: ranges.map(([a, b]) => [a + shift, b + shift]) };

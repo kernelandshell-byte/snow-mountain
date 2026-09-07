@@ -151,6 +151,30 @@ export const contractCases = [
     },
   },
   {
+    name: 'page metadata comes back without dragging the text along',
+    async run(store) {
+      const { id } = await store.putPage(PAGE);
+      const meta = await store.listPageMeta();
+      assertEqual(meta.length, 1, 'one row');
+      assertEqual(meta[0].id, id, 'right id');
+      assert(meta[0].bytes > 0, 'bytes reported');
+      assertEqual(meta[0].domain, 'example.com', 'domain included, for site rules');
+      assert(!('text' in meta[0]), 'text must not be included');
+      assert(!('title' in meta[0]), 'title must not be included');
+    },
+  },
+  {
+    name: 'the eviction log records what was removed, newest first',
+    async run(store) {
+      await store.logEviction({ reason: 'age', count: 3, bytesFreed: 900 });
+      await store.logEviction({ reason: 'size', count: 1, bytesFreed: 100 });
+      const log = await store.readEvictionLog(10);
+      assertEqual(log.length, 2, 'two entries');
+      assertEqual(log[0].reason, 'size', 'newest first');
+      assertEqual(log[1].count, 3, 'older entry intact');
+    },
+  },
+  {
     name: 'an unindexable url is refused rather than stored badly',
     async run(store) {
       let threw = false;

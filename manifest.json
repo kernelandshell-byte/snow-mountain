@@ -12,10 +12,29 @@
     "default_popup": "src/ui/popup/popup.html"
   },
   "options_page": "src/ui/options/options.html",
-  "permissions": ["storage", "tabs", "alarms", "scripting", "favicon"],
-  "optional_host_permissions": ["*://*/*"],
-  "omnibox": { "keyword": "sm" },
+  "permissions": [
+    "storage",
+    "tabs",
+    "alarms",
+    "scripting",
+    "favicon"
+  ],
+  "optional_host_permissions": [
+    "*://*/*"
+  ],
+  "omnibox": {
+    "keyword": "sm"
+  },
   "content_security_policy": {
     "extension_pages": "script-src 'self'; object-src 'self'; connect-src 'none'"
+  },
+  "commands": {
+    "open-search": {
+      "suggested_key": {
+        "default": "Ctrl+Shift+F",
+        "mac": "Command+Shift+F"
+      },
+      "description": "Search what you have read"
+    }
   }
 }

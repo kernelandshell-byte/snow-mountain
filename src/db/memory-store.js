@@ -14,6 +14,7 @@ export function createMemoryStore() {
   const pages = new Map();
   const byUrlKey = new Map();
   const buckets = new Map();
+  const evictionLog = [];
   let nextId = 1;
   let totalTokens = 0;
 
@@ -139,6 +140,31 @@ export function createMemoryStore() {
 
     async listRecent(limit = 20) {
       return [...pages.values()].sort((a, b) => b.lastSeen - a.lastSeen).slice(0, limit);
+    },
+
+    async listPageMeta() {
+      return [...pages.values()].map((page) => ({
+        id: page.id,
+        domain: page.domain,
+        lastSeen: page.lastSeen,
+        firstSeen: page.firstSeen,
+        bytes: page.bytes || 0,
+        pinned: page.pinned || 0,
+      }));
+    },
+
+    async logEviction(entry) {
+      evictionLog.push({ id: evictionLog.length + 1, at: Date.now(), ...entry });
+    },
+
+    async readEvictionLog(limit = 20) {
+      // Two entries written in the same millisecond need a tiebreaker, and
+      // insertion order is the honest one. IndexedDB does this for free by
+      // walking the primary key backwards, so this keeps the two stores
+      // agreeing rather than passing by luck.
+      return [...evictionLog]
+        .sort((a, b) => (b.at === a.at ? b.id - a.id : b.at - a.at))
+        .slice(0, limit);
     },
 
     close() {},

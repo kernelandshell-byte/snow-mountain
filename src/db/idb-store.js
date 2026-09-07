@@ -246,6 +246,56 @@ export function createIdbStore(db) {
       return out;
     },
 
+    // Deliberately lightweight: the eviction planner needs four fields per
+    // page, and reading whole records including their text would mean
+    // loading the entire corpus into memory to decide what to drop.
+    async listPageMeta() {
+      const tx = db.transaction('pages', 'readonly');
+      const out = [];
+      await new Promise((resolve, reject) => {
+        const request = tx.objectStore('pages').openCursor();
+        request.onsuccess = () => {
+          const cursor = request.result;
+          if (!cursor) return resolve();
+          const value = cursor.value;
+          out.push({
+            id: value.id,
+            domain: value.domain,
+            lastSeen: value.lastSeen,
+            firstSeen: value.firstSeen,
+            bytes: value.bytes || 0,
+            pinned: value.pinned || 0,
+          });
+          cursor.continue();
+        };
+        request.onerror = () => reject(request.error);
+      });
+      return out;
+    },
+
+    async logEviction(entry) {
+      const tx = db.transaction('evictionLog', 'readwrite');
+      await req(tx.objectStore('evictionLog').add({ at: Date.now(), ...entry }));
+      await txDone(tx);
+    },
+
+    async readEvictionLog(limit = 20) {
+      const tx = db.transaction('evictionLog', 'readonly');
+      const index = tx.objectStore('evictionLog').index('at');
+      const out = [];
+      await new Promise((resolve, reject) => {
+        const request = index.openCursor(null, 'prev');
+        request.onsuccess = () => {
+          const cursor = request.result;
+          if (!cursor || out.length >= limit) return resolve();
+          out.push(cursor.value);
+          cursor.continue();
+        };
+        request.onerror = () => reject(request.error);
+      });
+      return out;
+    },
+
     close() {
       db.close();
     },

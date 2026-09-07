@@ -79,7 +79,12 @@ Two independent caps, both set during setup, whichever binds first wins.
 - **Age cap**, default 12 months
 - **Size cap**, default 500MB
 
-500MB is roughly 20,000 pages. Average extracted article text runs 10 to 20KB, and the index adds somewhere between 30 and 60 percent on top, so call it 25KB per page all in. Compute this from observed averages rather than hardcoding it, and show it in the setup screen as a real number so the choice means something.
+500MB is roughly 30,000 pages. That is measured rather than estimated:
+indexing 1500 synthetic documents of about 800 words each into real
+IndexedDB came out at 15KB per document including the index, and synthetic
+text has a wider vocabulary than prose, so real pages should be cheaper.
+Recompute it from observed averages rather than hardcoding it, and show it
+in the setup screen as a real number so the choice means something.
 
 The behaviour model is a mobile data plan, which is the right mental model because people already understand it:
 

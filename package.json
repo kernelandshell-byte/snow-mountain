@@ -6,6 +6,7 @@
   "description": "Local full text memory for your browser.",
   "scripts": {
     "test": "node --test test/*.test.js",
-    "test:browser": "node test/browser/run-store-contract.mjs"
+    "test:browser": "node test/browser/run-store-contract.mjs",
+    "test:e2e": "node test/browser/run-e2e.mjs"
   }
 }

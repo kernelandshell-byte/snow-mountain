@@ -84,18 +84,44 @@ Indexes: `urlKey` (unique), `lastSeen`, `domain`, `pinned`, `firstSeen`.
 
 ### `postings`
 
-Key: `[term, bucket]` compound, where `bucket = id >> 12`, so 4096 documents per bucket.
+Key: `[term, bucket]` compound, where `bucket = id >> 8`, so 256 documents
+per bucket.
 
-Value: `{ term, bucket, df, docs: [{ id, tf, pos: number[] }] }`.
+Value: `{ term, bucket, docs: [{ id, tf, pos }] }`.
 
-Chunking is the important decision here. The two obvious alternatives both fail at scale:
+Chunking is the important decision here, and the size was chosen by
+measurement rather than by feel. The two obvious layouts both fail:
 
-- One record per term holding the whole list means every update to a common term rewrites a record that grows without bound. Write amplification gets brutal fast.
-- One record per term and document pair means IndexedDB per record overhead dominates, and reading a common term walks thousands of tiny records.
+- One record per term holding the whole list means every update to a common
+  term rewrites a record that grows without bound.
+- One record per term and document pair means IndexedDB per record overhead
+  dominates, and reading a common word walks thousands of tiny records.
 
-Buckets of 4096 documents keep updates local, keep reads to a bounded number of records, and let a term's document frequency be assembled cheaply.
+Chunks fix that, but only if the chunk is small. Indexing one article
+rewrites a record for roughly 550 distinct terms, and with 4096 documents
+per bucket each of those records grew with every page added to the same
+bucket. Measured against real IndexedDB, cost per page climbed from 132ms
+at 400 documents to 297ms at 1500 and was heading for about a second as the
+bucket approached capacity. At 256 the rewrite is bounded, indexing settles
+around 130ms, and storage came out 26% smaller because smaller records
+serialise more efficiently. `test/browser/run-benchmark.mjs` reproduces all
+of that.
 
-Positions are capped at the first 32 occurrences per term per document. That is enough for phrase queries in practice and it stops pathological documents from bloating the index.
+Positions are capped at the first 32 occurrences per term per document.
+Enough for phrase queries in practice, and it stops one pathological
+document from bloating the index.
+
+Removing a document's postings needs to know which terms it had. Rather
+than storing a term list on every page, which would cost roughly 40% on top
+of the text, the terms are recomputed by tokenising the text the record
+already holds. That is also why a page keeps its text after indexing.
+
+**Transaction discipline.** Every await inside a transaction must resolve
+from an IndexedDB request belonging to that transaction. Await anything else
+and the transaction commits underneath you, leaving half the writes done.
+Separately, issue requests before awaiting them: awaiting each read in turn
+costs one round trip per term, which was most of the original 265ms per
+page. `Promise.all` over requests created synchronously is the whole fix.
 
 ### `meta`
 
@@ -120,56 +146,90 @@ A migration test belongs in the suite from the day there is a second schema vers
 
 ## Message contracts
 
-All messages are `{type, payload}` with types declared as constants in `shared/messages.js`. No string literals at call sites.
+All messages are `{type, payload}` with types declared as constants in
+`shared/messages.js`. No string literals at call sites.
 
 Content script to service worker:
 
-- `PAGE_CANDIDATE` `{url, title, hasPasswordField, textLength}` and the reply is `{capture: boolean, reason: string}`. Policy is evaluated in the service worker so the rules exist in exactly one place.
-- `PAGE_CONTENT` `{url, canonicalUrl, title, text, excerpt, wordCount, contentHash, capturedAt}`
+- `PAGE_CANDIDATE` `{url, title, hasPasswordField, focusedMs, scrollDepth, wordCount}`
+  answered with `{capture, reason}`. The content script measures; the worker
+  judges, so the rules exist in exactly one place.
+- `PAGE_CONTENT` `{url, title, text, capturedAt}` answered with
+  `{ok, id, created, reindexed}`.
 
 Service worker to content script:
 
-- `HIGHLIGHT` `{quote}` for the fallback jump to passage path
+- `HIGHLIGHT` `{quote}`, the fallback jump to passage path for a tab that is
+  already open or a page that renders late.
 
 Extension pages to service worker:
 
-- `SEARCH` `{query, filters, limit, offset}` returns `{results, total, tookMs}`
+- `SEARCH` `{query, limit, offset}` returns `{results, total, mode, relaxed, tookMs}`
+- `RECENT` `{limit}` returns the newest pages
 - `PIN` `{id, pinned}`
-- `FORGET` `{scope: 'page' | 'site' | 'day', value}`
-- `STATS` returns `{docCount, bytes, budget, oldestDoc, pace}`
-- `EXPORT` streams the archive
+- `FORGET` `{scope: 'page' | 'site' | 'day', id | value}`
+- `STATS` returns counts, storage use, budget level, observed pace, the
+  projected date the budget runs out, and the last few eviction log entries
+- `SETTINGS_GET` and `SETTINGS_SET`, which also re-register content scripts
+  when the capture mode changes
+- `MAINTENANCE` runs the retention sweep on demand, which is also what the
+  hourly alarm calls
+
+## The store interface
+
+`core/index-reader.js` never sees IndexedDB. It takes a store, and both
+`db/memory-store.js` and `db/idb-store.js` implement the same surface. That
+seam is what lets search be tested without a browser, and it is enforced by
+one contract file run against both.
+
+| Method | Contract |
+|---|---|
+| `putPage({url, title, text, lastSeen, pinned})` | Creates, or reindexes in place when the content hash changed, or bumps `visitCount` when it did not. Returns `{id, created, reindexed}`. Refuses a URL that is not http(s). |
+| `readTerm(term)` | Every posting for a term across its buckets, sorted by id |
+| `readDocs(ids)` | `Map` of id to full page record |
+| `readStats()` | `{docCount, totalTokens, avgDocLength}` |
+| `listPageMeta()` | Lightweight rows for the eviction planner: id, domain, firstSeen, lastSeen, bytes, pinned. Deliberately excludes text |
+| `deletePages(ids)` | Removes pages and their postings, returns `{deleted, bytesFreed}` |
+| `setPinned(id, pinned)` | Returns false rather than throwing for an id that is gone |
+| `listRecent(limit)` | Newest first |
+| `logEviction(entry)` / `readEvictionLog(limit)` | Newest first, insertion order as the tiebreak |
+| `close()` | |
 
 ## Pure core
 
-`src/core/` contains no `chrome.*` calls at all. That is what makes it unit testable without a browser, and it is also what makes a Firefox port later a packaging problem rather than a rewrite.
+`src/core/` contains no `chrome.*` calls at all. That is what makes it unit
+testable without a browser, and what would make a Firefox port a packaging
+problem rather than a rewrite.
 
-**`capture-policy.js`**
-
-```
-decide({url, mode, allowlist, rules, hasPasswordField, incognito, paused})
-  -> {capture: boolean, reason: string}
-```
-
-Both capture modes route through this one function, with the mode as a parameter. If the two modes ever fork into separate code paths, the bug where strict mode captures something it should not becomes inevitable. The `reason` string is user facing, shown in a debug view as "skipped: webmail preset", which also makes the tests read like documentation.
-
-**`read-heuristic.js`**
-
-```
-isRead({focusedMs, scrollDepth, textLength})
-  -> boolean
-```
-
-Thresholds live in one config object. Visibility changes stop the timer. An SPA route change resets the candidate, which is the lesson Form Recovery paid for. A page that qualifies twice in one visit captures once, deduped by content hash.
-
-**`tokenizer.js`** Lowercase, Unicode aware, diacritic normalising, punctuation stripped, numbers kept. No stemming, for the reason in the brief. Returns tokens with positions.
-
-**`url-key.js`** The normalisation rules above, as a pure function, with tests covering the tracking parameter list.
-
-**`bm25.js`** `k1 = 1.2`, `b = 0.75` as starting values, both configurable so the relevance harness can tune them. Scoring takes corpus stats as an argument rather than reading them, so it stays pure.
-
-**`query-parser.js`** Bare terms, `"quoted phrases"`, `site:` filter. Date filters can wait.
-
-**`snippet.js`** Given text and match positions, pick the window with the highest density of query terms, expand to sentence boundaries, cap the length, mark the matches. This is what makes a result recognisable at a glance, so it deserves real tests rather than a first draft that ships.
+- **`capture-policy.js`** `decide({url, mode, allowlist, rules, hasPasswordField, incognito, paused})`
+  returns `{capture, reason}`. Both capture modes route through this one
+  function with the mode as a parameter, so they can never drift apart. The
+  `reason` string is user facing, which also makes the tests read like
+  documentation.
+- **`read-heuristic.js`** decides what counts as read, from dwell, scroll
+  depth and length. Short pages are exempt from the scroll requirement,
+  because there was nothing to scroll.
+- **`tokenizer.js`** lowercase, Unicode aware, diacritic folding, and an
+  explicit fold of the German sharp s, which NFKD leaves alone and which
+  would otherwise keep "Straße" and "Strasse" apart forever.
+- **`morphology.js`** the smallest possible amount of stemming: a query term
+  with no postings at all gets one attempt at its singular. Applied only as
+  a query time fallback, never at index time, so nothing is conflated in
+  storage.
+- **`url-key.js`** the dedupe key. Conservative on purpose: merging two
+  different pages loses data, failing to merge two spellings only costs a
+  row, so only unambiguous tracking parameters are stripped and a bare
+  `ref` is kept.
+- **`bm25.js`** scoring, with corpus statistics passed in rather than read,
+  plus a mild logarithmic recency preference.
+- **`query-parser.js`** bare terms, quoted phrases, `site:`.
+- **`snippet.js`** picks the densest window of query terms and expands to
+  sentence boundaries. This is what makes a result recognisable at a glance.
+- **`text-fragment.js`** builds the `#:~:text=` URL, following the rules the
+  spike established.
+- **`eviction.js`** the budget: two caps that both apply, pinned pages
+  exempt, plus the pace and projection that let the interface say "full
+  around March" instead of a percentage.
 
 ## Search pipeline
 
@@ -181,14 +241,32 @@ Thresholds live in one config object. Visibility changes stop the timer. An SPA 
 6. Load the top N page records and build snippets.
 7. Return with timing, because the timing goes in the UI and slow search is a bug we want visible.
 
-## Performance targets
+## Performance, measured
 
-These become assertions in a performance test against a generated corpus, not aspirations in a document.
+Numbers from `test/browser/run-benchmark.mjs` against real IndexedDB in
+Chromium, 1500 synthetic documents averaging 807 tokens, on an ordinary
+laptop. Synthetic text has a wider vocabulary than prose, so it is a
+pessimistic case for index size.
 
-- Search p95 under 100ms at 20,000 documents
-- Capture to indexed under 150ms for a typical article
-- Cold service worker to first search result under 300ms
-- No structure proportional to corpus size held in memory. Everything is demand loaded.
+| What | Measured |
+|---|---|
+| Indexing one page | 130ms p50, 174ms p95 |
+| Indexing, first fifth vs last fifth of the corpus | 113ms then 140ms, so close to flat |
+| Known item search, one rare word | 1.1ms p50, 3.8ms p95 |
+| One common word plus one selective word | 5.1ms p50, 6.6ms p95 |
+| Both words among the most common in the corpus | 51ms p50, 83ms p95 |
+| Phrase query on two common words | 46ms p50 |
+| Storage | about 15KB per document |
+
+The shape worth knowing: search is fast for the queries people actually
+type, because one selective word is enough to bound the work. Queries made
+entirely of very common words are the slow case, and they are slow for a
+reason that no amount of tuning removes, which is that their posting lists
+contain almost every document. If that ever becomes a real complaint, the
+fix is to split positions into their own store so the common path never
+reads them, not to tune the scorer.
+
+At 15KB per document, a 500MB budget holds roughly 30,000 pages.
 
 ## File layout
 
@@ -196,57 +274,92 @@ These become assertions in a performance test against a generated corpus, not as
 manifest.json
 src/
   background/
-    service-worker.js      coordinator, omnibox, alarms
-    capture-pipeline.js    payload to database
-    maintenance.js         budget checks, eviction, notices
+    service-worker.js      coordinator, omnibox, alarms, the only writer
   content/
-    observer.js            dwell, scroll, SPA route changes
-    extract.js             Readability wrapper
-    highlight.js           fallback jump to passage
+    observer.js            dwell, scroll, password fields; a sensor only
   core/                    pure, no chrome.*, fully tested
-    capture-policy.js
-    read-heuristic.js
-    tokenizer.js
-    url-key.js
-    bm25.js
-    query-parser.js
-    snippet.js
-    index-writer.js
-    index-reader.js
+    capture-policy.js  read-heuristic.js  tokenizer.js  morphology.js
+    url-key.js         hash.js            bm25.js      query-parser.js
+    snippet.js         text-fragment.js   eviction.js
+    index-writer.js    index-reader.js
   db/
     schema.js              stores, indexes, version
-    migrations.js
-    pages-repo.js
-    postings-repo.js
-    meta-repo.js
-  ui/
-    setup/                 four screen first run
-    search/
-    popup/
-    options/
+    memory-store.js        reference implementation, used by tests
+    idb-store.js           the real one
   shared/
-    messages.js
-    settings.js
-    constants.js           display name lives here, once
+    messages.js  settings.js  presets.js  constants.js
+  ui/
+    search/  popup/  options/
 test/
+  *.test.js                the Node suite
+  store-contract.js        one contract, run against both stores
+  fixtures/corpus.js       24 documents for the relevance harness
+  browser/
+    run-store-contract.mjs  run-e2e.mjs  run-ui-smoke.mjs  run-benchmark.mjs
+spikes/
+  text-fragment/           the experiment that settled jump to passage
 ```
+
+Two rules hold this together. Nothing in `core/` imports `chrome.*`.
+Nothing except the service worker writes to the database.
 
 ## Build order
 
-Steps 1 to 4 need no browser, which means fast iteration and a real test suite before any of the fiddly parts.
+Steps 1 to 5 are done. Steps 2 to 4 needed no browser at all, which is what
+made the test suite worth having before any of the fiddly parts existed.
 
-1. The text fragment spike from the assumption log
-2. `core/` with tests: tokenizer, url-key, capture-policy, read-heuristic
-3. `db/` schema and repositories, with a synthetic corpus generator
-4. index-writer, index-reader, bm25, and the relevance harness: 30 known item queries where the right page has to land in the top three, run in CI, failing the build on regression
-5. Content script capture and the service worker pipeline, end to end into the database
-6. Search page
+1. ~~The text fragment spike~~ (done, see the assumption log)
+2. ~~`core/` with tests~~ (done: tokenizer, url-key, capture-policy,
+   read-heuristic, bm25, query-parser, snippet, morphology, eviction,
+   text-fragment)
+3. ~~`db/`~~ (done: schema, memory-store, idb-store, one contract for both)
+4. ~~Index and search with a relevance harness~~ (done: 44 known item
+   queries, gated on mean reciprocal rank)
+5. ~~Capture pipeline and service worker wiring~~ (done, end to end through
+   the real extension), except that extraction is still
+   `document.body.innerText` rather than Readability
+6. The search page (a working version exists, it has had no design pass)
 7. Setup flow and the two permission modes
-8. Budget, meter, eviction, storage log
-9. Omnibox
-10. Export, pause, forget
-11. Jump to passage, fragment path plus fallback
+8. Budget notices in the interface, and the storage log
+9. Omnibox polish
+10. Export, and forget by day in the interface
+11. Vendoring Readability, replacing the placeholder extraction
 
 ## Testing
 
-Unit tests for everything in `core/`, which is most of the logic. jsdom tests for the content script, capture flow, password field exclusion and SPA navigation, in the style Form Recovery already uses. A fixture set of saved real pages covering news, documentation, forums, SPAs, cookie walls and paywalls, asserting on extraction shape. The relevance harness from step 4, treated as a test that can fail rather than a benchmark nobody reads. A migration test as soon as a second schema version exists.
+Four suites, in increasing order of how much they cost to run.
+
+**`npm test`** runs the Node suite: every pure module, plus the store
+contract against `memory-store`, plus the relevance harness. No
+dependencies, no browser, about a second. This is the one that runs on every
+change.
+
+**`npm run test:browser`** runs the same store contract against
+`idb-store` in a real Chromium with the extension loaded. One contract, two
+implementations. It has already earned its place: `memory-store` returned
+eviction log entries written in the same millisecond in the wrong order,
+which IndexedDB gets right for free by walking the primary key backwards,
+and the contract is what caught the disagreement.
+
+**`npm run test:e2e`** drives the real service worker: capture, revisit,
+search, pin, forget a site, run maintenance under a budget small enough to
+force eviction, and check the pinned page survived it. This is the suite
+that would notice a broken import or a message type nobody handles.
+
+**`node test/browser/run-ui-smoke.mjs`** types into the search page, checks
+the highlighting, the keyboard selection, the relaxation notice and that
+opening a result carries a text fragment. Pass `--screenshot out.png` to
+look at it.
+
+`test/browser/run-benchmark.mjs` is not a test. It answers "what does this
+cost" and it is what the numbers above come from.
+
+The relevance harness deserves a note. "Does search feel good" is
+unanswerable, so it is replaced by 44 known item queries against a corpus
+written as prose with deliberately overlapping vocabulary. The target has to
+come back in the top three, and the suite gates on mean reciprocal rank so a
+regression fails the build. Its first version scored a perfect 1.000 with
+its own known gaps passing too, which meant it was measuring nothing: the OR
+fallback was rescuing queries that should have failed. Gap queries are now
+reduced to the single word that carries the meaning, so they miss honestly
+and stay visible in the output.

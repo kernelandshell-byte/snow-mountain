@@ -36,3 +36,15 @@ test('respects the length cap', () => {
   const s = buildSnippet(long, ['needle'], { maxChars: 200 });
   assert.ok(s.text.length <= 210, 'snippet was ' + s.text.length + ' chars');
 });
+
+test('does not add an ellipsis straight after a full stop', () => {
+  const long = 'Alpha beta gamma. The needle is here and the sentence ends. Then more text follows for a while.';
+  const s = buildSnippet(long, ['needle'], { maxChars: 80 });
+  assert.ok(!/\.…$/.test(s.text), 'got: ' + s.text);
+});
+
+test('still marks a truncation that lands mid sentence', () => {
+  const long = 'The needle appears early ' + 'and then a great deal more text continues '.repeat(20);
+  const s = buildSnippet(long, ['needle'], { maxChars: 60 });
+  assert.ok(s.text.endsWith('…'), 'got: ' + s.text);
+});

@@ -10,33 +10,43 @@ Working title. See the naming note at the end of `BRIEF.md`.
 
 ## State
 
-Foundation only. The pure core, the search pipeline and the test suite are real and passing. Storage against IndexedDB, capture, and the interface are not built yet.
+It works end to end. Capture a page, search it back, open the result on the paragraph that matched.
 
-Done:
+What is real:
 
-- `src/core/` URL normalisation, tokenizer, capture policy, read heuristic, BM25, query parser, snippets, index writer, search pipeline
-- `src/db/memory-store.js`, an in-memory implementation of the store interface, which is what lets search be tested without a browser
-- 47 tests, no dependencies
-- Wiring skeleton: manifest, service worker message router, content script sensor, placeholder pages, so the extension loads
+- The whole pure core: tokenising, capture policy, read heuristic, BM25, query parsing, snippets, the storage budget, text fragment URLs
+- Two stores, `memory-store` and `idb-store`, held to one contract that runs against both
+- Search, with an AND to OR fallback and a singular fallback for plural queries
+- A service worker that captures, indexes, searches, pins, forgets and evicts
+- A working search page and popup
+- 134 Node tests, 14 store contract cases against real IndexedDB, 14 end to end checks through the real extension, 9 interface checks
 
-Next, in order, from the build order in `ARCHITECTURE.md`:
+What is not done:
 
-3. `src/db/idb-store.js`, satisfying exactly the interface `memory-store.js` implements
-4. The relevance harness: 30 known item queries where the right page has to land in the top three
-5. Capture end to end, with Readability vendored in place of the placeholder extraction
+- Extraction is still `document.body.innerText`. Readability needs vendoring, and until then captured text includes navigation and footer noise
+- No setup flow yet, so capture mode and the budget use their defaults
+- No export, no storage log screen, no per site controls in the interface
+- The search page works and has had no design pass
 
 ## Tests
 
 ```
-npm test
+npm test                              # Node suite, no dependencies, about a second
+npm install --no-save playwright      # only needed for the three below
+npm run test:browser                  # the store contract against real IndexedDB
+npm run test:e2e                      # capture, search, pin, forget, evict, through the real worker
+node test/browser/run-ui-smoke.mjs    # drives the search page; --screenshot out.png to look
+node test/browser/run-benchmark.mjs 1500   # what it costs, not a test
 ```
-
-No dependencies, no install step. Node 22 or newer, using the built in test runner.
 
 ## Loading it
 
-`chrome://extensions`, developer mode on, load unpacked, pick this folder. It installs and asks for nothing, because host access is requested during setup rather than at install time, and content scripts are registered at runtime.
+`chrome://extensions`, developer mode on, load unpacked, pick this folder. It installs and asks for nothing: host access is requested during setup rather than at install time, and content scripts are registered at runtime.
 
-## The one rule
+Until the setup flow exists, grant the broad permission by hand from the extension's details page if you want it to capture anything.
 
-Nothing in `src/core/` imports `chrome.*`. That is what keeps the test suite meaningful and what would make a Firefox port a packaging problem rather than a rewrite. Storage arrives as an injected interface, never as a global.
+## The two rules
+
+Nothing in `src/core/` imports `chrome.*`. That keeps the test suite meaningful and would make a Firefox port a packaging problem rather than a rewrite.
+
+Nothing except the service worker writes to the database. Extension pages ask it for what they need, which costs a message hop and buys a single writer with no cross context races.
