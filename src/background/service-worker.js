@@ -166,6 +166,105 @@ async function collectStats() {
   };
 }
 
+// What the popup needs to say something true about the page in front of you:
+// whether it is kept, and if not, why not. The reason strings come straight
+// out of the capture policy, which is why they were written to be read.
+async function pageStatus(url) {
+  const settings = await loadSettings();
+  const store = await getStore();
+  const page = await store.getPageByUrl(url);
+
+  const verdict = decide({
+    url,
+    mode: settings.mode,
+    allowlist: settings.allowlist,
+    rules: rulesFor(settings.presets, settings.customRules),
+    hasPasswordField: false,
+    incognito: false,
+    paused: isPaused(settings),
+  });
+
+  let domain = null;
+  try {
+    domain = new URL(url).hostname.replace(/^www\./, '');
+  } catch {
+    domain = null;
+  }
+
+  const granted = domain
+    ? await chrome.permissions.contains({ origins: ['*://' + domain + '/*'] }).catch(() => false)
+    : false;
+
+  return {
+    url,
+    domain,
+    mode: settings.mode,
+    kept: page
+      ? { id: page.id, lastSeen: page.lastSeen, visitCount: page.visitCount, pinned: !!page.pinned }
+      : null,
+    capturable: verdict.capture,
+    reason: verdict.reason,
+    hasSitePermission: granted,
+  };
+}
+
+// Keeping a page you are looking at, without waiting for the dwell and
+// scroll heuristic to be satisfied. The heuristic exists to avoid a landfill
+// of pages nobody read, not to argue with someone who is telling you
+// directly that this one matters.
+async function captureNow(tabId, url) {
+  const settings = await loadSettings();
+  const verdict = decide({
+    url,
+    mode: settings.mode,
+    allowlist: settings.allowlist,
+    rules: rulesFor(settings.presets, settings.customRules),
+    hasPasswordField: false,
+    incognito: false,
+    // An explicit request overrides a pause, which is about background
+    // capture rather than about this one page.
+    paused: false,
+  });
+  if (!verdict.capture) return { ok: false, reason: verdict.reason };
+  const injected = await injectExtractor(tabId);
+  return { ok: injected, reason: injected ? 'capturing' : 'could not read this tab' };
+}
+
+async function allowSite(domain) {
+  const settings = await loadSettings();
+  if (settings.allowlist.includes(domain)) return settings;
+  const next = await saveSettings({ allowlist: [...settings.allowlist, domain] });
+  await syncContentScripts();
+  return next;
+}
+
+// Blocking a site is not only about the future. Leaving what was already
+// captured in place would make the button a lie.
+async function blockSite(domain) {
+  const settings = await loadSettings();
+  const rules = settings.customRules.includes(domain)
+    ? settings.customRules
+    : [...settings.customRules, domain];
+  await saveSettings({
+    customRules: rules,
+    allowlist: settings.allowlist.filter((entry) => entry !== domain),
+  });
+  await syncContentScripts();
+
+  const store = await getStore();
+  const meta = await store.listPageMeta();
+  const ids = meta.filter((page) => page.domain === domain).map((page) => page.id);
+  const result = ids.length ? await store.deletePages(ids) : { deleted: 0, bytesFreed: 0 };
+  if (result.deleted) {
+    await store.logEviction({
+      reason: 'siteRule',
+      count: result.deleted,
+      bytesFreed: result.bytesFreed,
+    });
+  }
+  return { removed: result.deleted };
+}
+
 async function buildExport() {
   const store = await getStore();
   const settings = await loadSettings();
@@ -372,6 +471,18 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
     case MSG.WIPE:
       return reply(wipeEverything());
+
+    case MSG.PAGE_STATUS:
+      return reply(pageStatus(payload.url));
+
+    case MSG.CAPTURE_NOW:
+      return reply(captureNow(payload.tabId, payload.url));
+
+    case MSG.ALLOW_SITE:
+      return reply(allowSite(payload.domain));
+
+    case MSG.BLOCK_SITE:
+      return reply(blockSite(payload.domain));
 
     case MSG.LOG:
       return reply(getStore().then((store) => store.readEvictionLog(payload?.limit || 20)));

@@ -106,6 +106,13 @@ export function createMemoryStore() {
       return out;
     },
 
+    async getPageByUrl(url) {
+      const key = urlKey(url);
+      if (!key) return null;
+      const id = byUrlKey.get(key);
+      return id ? pages.get(id) : null;
+    },
+
     async readStats() {
       const docCount = pages.size;
       return {

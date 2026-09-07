@@ -10,6 +10,7 @@
     "test:e2e": "node test/browser/run-e2e.mjs",
     "test:extraction": "node test/browser/run-extraction.mjs",
     "test:setup": "node test/browser/run-setup.mjs",
-    "test:options": "node test/browser/run-options.mjs"
+    "test:options": "node test/browser/run-options.mjs",
+    "test:popup": "node test/browser/run-popup.mjs"
   }
 }

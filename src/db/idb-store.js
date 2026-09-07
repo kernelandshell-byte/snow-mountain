@@ -117,6 +117,14 @@ export function createIdbStore(db) {
       return out;
     },
 
+    async getPageByUrl(url) {
+      const key = urlKey(url);
+      if (!key) return null;
+      const tx = db.transaction('pages', 'readonly');
+      const page = await req(tx.objectStore('pages').index('urlKey').get(key));
+      return page || null;
+    },
+
     async readStats() {
       const tx = db.transaction('meta', 'readonly');
       const stats = (await req(tx.objectStore('meta').get('stats'))) || emptyStats;

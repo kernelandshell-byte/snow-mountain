@@ -151,6 +151,19 @@ export const contractCases = [
     },
   },
   {
+    name: 'a page can be found by any spelling of its url',
+    async run(store) {
+      const { id } = await store.putPage(PAGE);
+      const found = await store.getPageByUrl(
+        'https://www.example.com/retro-fatigue?utm_campaign=elsewhere'
+      );
+      assert(found, 'the same page under a different spelling should be found');
+      assertEqual(found.id, id, 'same page');
+      assertEqual(await store.getPageByUrl('https://example.com/nothing-here'), null, 'a page that is not kept');
+      assertEqual(await store.getPageByUrl('chrome://extensions'), null, 'an unindexable url');
+    },
+  },
+  {
     name: 'page metadata comes back without dragging the text along',
     async run(store) {
       const { id } = await store.putPage(PAGE);

@@ -7,13 +7,21 @@
   </head>
   <body>
     <button id="open" class="primary">Search what you have read</button>
-    <p id="status" class="status">Loading…</p>
-    <div id="budget" class="budget" hidden>
+
+    <section id="page" class="page">
+      <p id="pageStatus" class="status">Checking this page…</p>
+      <p id="pageUrl" class="host"></p>
+      <div id="pageActions" class="actions"></div>
+    </section>
+
+    <section id="budgetBlock" class="budget" hidden>
       <div class="bar"><span id="fill"></span></div>
-      <p id="budgetText" class="muted"></p>
-    </div>
+      <p id="budgetText" class="host"></p>
+    </section>
+
     <h2>Recently kept</h2>
     <ul id="recent" class="recent"></ul>
+
     <div class="row">
       <button id="pause" class="link"></button>
       <button id="options" class="link">Settings</button>
