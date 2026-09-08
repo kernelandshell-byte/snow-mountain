@@ -74,7 +74,7 @@ input[type="search"]:focus {
   flex-wrap: wrap;
 }
 .meta { color: var(--muted); font-size: 13px; margin: 0; flex: 1; min-width: 180px; }
-.filters { display: flex; align-items: center; gap: 8px; }
+.filters { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 
 select {
   font: inherit;
@@ -84,7 +84,11 @@ select {
   border: 1px solid var(--line);
   border-radius: 7px;
   padding: 4px 6px;
-  max-width: 170px;
+  /* Shrinkable rather than fixed, so a narrow window wraps the row instead
+     of pushing the sort control off the side of the page. */
+  flex: 0 1 auto;
+  min-width: 0;
+  max-width: min(170px, 45vw);
 }
 select:focus { outline: 2px solid var(--accent); outline-offset: -1px; }
 

@@ -13,7 +13,7 @@ import { search } from '../core/index-reader.js';
 import { planEviction, budgetStatus, projectExhaustion, paceFrom } from '../core/eviction.js';
 import { fragmentUrl } from '../core/text-fragment.js';
 import { urlKey } from '../core/url-key.js';
-import { openStore } from '../db/idb-store.js';
+import { openStore, isClosedError } from '../db/idb-store.js';
 import { loadSettings, saveSettings, isPaused } from '../shared/settings.js';
 import { rulesFor } from '../shared/presets.js';
 
@@ -24,7 +24,15 @@ const CONTENT_SCRIPT_ID = 'observer';
 let storePromise = null;
 const getStore = () => {
   if (!storePromise) {
-    storePromise = openStore().catch((error) => {
+    storePromise = openStore({
+      // Chrome closes the connection when the database is deleted or
+      // upgraded elsewhere, which is what clearing site data looks like from
+      // in here. Dropping the handle means the next call opens a fresh one
+      // rather than failing forever against a dead one.
+      onClosed: () => {
+        storePromise = null;
+      },
+    }).catch((error) => {
       // Never keep a rejected promise: one transient failure would
       // otherwise disable storage until the worker happened to restart.
       storePromise = null;
@@ -33,6 +41,18 @@ const getStore = () => {
   }
   return storePromise;
 };
+
+// Any operation can fail against a connection that has just gone away. One
+// retry against a fresh handle turns that from a lost page into a hiccup.
+async function withStore(work) {
+  try {
+    return await work(await getStore());
+  } catch (error) {
+    if (!isClosedError(error)) throw error;
+    storePromise = null;
+    return work(await getStore());
+  }
+}
 
 // Content scripts are registered at runtime rather than declared in the
 // manifest, so install time asks for no host access at all. Broad mode gets
@@ -137,19 +157,20 @@ function preferredUrl(url, canonicalUrl) {
 }
 
 async function onPageContent(payload) {
-  const store = await getStore();
-  // The cap is on stored text, not on what was extracted, so a very long
-  // page is truncated rather than refused.
-  const text = (payload.text || '').slice(0, MAX_TEXT_BYTES);
-  if (!text.trim()) return { ok: false, reason: 'nothing to index' };
+  return withStore(async (store) => {
+    // The cap is on stored text, not on what was extracted, so a very long
+    // page is truncated rather than refused.
+    const text = (payload.text || '').slice(0, MAX_TEXT_BYTES);
+    if (!text.trim()) return { ok: false, reason: 'nothing to index' };
 
-  const result = await store.putPage({
-    url: preferredUrl(payload.url, payload.canonicalUrl),
-    title: payload.title || '',
-    text,
-    lastSeen: payload.capturedAt || Date.now(),
+    const result = await store.putPage({
+      url: preferredUrl(payload.url, payload.canonicalUrl),
+      title: payload.title || '',
+      text,
+      lastSeen: payload.capturedAt || Date.now(),
+    });
+    return { ok: true, ...result };
   });
-  return { ok: true, ...result };
 }
 
 async function collectStats() {
@@ -561,7 +582,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
     case MSG.SEARCH:
       return reply(
-        getStore().then((store) =>
+        withStore((store) =>
           search(payload.query, {
             store,
             limit: payload.limit || 20,

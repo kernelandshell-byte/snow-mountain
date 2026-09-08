@@ -7,3 +7,4 @@ Thumbs.db
 .env
 *.zip
 web-ext-artifacts/
+test/browser/.pages/

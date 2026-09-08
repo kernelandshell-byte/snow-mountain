@@ -357,18 +357,21 @@ The browser suites need Playwright (`npm install --no-save playwright`):
 | `test:journey` | one whole session: setup, read, popup, search, open, pin, sweep, export |
 | `test:e2e` | capture, revisit, search, pin, forget, eviction, through the worker |
 | `test:extraction` | Readability against a page full of navigation, banners and footers |
+| `test:real-pages` | extraction against real snapshots from Ars, the NYT, the Guardian, Medium, WordPress and the BBC |
 | `test:highlight` | jump to passage when a fragment cannot fire |
 | `test:setup` | the setup flow, including a refused permission |
 | `test:options` | settings, and the export to import round trip |
 | `test:popup` | the current page controls, including strict mode granting |
 | `test:ui` | the search page: typing, filters, sorting, paging, keyboard |
 | `test:adversarial` | awkward content, hostile queries, concurrency, a stopped worker |
+| `test:resilience` | storage deleted underneath, a worker killed mid write, a browser restart |
 | `test:consistency` | randomised churn, then the invariants that must always hold |
+| `test:presentation` | dark mode, a 360px window, and using it without a mouse |
 
 `run-benchmark.mjs` is not a test. It answers "what does this cost", and it
 is where the numbers above come from.
 
-Two of these deserve explaining.
+Four of these deserve explaining.
 
 **The adversarial suite** goes looking for trouble rather than confirming
 the happy path: right to left text, a language without spaces between words,

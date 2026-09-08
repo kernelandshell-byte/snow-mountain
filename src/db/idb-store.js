@@ -44,11 +44,28 @@ export function openDatabase({
   factory = globalThis.indexedDB,
   name = DB_NAME,
   version = DB_VERSION,
+  onClosed = null,
 } = {}) {
   return new Promise((resolve, reject) => {
     const request = factory.open(name, version);
     request.onupgradeneeded = (event) => upgrade(request.result, request.transaction, event.oldVersion);
-    request.onsuccess = () => resolve(request.result);
+    request.onsuccess = () => {
+      const db = request.result;
+
+      // Someone else wants to delete or upgrade this database, which is what
+      // clearing site data looks like from in here. Holding the connection
+      // open would block them, and holding onto it afterwards would leave
+      // every later write failing against a dead handle.
+      db.onversionchange = () => {
+        db.close();
+        if (onClosed) onClosed('versionchange');
+      };
+      db.onclose = () => {
+        if (onClosed) onClosed('closed');
+      };
+
+      resolve(db);
+    };
     request.onerror = () => reject(request.error);
     request.onblocked = () => reject(new Error('upgrade blocked by another open tab'));
   });
@@ -339,4 +356,9 @@ export function createIdbStore(db) {
 
 export async function openStore(options) {
   return createIdbStore(await openDatabase(options));
+}
+
+export function isClosedError(error) {
+  const message = String((error && error.name) || '');
+  return message === 'InvalidStateError' || message === 'TransactionInactiveError';
 }

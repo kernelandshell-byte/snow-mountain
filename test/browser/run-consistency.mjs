@@ -7,6 +7,7 @@
 import { chromium } from 'playwright';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { invariantCheck } from './invariants.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const OPERATIONS = Number(process.argv[2] || 300);
@@ -25,7 +26,7 @@ const errors = [];
 page.on('pageerror', (error) => errors.push(String(error)));
 await page.goto('chrome-extension://' + extensionId + '/src/ui/options/options.html');
 
-const report = await page.evaluate(async (operations) => {
+const churn = await page.evaluate(async (operations) => {
   const { openStore, openDatabase } = await import('/src/db/idb-store.js');
   const { tokenize } = await import('/src/core/tokenizer.js');
   const { bucketOf } = await import('/src/core/index-writer.js');
@@ -83,85 +84,26 @@ const report = await page.evaluate(async (operations) => {
     }
   }
 
-  // Now read the database directly and check the invariants.
-  const db = await openDatabase({ name });
-  const readAll = (storeName) =>
-    new Promise((resolve, reject) => {
-      const request = db.transaction(storeName, 'readonly').objectStore(storeName).getAll();
-      request.onsuccess = () => resolve(request.result);
-      request.onerror = () => reject(request.error);
-    });
-
-  const pages = await readAll('pages');
-  const postings = await readAll('postings');
-  const meta = await readAll('meta');
-  const stats = meta.find((row) => row.key === 'stats');
-
-  const problems = [];
-
-  if (stats.docCount !== pages.length) {
-    problems.push('docCount says ' + stats.docCount + ' but there are ' + pages.length + ' pages');
-  }
-  const realBytes = pages.reduce((sum, p) => sum + (p.bytes || 0), 0);
-  if (stats.totalBytes !== realBytes) {
-    problems.push('totalBytes says ' + stats.totalBytes + ' but the pages add up to ' + realBytes);
-  }
-  const realTokens = pages.reduce((sum, p) => sum + (p.wordCount || 0), 0);
-  if (stats.totalTokens !== realTokens) {
-    problems.push('totalTokens says ' + stats.totalTokens + ' but the pages add up to ' + realTokens);
-  }
-
-  const liveIds = new Set(pages.map((p) => p.id));
-  let orphanEntries = 0;
-  let emptyRecords = 0;
-  const indexed = new Map(); // id -> Set(terms)
-  for (const record of postings) {
-    if (!record.docs.length) emptyRecords += 1;
-    for (const entry of record.docs) {
-      if (!liveIds.has(entry.id)) {
-        orphanEntries += 1;
-        continue;
-      }
-      if (!indexed.has(entry.id)) indexed.set(entry.id, new Set());
-      indexed.get(entry.id).add(record.term);
-      if (bucketOf(entry.id) !== record.bucket) {
-        problems.push('page ' + entry.id + ' is filed in bucket ' + record.bucket);
-      }
-    }
-  }
-  if (orphanEntries) problems.push(orphanEntries + ' postings point at pages that no longer exist');
-  if (emptyRecords) problems.push(emptyRecords + ' posting records are empty and should have been removed');
-
-  // Every word of every live page has to be findable, and nothing else.
-  let missingTerms = 0;
-  let extraTerms = 0;
-  for (const record of pages) {
-    const expected = new Set(tokenize((record.title || '') + '\n\n' + (record.text || '')).map((t) => t.term));
-    const actual = indexed.get(record.id) || new Set();
-    for (const term of expected) if (!actual.has(term)) missingTerms += 1;
-    for (const term of actual) if (!expected.has(term)) extraTerms += 1;
-  }
-  if (missingTerms) problems.push(missingTerms + ' words of live pages are missing from the index');
-  if (extraTerms) problems.push(extraTerms + ' words are indexed for pages that no longer contain them');
-
   store.close();
-  db.close();
+  return {
+    name,
+    writes: log.filter((l) => l.startsWith('put')).length,
+    deletes: log.filter((l) => l.startsWith('delete')).length,
+  };
+}, OPERATIONS);
+
+const invariants = await page.evaluate(invariantCheck, churn.name);
+
+await page.evaluate(async (name) => {
   await new Promise((resolve) => {
     const request = indexedDB.deleteDatabase(name);
     request.onsuccess = resolve;
     request.onerror = resolve;
     request.onblocked = resolve;
   });
+}, churn.name);
 
-  return {
-    operations,
-    pages: pages.length,
-    postingRecords: postings.length,
-    writes: log.filter((l) => l.startsWith('put')).length,
-    deletes: log.filter((l) => l.startsWith('delete')).length,
-    problems,
-  };
-}, OPERATIONS);
+const report = { operations: OPERATIONS, ...churn, ...invariants };
 
 await context.close();
 

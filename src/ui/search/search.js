@@ -12,7 +12,13 @@ const whenSelect = document.getElementById('when');
 const moreButton = document.getElementById('more');
 const sentinel = document.getElementById('sentinel');
 
-const ask = (type, payload) => chrome.runtime.sendMessage({ type, payload });
+// The worker can answer with an error, and the message itself can fail if
+// the worker is being restarted. Neither should leave a blank page with no
+// explanation, which is what an unhandled rejection here would produce.
+const ask = (type, payload) =>
+  chrome.runtime.sendMessage({ type, payload }).catch((error) => ({
+    error: String((error && error.message) || error),
+  }));
 
 let rows = [];
 let selected = 0;
@@ -120,7 +126,18 @@ async function run({ append = false } = {}) {
   });
   loading = false;
   // A slower earlier query must never overwrite a newer one's results.
-  if (mine !== sequence || !result) return;
+  if (mine !== sequence) return;
+
+  if (!result || result.error || !Array.isArray(result.results)) {
+    rows = [];
+    filters.hidden = true;
+    moreButton.hidden = true;
+    meta.textContent = '';
+    list.innerHTML =
+      '<p class="empty"><strong>Search is not available right now.</strong><br />' +
+      'The extension could not reach its storage. Reloading this page usually fixes it.</p>';
+    return;
+  }
 
   state.total = result.total;
   state.hasMore = result.hasMore;

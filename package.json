@@ -17,6 +17,9 @@
     "test:ui": "node test/browser/run-ui-smoke.mjs",
     "test:adversarial": "node test/browser/run-adversarial.mjs",
     "test:journey": "node test/browser/run-journey.mjs",
-    "test:consistency": "node test/browser/run-consistency.mjs"
+    "test:consistency": "node test/browser/run-consistency.mjs",
+    "test:resilience": "node test/browser/run-resilience.mjs",
+    "test:real-pages": "node test/browser/run-real-pages.mjs",
+    "test:presentation": "node test/browser/run-presentation.mjs"
   }
 }
