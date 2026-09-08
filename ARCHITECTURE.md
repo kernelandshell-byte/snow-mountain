@@ -357,7 +357,8 @@ The browser suites need Playwright (`npm install --no-save playwright`):
 | `test:journey` | one whole session: setup, read, popup, search, open, pin, sweep, export |
 | `test:e2e` | capture, revisit, search, pin, forget, eviction, through the worker |
 | `test:extraction` | Readability against a page full of navigation, banners and footers |
-| `test:real-pages` | extraction against real snapshots from Ars, the NYT, the Guardian, Medium, WordPress and the BBC |
+| `test:real-pages` | extraction against 32 real page snapshots: newspapers, blogs, a wiki, docs, a spec, fiction, tables |
+| `test:shapes` | the page shapes that are not articles: forums, feeds, video pages, dashboards, chats, paywalls |
 | `test:highlight` | jump to passage when a fragment cannot fire |
 | `test:setup` | the setup flow, including a refused permission |
 | `test:options` | settings, and the export to import round trip |

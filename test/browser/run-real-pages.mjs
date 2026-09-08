@@ -17,9 +17,19 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..')
 const cache = path.join(root, 'test/browser/.pages');
 const SOURCE = 'https://raw.githubusercontent.com/mozilla/readability/main/test/test-pages';
 
-// Chosen for variety: a tech site heavy with related links, two newspapers,
-// a blogging platform, and a publisher whose markup is famously awkward.
-const PAGES = ['ars-1', 'nytimes-1', 'guardian-1', 'medium-1', 'wordpress', 'bbc-1'];
+// Chosen for variety rather than for being easy: newspapers, blogs, a wiki,
+// technical documentation, a spec, fiction, pages built out of tables, pages
+// whose comments load after the article, and several that exist in that
+// corpus precisely because they are awkward.
+const PAGES = [
+  'ars-1', 'nytimes-1', 'guardian-1', 'medium-1', 'wordpress', 'bbc-1',
+  'wikipedia', 'lwn-1', 'theverge', 'engadget', 'tumblr', 'blogger',
+  'google-sre-book-1', 'ietf-1', 'keep-tabular-data', 'embedded-videos',
+  'videos-1', 'lifehacker-post-comment-load', 'social-buttons',
+  'links-in-tables', 'hidden-nodes', 'missing-paragraphs', 'quanta-1',
+  'daringfireball-1', 'v8-blog', 'mozilla-1', 'telegraph', 'cnet', 'msn',
+  'yahoo-1', 'royal-road', 'archive-of-our-own',
+];
 
 async function fetchIfMissing(name, file) {
   const target = path.join(cache, name + '.' + file + '.html');

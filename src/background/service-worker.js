@@ -6,7 +6,7 @@
 // can miss the very event that woke the worker.
 
 import { MSG } from '../shared/messages.js';
-import { MAX_TEXT_BYTES } from '../shared/constants.js';
+import { MAX_TEXT_BYTES, MIN_TEXT_CHARS, MIN_TEXT_OVER_TITLE } from '../shared/constants.js';
 import { decide, MODE } from '../core/capture-policy.js';
 import { isRead } from '../core/read-heuristic.js';
 import { search } from '../core/index-reader.js';
@@ -104,9 +104,19 @@ async function doSyncContentScripts() {
 // Extraction is injected only once a page has earned it. Putting 90KB of
 // parser into every page a person opens would be a strange thing to do to
 // their browser, and most pages never qualify.
-async function injectExtractor(tabId) {
+async function injectExtractor(tabId, { explicit = false } = {}) {
   if (typeof tabId !== 'number') return false;
   try {
+    if (explicit) {
+      // Carried through a global, the same way the quote reaches the
+      // highlight script: a content script cannot take arguments.
+      await chrome.scripting.executeScript({
+        target: { tabId },
+        func: () => {
+          window.__snowMountainExplicit = true;
+        },
+      });
+    }
     await chrome.scripting.executeScript({
       target: { tabId },
       files: ['src/vendor/readability/Readability.js', 'src/content/extract.js'],
@@ -162,6 +172,14 @@ async function onPageContent(payload) {
     // page is truncated rather than refused.
     const text = (payload.text || '').slice(0, MAX_TEXT_BYTES);
     if (!text.trim()) return { ok: false, reason: 'nothing to index' };
+    const title = payload.title || '';
+    const trimmed = text.trim();
+    if (
+      !payload.explicit &&
+      (trimmed.length < MIN_TEXT_CHARS || trimmed.length < title.length + MIN_TEXT_OVER_TITLE)
+    ) {
+      return { ok: false, reason: 'too little text to be worth finding later' };
+    }
 
     const result = await store.putPage({
       url: preferredUrl(payload.url, payload.canonicalUrl),
@@ -340,7 +358,7 @@ async function captureNow(tabId, url) {
     paused: false,
   });
   if (!verdict.capture) return { ok: false, reason: verdict.reason };
-  const injected = await injectExtractor(tabId);
+  const injected = await injectExtractor(tabId, { explicit: true });
   return { ok: injected, reason: injected ? 'capturing' : 'could not read this tab' };
 }
 

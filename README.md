@@ -29,10 +29,11 @@ paragraph that matched.
   is not, and one click to keep it, forget it, or never keep that site again
 - Settings with exclusion bundles, custom rules, the storage meter, the
   deletion log, export, import and delete everything
-- 157 Node tests and 275 browser checks across fifteen suites, including
-  extraction against real pages from six major sites, a resilience suite that
-  deletes the database underneath a running extension, and a consistency check
-  that churns the index and then verifies it has not drifted
+- 159 Node tests and 393 browser checks across seventeen suites, including
+  extraction against 32 real page snapshots, the page shapes that are not
+  articles at all, a resilience suite that deletes the database underneath a
+  running extension, and a consistency check that churns the index and then
+  verifies it has not drifted
 
 ## Tests
 

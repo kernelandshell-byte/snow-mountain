@@ -17,6 +17,7 @@ export const SETTINGS_DEFAULTS = {
     adult: true,
     government: true,
     intranet: true,
+    searchResults: true,
   },
   retentionMonths: DEFAULTS.retentionMonths,
   sizeCapBytes: DEFAULTS.sizeCapBytes,

@@ -21,6 +21,11 @@ export const PRESETS = {
     '*.gov', '*.gov.uk', '*.gov.cz', '*.bund.de', 'mojedatovaschranka.cz',
   ],
   intranet: ['localhost', '*.local', '*.internal', '*.lan'],
+  searchResults: [
+    'google.com/search', 'www.google.com/search', 'google.de/search', 'google.nl/search',
+    'bing.com/search', 'duckduckgo.com', 'search.brave.com', 'ecosia.org/search',
+    'startpage.com/sp/search', 'search.marcia.com',
+  ],
 };
 
 // Shown in setup. Kept beside the lists so a bundle can never be added
@@ -32,6 +37,7 @@ export const PRESET_LABELS = {
   adult: { title: 'Adult sites', example: '' },
   government: { title: 'Government and ID portals', example: 'tax, registration' },
   intranet: { title: 'Local and internal', example: 'localhost, company intranets' },
+  searchResults: { title: 'Search results pages', example: 'Google, Bing, DuckDuckGo' },
 };
 
 export function rulesFor(presets = {}, custom = []) {

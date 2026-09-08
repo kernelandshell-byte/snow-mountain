@@ -56,3 +56,11 @@ test('path prefix rules only match that prefix', () => {
 test('a rule for another host does not leak', () => {
   assert.equal(matchesRule('https://notexample.com/x', 'example.com'), false);
 });
+
+test('a search results page is excluded by the shipped preset', () => {
+  const rules = ['google.com/search', 'duckduckgo.com'];
+  assert.equal(decide({ ...base, url: 'https://www.google.com/search?q=retro+fatigue', rules }).capture, false);
+  assert.equal(decide({ ...base, url: 'https://duckduckgo.com/?q=retro', rules }).capture, false);
+  // The rest of the site is not the results page and stays capturable.
+  assert.equal(decide({ ...base, url: 'https://about.google.com/products', rules }).capture, true);
+});

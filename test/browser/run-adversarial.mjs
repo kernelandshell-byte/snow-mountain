@@ -50,8 +50,8 @@ await ask('SETTINGS_SET', { setupComplete: true, mode: 'broad', customRules: [],
 // --- content that is not tidy English ------------------------------------
 const awkward = [
   { name: 'German with umlauts and a sharp s', url: 'https://de.example/strassen', title: 'Strassenfotografie in Muenchen', text: 'Strassenfotografie lebt davon, dass Menschen sich unbeobachtet fuehlen.' },
-  { name: 'right to left text', url: 'https://he.example/a', title: 'RTL', text: 'צילום רחוב הוא תחום מורכב.' },
-  { name: 'a language without spaces between words', url: 'https://zh.example/a', title: 'CJK', text: '街头摄影是一种记录日常生活的艺术形式。' },
+  { name: 'right to left text', url: 'https://he.example/a', title: 'RTL', text: 'צילום רחוב הוא תחום מורכב שדורש סבלנות רבה ותשומת לב לפרטים קטנים בסביבה העירונית. לעיתים צריך לחכות שעה שלמה כדי לקבל תמונה אחת שבאמת עובדת.' },
+  { name: 'a language without spaces between words', url: 'https://zh.example/a', title: 'CJK', text: '街头摄影是一种记录日常生活的艺术形式，需要耐心和对细节的关注。很多摄影师在城市里长时间等待，只为了一个瞬间。这种拍摄方式没有固定的规则，也没有可以重复的流程，每一次出门都可能一无所获。' },
   { name: 'emoji', url: 'https://emoji.example/a', title: 'Ship it', text: 'We shipped the thing 🚢 and everybody was pleased 🎉 with how it turned out.' },
   { name: 'a page that is one enormous word', url: 'https://blob.example/a', title: 'Blob', text: 'x'.repeat(50000) },
   { name: 'a page of whitespace', url: 'https://blank.example/a', title: 'Blank', text: '   \n\n\t   ' },

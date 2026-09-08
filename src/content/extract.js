@@ -30,6 +30,8 @@
   );
 
   const canonical = document.querySelector('link[rel="canonical"]');
+  const explicit = window.__snowMountainExplicit === true;
+  delete window.__snowMountainExplicit;
 
   chrome.runtime.sendMessage({
     type: 'PAGE_CONTENT',
@@ -40,6 +42,7 @@
       text,
       excerpt: (article && article.excerpt) || '',
       extractedBy: article ? 'readability' : 'fallback',
+      explicit,
       capturedAt: Date.now(),
     },
   });

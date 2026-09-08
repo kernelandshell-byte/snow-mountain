@@ -23,3 +23,31 @@ test('one page is not "1 pages"', () => {
   assert.equal(pageCount(0), '0 pages');
   assert.equal(pageCount(1200), '1,200 pages');
 });
+
+test('the minimum tells a husk apart from short writing', async () => {
+  const { MIN_TEXT_CHARS, MIN_TEXT_OVER_TITLE } = await import('../src/shared/constants.js');
+  const keeps = (text, title) =>
+    text.length >= MIN_TEXT_CHARS && text.length >= title.length + MIN_TEXT_OVER_TITLE;
+
+  // What a page whose content sits in a shadow root or an iframe extracts to:
+  // the wrapper's heading, echoed back.
+  assert.equal(keeps('An article inside a shadow root', 'An article inside a shadow root'), false);
+
+  // Two sentences someone might actually have read.
+  assert.equal(
+    keeps(
+      'Grind size is the one variable you cannot write down and repeat, because beans change as they age.',
+      'Espresso notes'
+    ),
+    true
+  );
+
+  // A short sentence in a script that carries a word per character. The floor
+  // is low enough that this is a judgement about extraction rather than about
+  // which language someone reads in.
+  assert.equal(keeps('街头摄影是一种记录日常生活的艺术形式，需要耐心和对细节的关注。', '街头摄影'), true);
+
+  // And the floor still refuses a page that genuinely has nothing on it,
+  // even when its title is too short for the ratio to catch it.
+  assert.equal(keeps('Loading…', ''), false);
+});

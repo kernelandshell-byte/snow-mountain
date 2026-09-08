@@ -20,6 +20,7 @@
     "test:consistency": "node test/browser/run-consistency.mjs",
     "test:resilience": "node test/browser/run-resilience.mjs",
     "test:real-pages": "node test/browser/run-real-pages.mjs",
-    "test:presentation": "node test/browser/run-presentation.mjs"
+    "test:presentation": "node test/browser/run-presentation.mjs",
+    "test:shapes": "node test/browser/run-shapes.mjs"
   }
 }

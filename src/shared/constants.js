@@ -23,6 +23,27 @@ export const MAX_POSITIONS_PER_TERM = 32;
 
 export const MAX_TEXT_BYTES = 200 * 1024;
 
+// Below this there is nothing to find later. Pages whose content lives in a
+// shadow root or an iframe extract to twenty or thirty characters, and an
+// archive full of those husks is worse than one without them.
+//
+// Kept deliberately low, for two reasons. A character count means different
+// things in different scripts: thirty characters is nothing in English and a
+// whole sentence in Chinese, so a generous floor would quietly discriminate
+// against the languages that pack the most meaning per character. And the
+// target here is not "short pages", it is pages where extraction found
+// nothing, which is a much lower bar. Most of the work is done by the title
+// ratio below rather than by this floor.
+export const MIN_TEXT_CHARS = 25;
+
+// The half of the test that does the actual work. A husk is the title echoed
+// back, so text barely longer than its own heading is not a page that was
+// read, whatever its absolute length. This is what separates a thirty
+// character Chinese sentence, which carries a paragraph of meaning, from a
+// thirty character English husk, which carries none. No character count can
+// tell those apart; the relationship to the title can.
+export const MIN_TEXT_OVER_TITLE = 20;
+
 export const BM25 = { k1: 1.2, b: 0.75 };
 
 // Measured, not guessed: 1500 documents averaging 800 tokens came out at

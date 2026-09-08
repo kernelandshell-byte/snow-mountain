@@ -67,7 +67,7 @@ check('granting access moves on to exclusions', (await visibleStep(page)) === 2,
 
 const presetCount = await page.$$eval('[data-preset]', (nodes) => nodes.length);
 const allChecked = await page.$$eval('[data-preset]', (nodes) => nodes.every((n) => n.checked));
-check('exclusion bundles are offered', presetCount === 6, presetCount);
+check('exclusion bundles are offered', presetCount === 7, presetCount);
 check('and are on by default', allChecked, 'some bundle was off');
 
 await page.uncheck('[data-preset="adult"]');
