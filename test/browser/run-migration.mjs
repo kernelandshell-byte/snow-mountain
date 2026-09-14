@@ -145,9 +145,29 @@ const results = await page.evaluate(async () => {
     // The whole point of keeping the ids: the index still finds things.
     const { search } = await import('/src/core/index-reader.js');
     const { createIdbStore } = await import('/src/db/idb-store.js');
-    const found = await search('oldneedle7', { store: createIdbStore(db), limit: 5 });
+    const migrated = createIdbStore(db);
+    const found = await search('oldneedle7', { store: migrated, limit: 5 });
     check('and the archive is still searchable afterwards', found.results.length === 1,
       found.results.length + ' results for a word that is in exactly one page');
+
+    // The quiet one. Rebuilding an auto incrementing store means deleting it
+    // and adding every record back with an explicit key, and if the key
+    // generator does not come back with it, the next page written after an
+    // upgrade gets an id that already belongs to another page. Nothing throws;
+    // the archive just starts overwriting itself from the beginning.
+    const highest = Math.max(...afterPages.map((row) => row.id));
+    const next = await migrated.putPage({
+      url: 'https://after-the-migration.example/first-new-page',
+      title: 'Written after the upgrade',
+      text: 'The first page captured after a migration, with afterneedle in it.',
+    });
+    check('the next page written after a migration does not reuse an id',
+      next.id > highest, 'got id ' + next.id + ' when the archive already goes up to ' + highest);
+
+    const collided = await readAll(db, 'pages');
+    check('and nothing was overwritten by it',
+      collided.length === afterPages.length + 1,
+      afterPages.length + ' pages before, ' + collided.length + ' after adding one');
 
     db.close();
     await dropDatabase(name);
