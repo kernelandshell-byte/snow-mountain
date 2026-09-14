@@ -302,8 +302,9 @@ problem rather than a rewrite.
   spike established.
 - **`eviction.js`** the budget: two caps that both apply, pinned pages
   exempt, plus the pace and projection that let the interface say "full
-  around March" instead of a percentage, and `clockLooksWrong`, which is what
-  stops a laptop that woke up in next year from deleting a year of reading.
+  around March" instead of a percentage, and `clockLooksWrong`, which delays
+  the age rule for one sweep when time has moved in a way an hourly alarm
+  cannot account for.
 - **`content-change.js`** what to do when a page you already have comes back
   much smaller, which is usually a paywall rather than an edit. See below.
 
@@ -370,6 +371,18 @@ and settings says why. The size rule needs no clock and carries on regardless.
 A machine genuinely switched off for a fortnight pays one hour of delay for
 this.
 
+What this buys is one hour, and that is worth stating rather than claiming
+more. `lastSweepAt` is written on every sweep, including the one that suspended
+the age rule, so a clock that is wrong and stays wrong looks perfectly ordinary
+to the next sweep an hour later, and that one applies the age rule against next
+year's cutoff. For the case this was built for, a machine switched off for a
+fortnight, an hour of delay is the whole cost and the guard is exactly right.
+For a clock that is genuinely wrong it is a pause rather than a rescue, and no
+value of `CLOCK_JUMP_MS` changes that, because the second sweep never sees a
+jump. What would hold is a ceiling on how much one sweep may remove under the
+age rule, which would cover every other way a cutoff can come out wrong as
+well. Not built.
+
 **The badge** is raised only for something that can be acted on. An archive
 sitting at its cap and replacing its oldest pages is not that: it stays at
 ninety-nine percent of the cap by design, and a permanently lit badge is one
@@ -424,15 +437,31 @@ serialising every record in both stores, and fails if the meter drifts more
 than a tenth from it at any of three corpus sizes, or if either number drifts
 as the archive grows, or if a page of an odd shape is badly mis-counted.
 
-| pages | meter | page records | index | total | the meter counts |
+What that measures is what the archive's records weigh, not what is on the
+disk, and the difference is not a detail. The same 2,000 page archive occupies
+28.7MB immediately after it is written and 15.3MB once a reopen has triggered
+compaction, because LevelDB holds its write-ahead log and uncompacted files
+until something clears them, and Snappy compresses what is left. On a corpus of
+real prose the same two states are 47.3MB and 15.1MB. Nothing about the archive
+changes between those numbers.
+
+So the budget is a promise about what the archive holds, and not a claim about
+bytes on a disk. It has to be, because a figure that moves by a factor of three
+between compactions is not something eviction can be enforced against. On disk
+the archive will sometimes be half what the meter says and sometimes twice it.
+
+| pages | meter | page records | index | total serialised | the meter counts |
 |---|---|---|---|---|---|
 | 500 | 6.2MB | 1.7MB | 4.5MB | 6.2MB | 100% |
 | 1,000 | 12.4MB | 3.3MB | 9.1MB | 12.4MB | 100% |
 | 2,000 | 24.7MB | 6.6MB | 18.5MB | 25.1MB | 98% |
 
-`navigator.storage.estimate()` cannot settle any of this. It is approximate,
-includes things that are not ours, and reported 15KB and then 29.6KB a document
-for two runs of the same benchmark on the same corpus.
+`navigator.storage.estimate()` cannot settle any of this either, though not
+because it is wrong. It is approximate and it includes things that are not
+ours, and the 15KB and then 29.6KB a document it reported for two runs of the
+same benchmark on the same corpus is the compaction swing above, caught in two
+different states. It reports something real that genuinely moves, which is
+precisely what a budget cannot be enforced against.
 
 ## Settings are not to be trusted
 
@@ -713,7 +742,7 @@ The browser suites need Playwright (`npm install --no-save playwright`):
 | `test:hostile` | a wrong clock, a database from a newer build, two tabs filing one page at once, corrupted settings, an article that has since gone behind a paywall |
 | `test:migration` | the migration policy, including three migrations that fail in different ways |
 | `test:limits` | an export bigger than a message, persistent storage, a full disk, an alarm a profile lost |
-| `test:storage` | whether the meter is telling the truth about what is on disk |
+| `test:storage` | whether the meter is telling the truth about what the archive holds |
 
 `run-benchmark.mjs` and `run-delete-batch.mjs` are not tests. It answers "what does this cost", and it
 is where the numbers above come from.
