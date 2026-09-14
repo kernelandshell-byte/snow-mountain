@@ -92,9 +92,24 @@ await page.waitForTimeout(400);
 const relaxNote = await page.textContent('#meta');
 check('a relaxed query says what it actually searched', relaxNote.includes('searched'), relaxNote);
 
-// Pinning through the interface
+// Pinning through the interface.
+//
+// Waiting for an article to exist is not enough: the previous query's results
+// are still on screen until the debounce fires, and clicking those pins the
+// wrong page and then watches the list replace itself. Wait for the results
+// that belong to this query.
+const settled = (page, needle) =>
+  page.waitForFunction(
+    (text) => {
+      const first = document.querySelector('article .source');
+      return !!first && first.textContent.includes(text);
+    },
+    needle,
+    { timeout: 6000 }
+  );
+
 await page.fill('#q', 'cohort chart');
-await page.waitForSelector('article', { timeout: 4000 });
+await settled(page, 'metricsdesk.example');
 await page.click('.pin');
 await page.waitForFunction(
   () => document.querySelector('.pin').getAttribute('aria-pressed') === 'true',
@@ -106,7 +121,7 @@ check('pinning updates the button', pinned === 'true', pinned);
 
 // A result opens in a new tab, carrying a text fragment
 await page.fill('#q', 'retro fatigue');
-await page.waitForSelector('article', { timeout: 4000 });
+await settled(page, 'teamcraft.example');
 await page.evaluate(() => {
   window.__opened = [];
   const original = chrome.runtime.sendMessage.bind(chrome.runtime);

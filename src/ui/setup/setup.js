@@ -1,6 +1,11 @@
 import { MSG } from '../../shared/messages.js';
 import { PRESET_LABELS } from '../../shared/presets.js';
 import { BYTES_PER_PAGE_ESTIMATE } from '../../shared/constants.js';
+import { requestPersistence } from '../../shared/persistence.js';
+
+// The one moment everybody passes through, and the only context that is
+// allowed to ask. See shared/persistence.js.
+requestPersistence();
 
 const ask = (type, payload) => chrome.runtime.sendMessage({ type, payload });
 const byId = (id) => document.getElementById(id);

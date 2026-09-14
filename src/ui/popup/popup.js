@@ -1,17 +1,10 @@
 import { MSG } from '../../shared/messages.js';
+import { whenText } from '../shared/when.js';
 import { bytes as size, pageCount } from '../../shared/format.js';
 
 const ask = (type, payload) => chrome.runtime.sendMessage({ type, payload });
 const byId = (id) => document.getElementById(id);
 
-function whenText(timestamp) {
-  const days = Math.floor((Date.now() - timestamp) / 86400000);
-  if (days <= 0) return 'today';
-  if (days === 1) return 'yesterday';
-  if (days < 30) return days + ' days ago';
-  if (days < 365) return Math.round(days / 30) + ' months ago';
-  return Math.round(days / 365) + ' years ago';
-}
 
 // The tab is looked up once, at load, so that a click handler can call
 // chrome.permissions.request as its very first statement. Awaiting anything
@@ -19,7 +12,20 @@ function whenText(timestamp) {
 const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
 const stats = await ask(MSG.STATS).catch(() => null);
 
-if (stats && !stats.setupComplete) {
+// An archive that cannot be opened is not an empty one, and must never be
+// described as one. "Finish setting up" and "Nothing kept yet", after a year
+// of use, is exactly how somebody decides the extension is broken and throws
+// away an archive that was fine.
+const archiveBroken = !stats || stats.error || stats.ready === false;
+
+if (archiveBroken) {
+  const open = byId('open');
+  open.textContent = 'Open settings';
+  open.onclick = () => {
+    chrome.runtime.openOptionsPage();
+    window.close();
+  };
+} else if (stats && !stats.setupComplete) {
   const open = byId('open');
   open.textContent = 'Finish setting up';
   open.onclick = () => {
@@ -59,6 +65,12 @@ function setStatus(text, dim) {
 
 async function renderPage() {
   actionsEl.innerHTML = '';
+
+  if (archiveBroken) {
+    setStatus('The archive could not be opened. Nothing has been deleted.', true);
+    byId('pageUrl').textContent = '';
+    return;
+  }
 
   if (!tab || !tab.url || !/^https?:/.test(tab.url)) {
     setStatus('Nothing to keep here', true);
@@ -140,7 +152,17 @@ await renderPage();
 
 // --- everything else ------------------------------------------------------
 
-if (stats && !stats.error && stats.docCount > 0) {
+// The one thing worth interrupting somebody for: pages are not being kept and
+// they have no other way of knowing. Settings explains it at length; here it is
+// one sentence, on the surface people actually open.
+if (!archiveBroken && stats.storageFull) {
+  const alert = byId('alert');
+  alert.hidden = false;
+  alert.textContent =
+    'This disk ran out of room, so pages are not being kept. Settings has what to do about it.';
+}
+
+if (!archiveBroken && stats.docCount > 0) {
   byId('budgetBlock').hidden = false;
   const fraction = Math.min(1, stats.budget.fraction);
   const fill = byId('fill');
@@ -149,16 +171,24 @@ if (stats && !stats.error && stats.docCount > 0) {
 
   const parts = [pageCount(stats.docCount) + ' kept', size(stats.usedBytes) + ' of ' + size(stats.budget.sizeCapBytes)];
   // A percentage is not actionable. A date is, which is why the pace is
-  // measured before anything is said about it.
-  if (stats.exhaustsAt) {
+  // measured before anything is said about it. An archive that is already
+  // full has no date to give, and projecting one that has already passed is
+  // worse than saying nothing.
+  if (stats.capUnmeetable) {
+    parts.push('more is pinned than fits');
+  } else if (stats.atCap) {
+    parts.push('full, oldest pages being replaced');
+  } else if (stats.exhaustsAt) {
     parts.push('full around ' + new Date(stats.exhaustsAt).toLocaleDateString(undefined, { month: 'short', year: 'numeric' }));
   }
   byId('budgetText').textContent = parts.join(' · ');
 }
 
-const recent = (await ask(MSG.RECENT, { limit: 5 }).catch(() => [])) || [];
-byId('recent').innerHTML = recent.length
-  ? recent
+const recent = archiveBroken ? [] : ((await ask(MSG.RECENT, { limit: 5 }).catch(() => [])) || []);
+
+function recentMarkup(pages) {
+  if (Array.isArray(pages) && pages.length) {
+    return pages
       .map((page) => {
         const link = document.createElement('a');
         link.href = '#';
@@ -166,8 +196,19 @@ byId('recent').innerHTML = recent.length
         link.textContent = page.title || page.url;
         return '<li>' + link.outerHTML + '</li>';
       })
-      .join('')
-  : '<li class="host">Nothing kept yet.</li>';
+      .join('');
+  }
+  // The empty case has two very different meanings, and saying the wrong one
+  // is how somebody throws away an archive that was fine.
+  const li = document.createElement('li');
+  li.className = 'host';
+  li.textContent = archiveBroken
+    ? 'The archive could not be opened, so there is nothing to show here. Nothing has been deleted.'
+    : 'Nothing kept yet.';
+  return li.outerHTML;
+}
+
+byId('recent').innerHTML = recentMarkup(recent);
 
 byId('recent').addEventListener('click', (event) => {
   const link = event.target.closest('[data-url]');

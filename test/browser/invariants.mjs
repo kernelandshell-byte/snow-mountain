@@ -2,7 +2,15 @@
 // to be evaluated inside an extension page, so both the consistency suite
 // and the resilience suite hold the store to exactly the same standard.
 
-export async function invariantCheck(dbName) {
+// The argument is either a database name, or {name, deep}. The term level
+// check re-tokenises every page, which is the right cost to pay once and the
+// wrong cost to pay after each of sixty sweeps, so the long-term suite asks
+// for the cheap half between checkpoints.
+export async function invariantCheck(arg) {
+  const options = typeof arg === 'string' ? { name: arg } : (arg || {});
+  const dbName = options.name || null;
+  const deep = options.deep !== false;
+
   const { openDatabase } = await import('/src/db/idb-store.js');
   const { tokenize } = await import('/src/core/tokenizer.js');
   const { bucketOf } = await import('/src/core/index-writer.js');
@@ -56,7 +64,7 @@ export async function invariantCheck(dbName) {
 
   let missingTerms = 0;
   let extraTerms = 0;
-  for (const record of pages) {
+  for (const record of deep ? pages : []) {
     const expected = new Set(tokenize((record.title || '') + '\n\n' + (record.text || '')).map((t) => t.term));
     const actual = indexed.get(record.id) || new Set();
     for (const term of expected) if (!actual.has(term)) missingTerms += 1;

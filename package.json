@@ -21,6 +21,13 @@
     "test:resilience": "node test/browser/run-resilience.mjs",
     "test:real-pages": "node test/browser/run-real-pages.mjs",
     "test:presentation": "node test/browser/run-presentation.mjs",
-    "test:shapes": "node test/browser/run-shapes.mjs"
+    "test:shapes": "node test/browser/run-shapes.mjs",
+    "test:longterm": "node test/browser/run-longterm.mjs",
+    "test:hostile": "node test/browser/run-hostile.mjs",
+    "bench:delete": "node test/browser/run-delete-batch.mjs",
+    "test:migration": "node test/browser/run-migration.mjs",
+    "test:limits": "node test/browser/run-limits.mjs",
+    "shots": "node test/browser/run-screenshots.mjs",
+    "test:storage": "node test/browser/run-storage.mjs"
   }
 }

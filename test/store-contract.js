@@ -251,4 +251,147 @@ export const contractCases = [
       assert(threw, 'should have refused');
     },
   },
+  {
+    name: 'the sweep can read only the oldest pages, and only the expired ones',
+    async run(store) {
+      const day = 86400000;
+      const now = Date.now();
+      // Deliberately out of order, so nothing passes by accident of insertion.
+      await store.putPage({ url: 'https://a.example/mid', title: 'Middle', text: 'A middling page.', lastSeen: now - 200 * day });
+      await store.putPage({ url: 'https://a.example/new', title: 'Newest', text: 'A recent page.', lastSeen: now - day });
+      await store.putPage({ url: 'https://a.example/old', title: 'Oldest', text: 'An ancient page.', lastSeen: now - 400 * day });
+
+      const oldest = await store.oldestPages(10);
+      assertEqual(oldest.length, 3, 'all three when the limit allows');
+      assertEqual(oldest[0].title, undefined, 'the slice is metadata, not whole records');
+      assert(oldest[0].lastSeen < oldest[1].lastSeen, 'oldest first');
+      assert(oldest[1].lastSeen < oldest[2].lastSeen, 'and in order throughout');
+
+      const limited = await store.oldestPages(1);
+      assertEqual(limited.length, 1, 'the limit is honoured');
+      assertEqual(limited[0].lastSeen, now - 400 * day, 'and it is the oldest one');
+
+      const expired = await store.oldestPages(10, now - 300 * day);
+      assertEqual(expired.length, 1, 'only pages past the cutoff');
+      assertEqual(expired[0].lastSeen, now - 400 * day, 'and it is the right one');
+
+      const none = await store.oldestPages(10, now - 500 * day);
+      assertEqual(none.length, 0, 'nothing expired means nothing read');
+    },
+  },
+  {
+    name: 'one sweep is one row in the storage log, however many rounds it took',
+    async run(store) {
+      const now = Date.now();
+      await store.logEviction({ reason: 'size', count: 3, bytesFreed: 300 }, { merge: true, now });
+      await store.logEviction({ reason: 'size', count: 4, bytesFreed: 400 }, { merge: true, now: now + 1000 });
+      await store.logEviction({ reason: 'size', count: 5, bytesFreed: 500 }, { merge: true, now: now + 2000 });
+
+      let log = await store.readEvictionLog(20);
+      assertEqual(log.length, 1, 'three rounds, one row');
+      assertEqual(log[0].count, 12, 'the counts add up');
+      assertEqual(log[0].bytesFreed, 1200, 'and so do the bytes');
+      assertEqual(log[0].rounds, 3, 'the row remembers how many rounds it took');
+
+      // A different reason is a different event, and so is one far enough
+      // apart in time to be a separate sweep.
+      await store.logEviction({ reason: 'age', count: 1, bytesFreed: 100 }, { merge: true, now: now + 3000 });
+      await store.logEviction({ reason: 'size', count: 1, bytesFreed: 100 }, { merge: true, now: now + 40 * 60 * 1000 });
+      log = await store.readEvictionLog(20);
+      assertEqual(log.length, 3, 'a new reason and a later sweep each get their own row');
+    },
+  },
+  {
+    name: 'a large delete keeps the progress it made when it is stopped',
+    async run(store) {
+      const ids = [];
+      for (let i = 0; i < 8; i++) {
+        const { id } = await store.putPage({
+          url: 'https://batch.example/page-' + i,
+          title: 'Batch page ' + i,
+          text: 'A page that exists so it can be deleted in batches, number ' + i + '.',
+        });
+        ids.push(id);
+      }
+
+      // What an interrupted sweep looks like: stopped part way through. The
+      // signal is read once per batch, so counting reads is what "the worker
+      // was stopped after three pages" means to the store.
+      let reads = 0;
+      const signal = { get aborted() { return ++reads > 3; } };
+      const result = await store.deletePages(ids, { batch: 1, signal });
+
+      const left = (await store.readStats()).docCount;
+      assertEqual(left, 8 - result.deleted, 'what was deleted stayed deleted');
+      assertEqual(result.deleted, 3, 'stopped after three, not at the end');
+      assert(result.deleted > 0, 'and it kept what it had already done');
+    },
+  },
+  {
+    name: 'pages can be found by site and by day without reading the archive',
+    async run(store) {
+      const day = 86400000;
+      const noon = new Date('2026-03-04T12:00:00Z').getTime();
+      await store.putPage({ url: 'https://a.example/one', title: 'A one', text: 'The first page on site a.', lastSeen: noon });
+      await store.putPage({ url: 'https://a.example/two', title: 'A two', text: 'The second page on site a.', lastSeen: noon + 3600000 });
+      await store.putPage({ url: 'https://b.example/one', title: 'B one', text: 'The only page on site b.', lastSeen: noon });
+      await store.putPage({ url: 'https://a.example/old', title: 'A old', text: 'An older page on site a.', lastSeen: noon - 5 * day });
+
+      const bySite = await store.pageIdsByDomain('a.example');
+      assertEqual(bySite.length, 3, 'three pages on that site');
+      assertEqual((await store.pageIdsByDomain('nobody.example')).length, 0, 'and none on one with nothing');
+
+      const dayStart = new Date('2026-03-04T00:00:00Z').getTime();
+      const inDay = await store.pageIdsBetween(dayStart, dayStart + day);
+      assertEqual(inDay.length, 3, 'three pages that day, across both sites');
+      assertEqual((await store.pageIdsBetween(dayStart - 30 * day, dayStart - 29 * day)).length, 0, 'and none on a quiet day');
+    },
+  },
+  {
+    name: 'the archive can be walked a page at a time, for export',
+    async run(store) {
+      const ids = [];
+      for (let i = 0; i < 7; i++) {
+        const { id } = await store.putPage({
+          url: 'https://walk.example/page-' + i,
+          title: 'Walk ' + i,
+          text: 'A page to be walked past during an export, number ' + i + '.',
+        });
+        ids.push(id);
+      }
+
+      const first = await store.listPagesFrom(0, 3);
+      assertEqual(first.length, 3, 'a page at a time, three of them');
+      assertEqual(first[0].id, ids[0], 'starting at the beginning');
+      assert(first[0].text, 'and carrying the text, which is the point of an export');
+
+      const second = await store.listPagesFrom(first[first.length - 1].id, 3);
+      assertEqual(second[0].id, ids[3], 'continuing after the last one seen');
+
+      const seen = new Set();
+      let after = 0;
+      for (let guard = 0; guard < 20; guard++) {
+        const batch = await store.listPagesFrom(after, 3);
+        if (!batch.length) break;
+        for (const page of batch) seen.add(page.id);
+        after = batch[batch.length - 1].id;
+      }
+      assertEqual(seen.size, 7, 'walking the whole archive sees every page exactly once');
+    },
+  },
+  {
+    name: 'the storage log keeps the newest entries rather than growing for ever',
+    async run(store) {
+      const { EVICTION_LOG_MAX } = await import('../src/shared/constants.js');
+      const total = EVICTION_LOG_MAX + 25;
+      // Far enough apart in time that none of them merge into one another.
+      for (let i = 0; i < total; i++) {
+        await store.logEviction({ reason: 'size', count: 1, bytesFreed: i }, { now: 1000 + i * 3600000 });
+      }
+      const log = await store.readEvictionLog(EVICTION_LOG_MAX + 100);
+      assertEqual(log.length, EVICTION_LOG_MAX, 'capped at the maximum');
+      assertEqual(log[0].bytesFreed, total - 1, 'and it is the newest that survived');
+      assertEqual(log[log.length - 1].bytesFreed, total - EVICTION_LOG_MAX, 'the oldest went');
+    },
+  },
 ];

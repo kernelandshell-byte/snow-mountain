@@ -2,9 +2,15 @@ import { MSG } from '../../shared/messages.js';
 import { PRESET_LABELS } from '../../shared/presets.js';
 import { BYTES_PER_PAGE_ESTIMATE } from '../../shared/constants.js';
 import { bytes as mb, pageCount } from '../../shared/format.js';
+import { requestPersistence } from '../../shared/persistence.js';
 
 const ask = (type, payload) => chrome.runtime.sendMessage({ type, payload });
 const byId = (id) => document.getElementById(id);
+
+// Asking here as well as during setup, because persistence can be refused the
+// first time and granted later, and because somebody opening settings is
+// somebody who would want to know if it had been refused.
+await requestPersistence();
 
 let settings = await ask(MSG.SETTINGS_GET);
 let saveTimer;
@@ -21,10 +27,89 @@ async function save(patch) {
   flashSaved();
 }
 
-byId('modeLine').textContent =
-  settings.mode === 'broad'
-    ? 'Every site is read except what you exclude below.'
-    : 'Only sites you have added are read. Chrome enforces that, not this extension.';
+// The mode switch, and the part of it that makes strict mode mean anything.
+//
+// Every competitor's privacy mode is a promise. This one is meant to be
+// enforced by the browser, and it only is if switching away from broad mode
+// actually hands the wide permission back. Leaving it granted and merely
+// unregistering the content scripts would look identical in here and be a lie
+// on Chrome's own permissions screen.
+const WIDE = ['*://*/*'];
+const originsFor = (domain) => ['*://' + domain + '/*', '*://*.' + domain + '/*'];
+
+function renderMode() {
+  for (const radio of document.querySelectorAll('input[name="mode"]')) {
+    radio.checked = radio.value === settings.mode;
+  }
+  byId('modeLine').textContent =
+    settings.mode === 'broad'
+      ? 'Every site is read except what you exclude below.'
+      : 'Only sites you have added are read. Chrome enforces that, not this extension.';
+  byId('presetBlock').hidden = settings.mode !== 'broad';
+  byId('allowBlock').hidden = settings.mode !== 'strict';
+  if (settings.mode === 'strict') renderAllowlist();
+}
+
+function renderAllowlist() {
+  const list = byId('allowlist');
+  list.innerHTML = '';
+  if (!settings.allowlist.length) {
+    const empty = document.createElement('li');
+    empty.className = 'when';
+    empty.textContent = 'None yet. Open a site you want kept and add it from the extension button.';
+    list.appendChild(empty);
+    return;
+  }
+  for (const domain of settings.allowlist) {
+    const row = document.createElement('li');
+    row.className = 'site';
+    const name = document.createElement('span');
+    name.textContent = domain;
+    const remove = document.createElement('button');
+    remove.className = 'remove';
+    remove.textContent = 'remove';
+    remove.addEventListener('click', async () => {
+      remove.disabled = true;
+      // Taking the permission back first. If Chrome refuses, the site stays on
+      // the list rather than the list claiming something Chrome disagrees with.
+      await chrome.permissions.remove({ origins: originsFor(domain) }).catch(() => false);
+      await save({ allowlist: settings.allowlist.filter((entry) => entry !== domain) });
+      renderAllowlist();
+    });
+    row.append(name, remove);
+    list.appendChild(row);
+  }
+}
+
+document.querySelector('.modes').addEventListener('change', (event) => {
+  const next = event.target.value;
+  if (!next || next === settings.mode) return;
+
+  if (next === 'broad') {
+    // First statement in the handler: awaiting anything before a permission
+    // request spends the user gesture and Chrome refuses it.
+    chrome.permissions.request({ origins: WIDE }).then(async (granted) => {
+      if (!granted) {
+        // renderMode first, because it rewrites this line from the setting.
+        renderMode();
+        byId('modeLine').textContent =
+          'Chrome did not grant access to all sites, so nothing changed. Still only reading sites you add.';
+        return;
+      }
+      await save({ mode: 'broad' });
+      renderMode();
+    });
+    return;
+  }
+
+  // Broad to strict. The permission actually goes; that is the whole point.
+  chrome.permissions.remove({ origins: WIDE }).then(async () => {
+    await save({ mode: 'strict' });
+    renderMode();
+  });
+});
+
+renderMode();
 
 byId('presets').innerHTML = Object.entries(PRESET_LABELS)
   .map(
@@ -62,9 +147,24 @@ byId('size').addEventListener('change', (event) => {
   save({ sizeCapBytes: Number(event.target.value) * 1048576 }).then(refreshUsage);
 });
 
+// An archive that cannot be opened is not an empty one. Going quiet here, or
+// showing a zeroed meter, tells somebody their year of reading is gone when it
+// is sitting on disk untouched.
+function reportUnavailable(stats) {
+  byId('fill').style.width = '0%';
+  byId('usage').textContent =
+    'The archive could not be opened, so nothing here can be shown. ' +
+    'Nothing has been deleted.' + (stats && stats.detail ? ' (' + stats.detail + ')' : '');
+  byId('log').innerHTML = '<li class="when">Not available while the archive cannot be opened.</li>';
+  for (const id of ['sweep', 'export', 'wipe', 'import']) {
+    const button = byId(id);
+    if (button) button.disabled = true;
+  }
+}
+
 async function refreshUsage() {
-  const stats = await ask(MSG.STATS);
-  if (!stats || stats.error) return;
+  const stats = await ask(MSG.STATS).catch(() => null);
+  if (!stats || stats.error || stats.ready === false) return reportUnavailable(stats);
   const fraction = Math.min(1, stats.budget.fraction);
   const fill = byId('fill');
   fill.style.width = Math.max(1, fraction * 100) + '%';
@@ -75,14 +175,61 @@ async function refreshUsage() {
     pageCount(stats.docCount) + ', ' + mb(stats.usedBytes) + ' of ' + mb(stats.budget.sizeCapBytes),
     'room for roughly ' + capacity.toLocaleString(),
   ];
-  if (stats.exhaustsAt) {
+  if (stats.capUnmeetable) {
+    parts.push('more is pinned than the budget allows');
+  } else if (stats.atCap) {
+    parts.push('full, oldest pages being replaced');
+  } else if (stats.exhaustsAt) {
     parts.push('full around ' + new Date(stats.exhaustsAt).toLocaleDateString(undefined, { month: 'long', year: 'numeric' }));
   }
   byId('usage').textContent = parts.join(' · ');
+
+  // Point six of the migration policy, and the only place it is said. An
+  // upgrade that moved somebody's archive is worth one sentence and then never
+  // again, which is why acknowledging it clears the record.
+  const migrationNote = byId('migrationNote');
+  if (migrationNote && stats.lastMigration) {
+    const steps = (stats.lastMigration.steps || []).join(', ');
+    migrationNote.hidden = false;
+    migrationNote.textContent =
+      'The archive was upgraded on ' + new Date(stats.lastMigration.at).toLocaleDateString() +
+      (steps ? ' to ' + steps : '') + '. Everything was checked across and nothing was lost.';
+    ask(MSG.ACKNOWLEDGE, { what: 'lastMigration' });
+  }
+
+  const warnings = [];
+  if (stats.storageFull) {
+    warnings.push(
+      'This disk ran out of room on ' + new Date(stats.storageFull).toLocaleDateString() +
+      ', so pages were not kept. Freeing space, or lowering the size limit above, fixes it.'
+    );
+  }
+  if (stats.persisted === false) {
+    warnings.push(
+      'Chrome has not granted this archive persistent storage, which means it can be cleared ' +
+      'without warning when the disk gets full. Exporting now and then is worth doing.'
+    );
+  }
+  const storageNote = byId('storageNote');
+  if (storageNote) {
+    storageNote.hidden = warnings.length === 0;
+    storageNote.textContent = warnings.join(' ');
+  }
+
+  const clock = byId('clockNote');
+  if (clock) {
+    // Saying nothing would leave an unexplained gap in the storage log.
+    clock.hidden = !stats.clockProblem;
+    clock.textContent = stats.clockProblem
+      ? 'The last sweep left the age limit alone because ' + stats.clockProblem +
+        '. Nothing was removed by age. It will apply again at the next sweep.'
+      : '';
+  }
 }
 
 async function refreshLog() {
-  const entries = (await ask(MSG.LOG, { limit: 15 })) || [];
+  const entries = (await ask(MSG.LOG, { limit: 15 }).catch(() => [])) || [];
+  if (!Array.isArray(entries)) return;
   byId('log').innerHTML = entries.length
     ? entries
         .map(
@@ -108,16 +255,64 @@ byId('sweep').addEventListener('click', async () => {
   await refreshLog();
 });
 
+// Export walks the archive rather than asking for it in one piece, because a
+// full archive is hundreds of megabytes and neither a single message nor a
+// single JSON string will carry that. The chunks go into the Blob as separate
+// strings for the same reason.
+const EXPORT_BATCH = 200;
+
 byId('export').addEventListener('click', async () => {
-  const data = await ask(MSG.EXPORT);
-  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const note = byId('dataNote');
+  const progress = byId('progress');
+  const fill = byId('progressFill');
+  progress.hidden = false;
+
+  const chunks = [];
+  let written = 0;
+  let afterId = 0;
+  let header = null;
+
+  for (let guard = 0; guard < 100000; guard++) {
+    const slice = await ask(MSG.EXPORT, { afterId, limit: EXPORT_BATCH });
+    if (!slice || slice.error) {
+      progress.hidden = true;
+      note.textContent = 'The archive could not be read, so nothing was exported.';
+      return;
+    }
+    if (!header) {
+      header = slice;
+      chunks.push(
+        '{\n  "format": ' + JSON.stringify(slice.format) +
+        ',\n  "version": ' + JSON.stringify(slice.version) +
+        ',\n  "exportedAt": ' + JSON.stringify(slice.exportedAt) +
+        ',\n  "settings": ' + JSON.stringify(slice.settings) +
+        ',\n  "pages": [\n'
+      );
+    }
+    for (const page of slice.pages) {
+      chunks.push((written ? ',\n' : '') + '    ' + JSON.stringify(page));
+      written += 1;
+    }
+    if (header.total) {
+      fill.style.width = Math.min(100, Math.round((written / header.total) * 100)) + '%';
+      note.textContent = 'Exporting… ' + written + ' of ' + header.total;
+    }
+    if (slice.done || slice.lastId === null) break;
+    afterId = slice.lastId;
+  }
+  chunks.push('\n  ]\n}\n');
+
+  const blob = new Blob(chunks, { type: 'application/json' });
   const url = URL.createObjectURL(blob);
   const link = document.createElement('a');
   link.href = url;
   link.download = 'snow-mountain-' + new Date().toISOString().slice(0, 10) + '.json';
   link.click();
   URL.revokeObjectURL(url);
-  byId('dataNote').textContent = 'Exported ' + data.pages.length + ' pages.';
+
+  progress.hidden = true;
+  fill.style.width = '0%';
+  note.textContent = 'Exported ' + written + ' pages.';
 });
 
 // Imported in batches so a large archive shows progress rather than

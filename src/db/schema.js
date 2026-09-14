@@ -54,3 +54,31 @@ export function createStores(db) {
     }
   }
 }
+
+// What a stored page costs, beyond the text everyone thinks of.
+//
+// A page record is not its text: it also carries the URL twice (as captured
+// and normalised), the domain, the title, a four hundred character excerpt
+// that duplicates the start of the text, a content hash, five numbers, and the
+// field names themselves. That came to about five hundred bytes a page, which
+// is the difference between a storage meter that is right and one that is
+// thirteen percent optimistic.
+//
+// Counted from the fields rather than by serialising the record, because
+// serialising means running JSON.stringify over two hundred kilobytes of text
+// on every single capture to learn something about the other five hundred
+// bytes.
+const PAGE_FIELD_OVERHEAD = 130;
+
+export function pageRecordBytes(record, byteLength) {
+  return (
+    byteLength(record.text || '') +
+    byteLength(record.title || '') +
+    byteLength(record.excerpt || '') +
+    byteLength(record.url || '') +
+    byteLength(record.urlKey || '') +
+    byteLength(record.domain || '') +
+    byteLength(record.contentHash || '') +
+    PAGE_FIELD_OVERHEAD
+  );
+}

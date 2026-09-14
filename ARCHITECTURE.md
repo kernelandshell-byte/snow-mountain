@@ -33,6 +33,25 @@ Four consequences, all settled:
 
 The fallback is the quote plus position matching that Form Recovery already uses, so it is a port rather than a new problem.
 
+### Verified: a service worker cannot ask for persistent storage
+
+`StorageManager.persist()` is exposed to windows and not to workers. In the
+service worker `navigator.storage.persist` is `undefined`, while `persisted()`
+is there and answers, which is exactly the shape of a bug that never throws. An
+earlier version of this asked from the worker, which meant it never asked at
+all, silently, for ever.
+
+Asking therefore happens from the pages: setup, which everybody passes through
+once, and settings, which is where the answer is reported if it was refused.
+Whether Chrome says yes is Chrome's business and an automated profile is always
+refused, so what this extension is responsible for is asking from somewhere the
+question can be asked at all, and saying so when the answer is no. See
+`shared/persistence.js`.
+
+The manifest also asks for `unlimitedStorage`, which is the only mechanism an
+extension has for exemption from quota eviction, and which carries no
+permission warning.
+
 ### Unverified
 
 **Whether a service worker can spawn a dedicated `Worker`.** An earlier draft of the brief claimed indexing would run in a Web Worker. That was written before checking, and MV3 service workers have historically not been permitted to create dedicated workers. Nothing below depends on the answer, so this is worth knowing but not worth blocking on.
@@ -129,7 +148,32 @@ Key: `key`. Holds the schema version and the corpus statistics BM25 needs: docum
 
 ### `evictionLog`
 
-Key: auto increment. Fields: `at`, `reason` (`age` | `size` | `manual` | `siteRule`), `count`, `bytesFreed`, `sampleTitles`. This is what the storage log in the UI reads. Nothing is ever removed without a row here.
+Key: auto increment. Fields: `at`, `reason` (`age` | `size` | `both` |
+`manual` | `siteRule`), `count`, `bytesFreed`, `counts`, `rounds`. This is what
+the storage log in the UI reads. Nothing is ever removed without a row here.
+
+A row is written as each sweep round commits, so an interrupted sweep has still
+said what it removed; consecutive rounds with the same reason inside ten
+minutes merge into the row they started. One sweep is one event to the person
+reading it, and twenty rows of it would push a year of history out of a list
+that shows fifteen. The store is capped at `EVICTION_LOG_MAX` rows and trimmed
+from the oldest end, because this is the one list here that would otherwise
+grow for ever.
+
+### What the sweep and the one-off actions read
+
+Four reads exist so that nothing walks the whole archive to do a job
+proportional to a handful of pages.
+
+| Method | What it avoids |
+|---|---|
+| `oldestPages(limit, before)` | The sweep reading every page record, text included, once an hour |
+| `pageIdsByDomain(domain)` | "Never keep this site" scanning the archive from the popup while somebody waits |
+| `pageIdsBetween(from, to)` | The same for "forget this day" |
+| `listPagesFrom(afterId, limit)` | An export holding every page of text in one message and one string |
+
+`listPageMeta()` still exists and is still in the contract; nothing in the
+service worker calls it any more.
 
 ## Migration policy
 
@@ -142,7 +186,33 @@ This is the part the Session Buddy failure was about, so it is a rule, not a pre
 5. If the database version is newer than the running code expects, which is what a downgrade looks like, refuse to start rather than mangling anything.
 6. After a successful migration, tell the user once what happened.
 
-A migration test belongs in the suite from the day there is a second schema version: build a v1 database, run the upgrade, assert no loss, then assert that a forced failure leaves v1 intact.
+All six are `db/migrations.js` rather than a paragraph somebody remembers, and
+the reason points two to four are cheap is that IndexedDB gives them away if
+everything happens inside the one versionchange transaction: a throw aborts it,
+and an aborted versionchange transaction leaves the database exactly as it was,
+at its old version. So the transaction rule from the data model applies harder
+here -- every `await` resolves from a request belonging to that transaction,
+because awaiting anything else commits it half done, which is the precise shape
+of the bug this whole policy exists to prevent.
+
+`rebuildStore` is the general move: stage the transformed records in a scratch
+store, count them at both ends, let the caller sample the result, and only then
+delete the old store, recreate it with its new indexes, and copy back. A throw
+anywhere in that undoes all of it.
+
+There is still only schema version 1, so `MIGRATIONS` is empty and the
+machinery is driven by fixture migrations in `test:migration` instead --
+including one that throws part way, one whose verification refuses the result,
+and one that would quietly drop a third of the records. Each has to leave a
+version 1 database with every page, every posting and a working search. The day
+a second version is needed is a bad day to find out whether any of this works.
+
+Writing that suite found one thing immediately: `onblocked` used to reject the
+open. It is not a failure. It means another connection is still open, and the
+open carries on by itself the moment that one goes away -- which includes this
+extension's own handle, since `close()` returns before the connection has
+actually gone. Rejecting turned an upgrade that would have worked into one that
+never ran. It now rejects only if the other connection never lets go.
 
 ## Message contracts
 
@@ -188,11 +258,14 @@ one contract file run against both.
 | `readTerm(term)` | Every posting for a term across its buckets, sorted by id |
 | `readDocs(ids)` | `Map` of id to full page record |
 | `readStats()` | `{docCount, totalTokens, avgDocLength}` |
-| `listPageMeta()` | Lightweight rows for the eviction planner: id, domain, firstSeen, lastSeen, bytes, pinned. Deliberately excludes text |
-| `deletePages(ids)` | Removes pages and their postings, returns `{deleted, bytesFreed}` |
+| `listPageMeta()` | Lightweight rows: id, domain, firstSeen, lastSeen, bytes, pinned. Deliberately excludes text |
+| `oldestPages(limit, before)` | The same rows for the oldest pages by `lastSeen`, at most `limit`, optionally only those before a cutoff. What the sweep reads instead of the whole archive |
+| `pageIdsByDomain(domain)` / `pageIdsBetween(from, to)` | Ids only, off an index, for forgetting a site or a day |
+| `listPagesFrom(afterId, limit)` | Whole records by primary key, for walking the archive during an export |
+| `deletePages(ids, {batch, signal})` | Removes pages and their postings, returns `{deleted, bytesFreed}`. Split across transactions, so a large job keeps the progress it made and lets other work through |
 | `setPinned(id, pinned)` | Returns false rather than throwing for an id that is gone |
 | `listRecent(limit)` | Newest first |
-| `logEviction(entry)` / `readEvictionLog(limit)` | Newest first, insertion order as the tiebreak |
+| `logEviction(entry, {merge, now})` / `readEvictionLog(limit)` | Newest first, insertion order as the tiebreak. `merge` folds consecutive rounds of one sweep into a single row |
 | `close()` | |
 
 ## Pure core
@@ -229,7 +302,10 @@ problem rather than a rewrite.
   spike established.
 - **`eviction.js`** the budget: two caps that both apply, pinned pages
   exempt, plus the pace and projection that let the interface say "full
-  around March" instead of a percentage.
+  around March" instead of a percentage, and `clockLooksWrong`, which is what
+  stops a laptop that woke up in next year from deleting a year of reading.
+- **`content-change.js`** what to do when a page you already have comes back
+  much smaller, which is usually a paywall rather than an edit. See below.
 
 ## Search pipeline
 
@@ -241,61 +317,315 @@ problem rather than a rewrite.
 6. Load the top N page records and build snippets.
 7. Return with timing, because the timing goes in the UI and slow search is a bug we want visible.
 
+## The storage sweep
+
+Runs hourly on an alarm, and on demand from settings. Two caps apply at once
+and whichever binds first wins; pinned pages are exempt from both, which is
+what makes accepting a budget safe.
+
+It is written as rounds rather than one pass, for three separate reasons that
+all turned up under test at ten and thirty thousand pages.
+
+**It reads only what it might delete.** Only the oldest pages can be evicted by
+either rule, so a round reads the oldest `EVICTION_SCAN` pages by `lastSeen` --
+and when nothing is over the size cap, only those older than the retention
+cutoff. With nothing expired and nothing over the cap it reads nothing at all,
+which is what almost every hourly run should cost: **10ms against an archive of
+10,000 pages**. The version before this called `listPageMeta()`, which cursors
+every page record, text included, to pick six fields off each. `planEviction`
+is still the pure function that decides; it takes the archive's real
+`totalBytes` alongside the slice, because a slice cannot say how far over the
+cap things are.
+
+**It deletes a page at a time.** A single transaction covering thousands of
+pages holds a write lock for minutes, and Manifest V3 stops the worker whenever
+it likes: an all-or-nothing sweep that is always interrupted would achieve
+nothing, forever. Small transactions keep whatever finished, which is checked
+by stopping the worker in the middle of one and watching the count drop and
+stay dropped.
+
+**It lets go between them.** IndexedDB starts transactions in creation order,
+and one search is not one transaction -- it reads a posting list per word and
+then the pages, each created only after the last resolved. A sweep that never
+yields creates its next batch before a waiting search has created anything, so
+the search ends up behind the whole queue instead of behind one piece of it. A
+timer between batches fixes the ordering, and then the batch size decides the
+wait. The numbers are in `DELETE_BATCH`, and they include what the choice
+costs: one page at a time is about sixty percent slower to get through, in
+exchange for search latency five times better. That is the right way round,
+because search is what somebody is waiting for and the sweep is a background
+job with nothing waiting on it.
+
+A sweep also gives up its turn after `MAX_SWEEP_MS` rather than running until
+Chrome stops it. What is left is picked up by the next alarm, and the progress
+made is kept.
+
+**The clock.** A laptop that comes back from sleep set to next year makes every
+page look expired, and an hourly sweep would then delete a year of reading in
+one go with no way back. The archive cannot tell the time any better than the
+machine can, but it can notice that time has moved in a way an hourly alarm
+cannot account for: `lastSweepAt` is kept beside the settings, and if `now` is
+more than a week past it, or before it, the age rule is suspended for that run
+and settings says why. The size rule needs no clock and carries on regardless.
+A machine genuinely switched off for a fortnight pays one hour of delay for
+this.
+
+**The badge** is raised only for something that can be acted on. An archive
+sitting at its cap and replacing its oldest pages is not that: it stays at
+ninety-nine percent of the cap by design, and a permanently lit badge is one
+nobody reads. It is raised when the cap cannot be met at all, which in practice
+means more has been pinned than the cap allows, and when the disk itself has
+run out. Chrome clears the badge on restart, so a state that still cannot be
+acted on raises it again at startup -- a warning that only ever appears once is
+not a warning.
+
+The hourly alarm is also re-created at startup rather than only at install. An
+alarm survives a restart but not a profile that lost it, and an extension whose
+only sweep was scheduled once at install would quietly stop applying the budget
+for ever.
+
+## What a page costs
+
+The budget is the promise this extension makes about its footprint. "Use at
+most 500MB" is a sentence in the settings screen, the meter is on the popup,
+and eviction is enforced against the number behind both. If that number is not
+what is on disk then the promise, the meter and the sweep are all wrong
+together, and nothing in the interface can tell you.
+
+It was wrong. A page's `bytes` was `byteLength(text) + byteLength(title)` and
+nothing else, so the meter reported about a fifth of what the archive actually
+occupied, and a 500MB cap was really a 2.4GB one. The index is not a rounding
+error on an archive: measured against a realistic six thousand word vocabulary,
+the postings weigh nearly three times the page records they index. The setup
+screen's "room for roughly 34,000 pages", which comes from
+`BYTES_PER_PAGE_ESTIMATE` and has always assumed 15KB a page including its
+index, disagreed with the extension's own meter by a factor of five.
+
+`bytes` now covers all three parts of what a page costs:
+
+- **The page record**, which is not just its text: the URL twice, as captured
+  and normalised, the domain, the title, a four hundred character excerpt that
+  duplicates the start of the text, a content hash, five numbers and the field
+  names. About five hundred bytes a page. `schema.js` counts it from the
+  fields rather than by serialising the record, because serialising means
+  running `JSON.stringify` over two hundred kilobytes of text on every capture
+  to learn something about the other five hundred bytes.
+- **An entry in a posting list** for each distinct term, `{id, tf, pos}`.
+- **The record that holds those entries**, charged once, to whichever document
+  first mentions that term in that bucket, because that is the document whose
+  write creates it. Up to 255 others then join it for the cost of an entry
+  each, which is what actually happens on disk. Charging every document for the
+  whole record instead overstated a 2,000 page archive by 88%.
+
+The two index constants are solved against a measured archive rather than
+counted off the JSON shapes, because IndexedDB stores structured clones and
+keys, not the JSON they resemble. `test:storage` does the measuring, by
+serialising every record in both stores, and fails if the meter drifts more
+than a tenth from it at any of three corpus sizes, or if either number drifts
+as the archive grows, or if a page of an odd shape is badly mis-counted.
+
+| pages | meter | page records | index | total | the meter counts |
+|---|---|---|---|---|---|
+| 500 | 6.2MB | 1.7MB | 4.5MB | 6.2MB | 100% |
+| 1,000 | 12.4MB | 3.3MB | 9.1MB | 12.4MB | 100% |
+| 2,000 | 24.7MB | 6.6MB | 18.5MB | 25.1MB | 98% |
+
+`navigator.storage.estimate()` cannot settle any of this. It is approximate,
+includes things that are not ours, and reported 15KB and then 29.6KB a document
+for two runs of the same benchmark on the same corpus.
+
+## Settings are not to be trusted
+
+Settings come back from `chrome.storage.local`, and storage can hand back
+something that is not settings at all: a profile copied between machines, a
+half written value, an older build's shape, an extension interrupted mid save.
+
+This is not a tidiness concern. `retentionMonths` arriving as `null` made the
+retention cutoff `now`, which expired every page in the archive on the next
+hourly sweep -- all of it, silently, because a default parameter only applies
+to `undefined`. A settings file being slightly wrong must never be able to
+delete somebody's year of reading, so `normaliseSettings` checks every field
+where they are loaded, and `planEviction` guards the retention window again
+where it is used. Belt and braces, for the one operation here that cannot be
+undone.
+
+## A page that comes back smaller
+
+The usual revisit is harmless: an article gains a correction, a docs page gains
+a paragraph, and reindexing is right. One case is not. You read something in
+full, and weeks later the same URL serves three paragraphs and a subscribe
+button, or a consent wall, or a takedown stub. Reindexing that replaces what
+you read with what you are now allowed to read, and the one thing this
+extension exists to do stops working for exactly the pages most worth keeping.
+
+So a revisit that would replace a substantial page with one under forty percent
+of its length is treated as a revisit and nothing more: the visit is counted,
+the date moves, and the text that was read is kept. The cost is a page that
+really was shortened staying stale in the index. That is the right way round --
+a stale copy of something you read can still be found, and a lost one cannot.
+Keeping the page explicitly overrides all of it, because at that point the
+person can see what is on the screen and is saying to keep that.
+
+## Export
+
+Export is handed out a slice at a time, keyed by the last id seen, and the
+settings page assembles the file from those slices as separate strings in one
+`Blob`.
+
+The obvious version reads every page and returns one object. At fourteen
+kilobytes a page that is hundreds of megabytes in a single message and, once
+the receiving side calls `JSON.stringify` on it, in a single string as well.
+Neither survives a real archive, and the failure is an out of memory crash
+rather than an error anybody can act on.
+
+## One visual system
+
+Four surfaces used to carry four palettes, four type scales and four copies of
+the same reset, which is why they looked like three tools that happened to ship
+together. Everything shared now lives in `ui/shared/base.css`: colour, a single
+type scale, buttons, fields, the storage meter, the row list, and the callout
+used for the handful of things that have to be noticed rather than read.
+
+Two rules came out of doing it. Every text colour clears 4.5:1 against every
+surface it is allowed to sit on, which `test:presentation` checks and which
+caught the metadata grey at 3.4:1. And the selected search result is marked by
+an accent bar as well as a tint, because keyboard is the primary way through
+that list and a tint alone is not enough to tell it apart from the tint next to
+it.
+
+## Capture modes, and what makes strict mode true
+
+Strict mode is the one claim here that is meant to be enforced by Chrome rather
+than promised by us, and it only is if switching away from broad mode actually
+hands the wide host permission back. Leaving it granted and merely
+unregistering the content scripts looks identical from inside the extension and
+is a lie on Chrome's own permissions screen.
+
+So settings has the mode switch, switching to strict calls
+`permissions.remove()` before saving, switching back calls
+`permissions.request()` first and does not save if Chrome says no, and removing
+a site from the strict mode allowlist takes back that site's origins too.
+`permissions.request` has to be the first statement in its click handler:
+awaiting anything before it spends the user gesture and Chrome refuses.
+
 ## Performance, measured
 
-Numbers from `test/browser/run-benchmark.mjs` against real IndexedDB in
-Chromium, 1500 synthetic documents averaging 807 tokens, on an ordinary
-laptop. Synthetic text has a wider vocabulary than prose, so it is a
-pessimistic case for index size.
+Numbers from `test/browser/run-benchmark.mjs`, `run-longterm.mjs` and
+`run-delete-batch.mjs` against real IndexedDB in Chromium. Synthetic text has a
+wider vocabulary than prose, so the benchmark corpus is a pessimistic case for
+index size.
 
-| What | Measured |
-|---|---|
-| Indexing one page | 130ms p50, 174ms p95 |
-| Indexing, first fifth vs last fifth of the corpus | 113ms then 140ms, so close to flat |
-| Known item search, one rare word | 1.1ms p50, 3.8ms p95 |
-| One common word plus one selective word | 5.1ms p50, 6.6ms p95 |
-| Both words among the most common in the corpus | 51ms p50, 83ms p95 |
-| Phrase query on two common words | 46ms p50 |
-| Storage | about 15KB per document |
+Through the real service worker, on the long-term corpus of 340 token pages,
+which is closer to what a real archive holds:
 
-The shape worth knowing: search is fast for the queries people actually
-type, because one selective word is enough to bound the work. Queries made
-entirely of very common words are the slow case, and they are slow for a
-reason that no amount of tuning removes, which is that their posting lists
-contain almost every document. If that ever becomes a real complaint, the
-fix is to split positions into their own store so the common path never
-reads them, not to tune the scorer.
+| What | 4,000 pages | 10,000 pages | 30,000 pages |
+|---|---|---|---|
+| Bytes per page, meter | 5,898 | | |
+| Indexing one page, through import | 31ms | 34ms | 41ms |
+| **An hourly sweep with nothing to do** | **6ms** | **10ms** | **8ms** |
+| Eviction | 50ms per page removed | 47ms | |
+| Search during a sweep | 147ms p50, 246ms worst | 162ms p50, 240ms worst | |
 
-At 15KB per document, a 500MB budget holds roughly 30,000 pages.
+The idle sweep is the one worth staring at. It does not grow with the archive
+because it reads nothing when there is nothing to remove, which is what almost
+every hourly run is. The version that called `listPageMeta()` read the lot.
+
+The 10,000 and 30,000 page figures were measured before the storage accounting
+was corrected, so their bytes-per-page numbers counted text alone and are not
+repeated here; the timings are unaffected, since nothing about what the sweep
+reads depends on what the meter says. `test:storage` is where the size
+question is answered now.
+
+Benchmark corpus, 807 tokens per document:
+
+| What | 1,500 docs | 6,000 docs |
+|---|---|---|
+| Indexing one page | 110ms p50, 150ms p95 | 118ms p50, 159ms p95 |
+| Known item search, one rare word | 0.9ms p50, 1.5ms p95 | 1.1ms p50, 6.3ms p95 |
+| One common word plus one selective word | 4.6ms p50, 8.9ms p95 | 20ms p50, 30ms p95 |
+| Both words among the most common | 37ms p50, 69ms p95 | 74ms p50, 128ms p95 |
+| Phrase query on two common words | 42ms p50 | 65ms p50 |
+| Storage | 16KB per document | 14KB per document |
+
+Deleting 400 pages while searching every 80ms, which is what decides
+`DELETE_BATCH`:
+
+| batch | typical search | worst | sweep, alone |
+|---|---|---|---|
+| 10 | 520ms | 1237ms | 8s |
+| 3 | 224ms | 465ms | 10s |
+| 1 | 93ms | 253ms | 13s |
+
+The shape worth knowing about search: it is fast for the queries people
+actually type, because one selective word is enough to bound the work. Queries
+made entirely of very common words are the slow case, and they are slow for a
+reason no amount of tuning removes, which is that their posting lists contain
+almost every document. If that ever becomes a real complaint, the fix is to
+split positions into their own store so the common path never reads them, not
+to tune the scorer.
+
+Two things are deliberately flat rather than fast: the popup statistics and the
+recent list do not move between four and thirty thousand pages, because neither
+reads the archive. The statistics come from a running total kept in `meta` and
+one cursor step on an index; the recent list is a cursor on `lastSeen`.
+Anything on the path that opens the popup has to stay that way.
+
+Eviction is the expensive operation, at around fifty milliseconds a page,
+because removing a page recomputes its terms from its text instead of storing a
+term list -- which would cost roughly forty percent on top of the text,
+permanently, to make an hourly background job faster. That is the trade, and it
+is why the sweep is written to stay out of the way rather than to be quick.
+
+At around 13KB a page for a realistic vocabulary, counted properly, a 500MB
+budget holds roughly 38,000 pages, and `BYTES_PER_PAGE_ESTIMATE` is
+deliberately a little pessimistic at 15KB so the interface promises fewer
+pages than it delivers.
+
+Scale has been run to 30,000 pages: 30,000 seeded through the real import path,
+index invariants consistent, an idle sweep at 8ms. The eviction phases at that
+size were interrupted by the machine rather than by anything the extension did,
+and are proven at 10,000.
 
 ## File layout
 
 ```
 manifest.json
 src/
-  background/
-    service-worker.js      coordinator, omnibox, alarms, the only writer
+  background/              the only context that writes to the database
+    service-worker.js      every listener, registered synchronously; nothing else
+    store-handle.js        the one connection, and the rules for keeping it
+    content-scripts.js     registering where the extension may watch
+    capture.js             candidate to stored page
+    open-result.js         opening a result, and what to say about this tab
+    archive.js             allow, block, export, import, forget, wipe
+    maintenance.js         the sweep, and the numbers the meter shows
   content/
     observer.js            dwell, scroll, password fields; a sensor only
   core/                    pure, no chrome.*, fully tested
     capture-policy.js  read-heuristic.js  tokenizer.js  morphology.js
     url-key.js         hash.js            bm25.js      query-parser.js
-    snippet.js         text-fragment.js   eviction.js
-    index-writer.js    index-reader.js
+    snippet.js         text-fragment.js   eviction.js  content-change.js
+    index-writer.js    index-reader.js    quote-match.js
   db/
     schema.js              stores, indexes, version
+    migrations.js          the policy, as code
     memory-store.js        reference implementation, used by tests
     idb-store.js           the real one
   shared/
-    messages.js  settings.js  presets.js  constants.js
+    messages.js  settings.js  presets.js  constants.js  format.js
+    persistence.js         asking Chrome not to throw the archive away
   ui/
-    search/  popup/  options/
+    shared/base.css        one palette, one type scale, one set of controls
+    shared/when.js         "last month", not "1 months ago"
+    setup/  search/  popup/  options/
 test/
   *.test.js                the Node suite
   store-contract.js        one contract, run against both stores
   fixtures/corpus.js       24 documents for the relevance harness
   browser/
-    run-store-contract.mjs  run-e2e.mjs  run-ui-smoke.mjs  run-benchmark.mjs
+    invariants.mjs          what must be true whatever happened
+    harness.mjs             a copy of the extension with the grant shortcut
+    run-*.mjs               one file per suite; see Testing
 spikes/
   text-fragment/           the experiment that settled jump to passage
 ```
@@ -305,9 +635,8 @@ Nothing except the service worker writes to the database.
 
 ## Build order
 
-Everything through step 10 is done. Steps 2 to 4 needed no browser at all,
-which is what made the test suite worth having before any of the fiddly
-parts existed.
+Everything here is done. Steps 2 to 4 needed no browser at all, which is what
+made the test suite worth having before any of the fiddly parts existed.
 
 1. ~~The text fragment spike~~ (see the assumption log)
 2. ~~`core/` with tests~~
@@ -323,6 +652,18 @@ parts existed.
 
 12. ~~Import, and the current page controls in the popup~~
 13. ~~Search filters, sorting and paging~~
+14. ~~A year put through it: both caps biting, restarts, a worker stopped
+    mid sweep, sixty days of ordinary use~~
+15. ~~What the browser and the operating system do to it: a wrong clock, a
+    database from a newer build, settings that are not settings~~
+16. ~~The migration policy, written as code and driven by migrations that
+    fail~~
+17. ~~The limits: an export bigger than a message, persistent storage, a full
+    disk, housekeeping that has to survive a restart~~
+18. ~~Switching capture modes, and making strict mode true~~
+
+Left for the release checklist: icons, LICENSE, a privacy policy, the threat
+model written down, a name, and store listing assets.
 
 What is deliberately not done:
 
@@ -341,7 +682,7 @@ What is deliberately not done:
 
 ## Testing
 
-Ten suites. One runs in Node, the rest drive a real Chromium with the
+Twenty-two suites. One runs in Node, the rest drive a real Chromium with the
 extension loaded.
 
 **`npm test`** is the Node suite: every pure module, the store contract
@@ -368,11 +709,16 @@ The browser suites need Playwright (`npm install --no-save playwright`):
 | `test:resilience` | storage deleted underneath, a worker killed mid write, a browser restart |
 | `test:consistency` | randomised churn, then the invariants that must always hold |
 | `test:presentation` | dark mode, a 360px window, and using it without a mouse |
+| `test:longterm` | a year of accumulation, both caps biting, sixty days of ordinary use, and four browser restarts |
+| `test:hostile` | a wrong clock, a database from a newer build, two tabs filing one page at once, corrupted settings, an article that has since gone behind a paywall |
+| `test:migration` | the migration policy, including three migrations that fail in different ways |
+| `test:limits` | an export bigger than a message, persistent storage, a full disk, an alarm a profile lost |
+| `test:storage` | whether the meter is telling the truth about what is on disk |
 
-`run-benchmark.mjs` is not a test. It answers "what does this cost", and it
+`run-benchmark.mjs` and `run-delete-batch.mjs` are not tests. It answers "what does this cost", and it
 is where the numbers above come from.
 
-Four of these deserve explaining.
+Eight of these deserve explaining.
 
 **The adversarial suite** goes looking for trouble rather than confirming
 the happy path: right to left text, a language without spaces between words,
@@ -391,6 +737,50 @@ of every page is findable while nothing else is. That last pair is the one
 that matters. An index that has drifted does not throw; it just quietly
 stops finding things, or starts returning pages that no longer contain the
 word.
+
+**The long-term suite** is the only one that answers what a year does to it.
+It seeds pages spread over fourteen months through the real import path, so
+they can be backdated, then makes both caps actually bite: the retention limit
+with one old page pinned, one left to expire and one revisited today, so the
+sweep has to tell them apart; then the size cap, shrunk under what is stored.
+In between it closes and reopens the browser four times, kills the worker in
+the middle of a sweep, and searches while a sweep is deleting. Then sixty
+simulated days of a dozen pages in and a sweep after each, which is the state a
+real archive spends its life in and the only place a slow leak in the index
+would show. The invariants are checked after every single sweep. It found the
+sweep reading the whole archive once an hour, an all-or-nothing delete
+transaction that an interrupted worker rolled back to nothing, searches waiting
+seventeen seconds behind a sweep, and a warning badge permanently lit by an
+archive doing exactly what it was told.
+
+**The hostile suite** is about the things the browser and the operating system
+do to it rather than the things a person does. A laptop that comes back from
+sleep with next year's clock. A database left behind by a newer build, which is
+what installing an older one over it looks like. Two tabs finishing in the same
+millisecond and both filing the same URL, against a unique index. Settings that
+come back from storage as a string. A page three times the size cap, and one
+word repeated fifteen thousand times. An article that has since gone behind a
+paywall. It found that a `retentionMonths` of `null` expired the entire
+archive, that a null preset list took the capture policy down with it, and that
+an archive which could not be opened was described to the user as an empty one
+-- "nothing kept yet", after a year -- which is exactly how somebody decides
+the extension is broken and throws away an archive that was fine.
+
+**The migration suite** drives the policy with fixture migrations, because
+there is only one schema version and waiting for a second one would mean
+finding out whether the policy works on the day it matters. Three of its
+migrations fail on purpose, and each has to leave a version 1 database with
+every page, every posting and a working search.
+
+**The limits suite** covers the failures that do not happen on a test archive
+and do happen on a real one: an export too big for one message, storage Chrome
+has not promised to keep, a disk with nothing left on it, and an hourly alarm a
+profile lost. It found that `navigator.storage.persist()` was being called from
+a service worker, where it does not exist.
+
+**The storage suite** asks the one question the storage meter cannot be trusted
+to answer about itself, and found the meter counting a fifth of what was on
+disk. See "What a page costs".
 
 Two notes on how these are built.
 

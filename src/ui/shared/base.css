@@ -1,0 +1,200 @@
+/* The one visual system.
+ *
+ * Four surfaces used to carry four palettes, four type scales and four copies
+ * of the same reset, which is why they looked like three different tools that
+ * happened to ship together. Everything shared lives here; each page's own
+ * stylesheet holds only what is genuinely particular to it.
+ *
+ * The character this is refining rather than replacing: quiet, text first, no
+ * chrome for its own sake. A tool for finding something you already read
+ * should get out of the way of the thing you are reading.
+ */
+
+:root {
+  /* Warm off-white rather than pure white, because this is a reading surface
+     and a page of text on #fff is glarier than it needs to be. */
+  --bg: #fbfbfa;
+  --surface: #ffffff;
+  --sunken: #f4f4f1;
+
+  --fg: #16160f;
+  /* Every text colour here clears 4.5:1 against every surface it is allowed
+     to sit on -- checked in test:presentation, which is where the previous
+     metadata grey was caught at 3.4:1. "Quiet" is a matter of weight and size
+     as much as of colour, and a colour nobody can read is not quiet. */
+  --muted: #5f5f58;   /* secondary text: 6.2:1 */
+  --faint: #6e6e66;   /* metadata, the quietest allowed: 5.0:1, 4.7:1 on sunken */
+
+  --line: #e4e4de;
+  --line-strong: #d2d2ca;
+
+  --accent: #1f6f5c;
+  --accent-soft: #eef3f1;
+  --accent-fg: #ffffff;
+  --mark: #fbe38e;
+  --warn: #9a5b08;
+  --warn-soft: #fdf3e3;
+  --danger: #a33a2e;
+
+  --radius-sm: 6px;
+  --radius: 9px;
+  --radius-lg: 12px;
+
+  /* One type scale, used everywhere. */
+  --t-micro: 11.5px;
+  --t-small: 12.5px;
+  --t-meta: 13px;
+  --t-body: 14.5px;
+  --t-lead: 15.5px;
+  --t-title: 17px;
+  --t-head: 21px;
+  --t-display: 26px;
+
+  --stack: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --mono: ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #131417;
+    --surface: #1b1d21;
+    --sunken: #101113;
+
+    --fg: #e9e9e4;
+    --muted: #a5a59d;   /* 7.4:1 */
+    --faint: #8f8f87;   /* 5.7:1, 5.2:1 on surface */
+
+    --line: #2b2d32;
+    --line-strong: #3a3d44;
+
+    --accent: #63bda2;
+    --accent-soft: #1c2a27;
+    --accent-fg: #10221d;
+    --mark: #6d5a20;
+    --warn: #d9a24a;
+    --warn-soft: #2a2115;
+    --danger: #d9705f;
+  }
+}
+
+* { box-sizing: border-box; }
+
+/* Checkboxes and radios are the only controls Chrome paints in its own blue,
+   which on a green surface reads as somebody else's interface embedded in
+   this one. One line puts them in the palette. */
+input[type="checkbox"], input[type="radio"] { accent-color: var(--accent); }
+
+/* An author rule that sets display wins over the user agent's [hidden] rule,
+   so anything hidden by attribute has to be told twice. */
+[hidden] { display: none !important; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--fg);
+  font: var(--t-lead)/1.6 var(--stack);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Focus that is actually visible, on everything, rather than on the two
+   controls somebody remembered. Keyboard use is a stated requirement of this
+   project and an invisible focus ring quietly breaks it. */
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 3px;
+}
+:focus:not(:focus-visible) { outline: none; }
+
+h1 { font-size: var(--t-display); line-height: 1.22; letter-spacing: -0.012em; margin: 0 0 12px; }
+h2 { font-size: var(--t-head); line-height: 1.3; margin: 0 0 10px; }
+
+/* The small caps section label used on the settings and popup surfaces. */
+.eyebrow {
+  font-size: var(--t-micro); text-transform: uppercase; letter-spacing: .06em;
+  font-weight: 600; color: var(--faint); margin: 0 0 8px;
+}
+
+.note { color: var(--muted); font-size: var(--t-meta); margin: 8px 0 0; }
+.note.warn { color: var(--warn); }
+
+/* A notice that has to be noticed, as opposed to a note that is just quiet
+   explanation. Used for a full disk, refused persistence, a clock that looked
+   wrong, and an upgrade that moved somebody's archive. */
+.callout {
+  margin: 12px 0 0; padding: 10px 12px;
+  border: 1px solid var(--line); border-left: 3px solid var(--faint);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--muted); font-size: var(--t-meta);
+}
+.callout.warn { border-left-color: var(--warn); background: var(--warn-soft); color: var(--warn); }
+.callout.good { border-left-color: var(--accent); background: var(--accent-soft); color: var(--muted); }
+
+button { font: inherit; cursor: pointer; border-radius: var(--radius-sm); }
+
+.primary {
+  font-weight: 600; color: var(--accent-fg); background: var(--accent);
+  border: 1px solid var(--accent); padding: 9px 16px; border-radius: var(--radius);
+}
+.primary:hover { filter: brightness(1.06); }
+.primary:disabled { opacity: .5; cursor: default; filter: none; }
+
+.secondary {
+  background: var(--surface); color: var(--fg); border: 1px solid var(--line-strong);
+  padding: 8px 14px; border-radius: var(--radius);
+}
+.secondary:hover { border-color: var(--faint); }
+.secondary:disabled { opacity: .5; cursor: default; border-color: var(--line); }
+
+.danger {
+  background: transparent; color: var(--danger); border: 1px solid var(--danger);
+  padding: 8px 14px; border-radius: var(--radius);
+}
+.danger:hover { background: var(--danger); color: var(--accent-fg); }
+.danger:disabled { opacity: .5; cursor: default; background: transparent; color: var(--danger); }
+
+.link {
+  border: 0; background: none; color: var(--accent);
+  font: inherit; padding: 0; text-align: left;
+}
+.link:hover { text-decoration: underline; text-underline-offset: 2px; }
+
+input, select, textarea {
+  font: inherit; color: var(--fg); background: var(--surface);
+  border: 1px solid var(--line-strong); border-radius: var(--radius-sm);
+  padding: 7px 9px;
+}
+textarea { width: 100%; font-family: var(--mono); font-size: var(--t-small); line-height: 1.55; }
+
+/* The storage meter, on both the popup and the settings page. */
+.bar {
+  height: 5px; background: var(--line); border-radius: 3px;
+  overflow: hidden; margin-bottom: 7px;
+}
+.bar span { display: block; height: 100%; background: var(--accent); transition: width .25s ease; }
+.bar span.warn { background: var(--warn); }
+
+/* A list of rows with a rule between them: exclusion bundles, capture modes,
+   the storage log, the allowlist. */
+.rows label {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 2px; border-bottom: 1px solid var(--line);
+}
+.rows label:first-child { border-top: 1px solid var(--line); }
+.rows .desc { color: var(--faint); font-size: var(--t-meta); margin-left: auto; text-align: right; }
+
+.log { list-style: none; padding: 0; margin: 10px 0 0; }
+.log li { padding: 8px 2px; border-bottom: 1px solid var(--line); font-size: var(--t-meta); }
+.log li:first-child { border-top: 1px solid var(--line); }
+.log .when { color: var(--faint); }
+
+code, kbd { font-family: var(--mono); font-size: var(--t-small); }
+code {
+  background: var(--sunken); border: 1px solid var(--line);
+  border-radius: 4px; padding: 0 4px;
+}
+kbd {
+  border: 1px solid var(--line-strong); border-bottom-width: 2px;
+  border-radius: 5px; padding: 1px 6px;
+}

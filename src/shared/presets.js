@@ -40,10 +40,16 @@ export const PRESET_LABELS = {
   searchResults: { title: 'Search results pages', example: 'Google, Bing, DuckDuckGo' },
 };
 
-export function rulesFor(presets = {}, custom = []) {
+// Defensive about both arguments. Settings are normalised before they get
+// here, but this is the function that decides what is never read, and a
+// throw inside it would take the whole capture policy down with it.
+export function rulesFor(presets, custom) {
   const out = [];
-  for (const [name, enabled] of Object.entries(presets)) {
-    if (enabled && PRESETS[name]) out.push(...PRESETS[name]);
+  if (presets && typeof presets === 'object') {
+    for (const [name, enabled] of Object.entries(presets)) {
+      if (enabled && PRESETS[name]) out.push(...PRESETS[name]);
+    }
   }
-  return [...out, ...custom];
+  const extra = Array.isArray(custom) ? custom.filter((rule) => typeof rule === 'string' && rule) : [];
+  return [...out, ...extra];
 }

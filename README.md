@@ -29,27 +29,47 @@ paragraph that matched.
   is not, and one click to keep it, forget it, or never keep that site again
 - Settings with exclusion bundles, custom rules, the storage meter, the
   deletion log, export, import and delete everything
-- 159 Node tests and 393 browser checks across seventeen suites, including
+- A storage budget with two caps, an hourly sweep that reads only what it
+  might delete, pinning that eviction can never touch, a storage log, a clock
+  guard so a laptop that wakes up in next year cannot delete a year of reading,
+  and a meter that counts the index as well as the text, because the index is
+  most of an archive
+- A migration policy that is code rather than a paragraph: build the new
+  shape alongside the old, verify it, and only then give up the old one, all
+  inside one transaction so a failure leaves the archive exactly as it was
+- 177 Node tests and 625 browser checks across twenty-two suites, including
   extraction against 32 real page snapshots, the page shapes that are not
   articles at all, a resilience suite that deletes the database underneath a
-  running extension, and a consistency check that churns the index and then
-  verifies it has not drifted
+  running extension, a consistency check that churns the index and then
+  verifies it has not drifted, a year of accumulation with both caps biting,
+  and a migration suite whose failing migrations all have to leave the old
+  database untouched
 
 ## Tests
 
 ```
-npm test                              # 138 Node tests, no dependencies, about a second
+npm test                              # 177 Node tests, no dependencies, about two seconds
 npm install --no-save playwright      # only needed for the browser suites
 
 npm run test:browser                  # the store contract against real IndexedDB
 npm run test:e2e                      # capture, search, pin, forget, evict, through the real worker
 npm run test:extraction               # Readability against a page full of clutter
 npm run test:setup                    # the setup flow, including a refused permission
-npm run test:options                  # settings, export and delete everything
+npm run test:options                  # settings, capture modes, export and delete everything
+npm run test:migration                # the migration policy, including migrations that fail
+npm run test:limits                   # export at scale, persistence, a full disk, restarts
+npm run test:hostile                  # a wrong clock, a newer database, settings that are not settings
+npm run test:storage                  # whether the storage meter is telling the truth
+npm run test:longterm                 # a year of accumulation; takes a while
 node test/browser/run-ui-smoke.mjs    # the search page; --screenshot out.png to look at it
 
 node test/browser/run-benchmark.mjs 1500   # what it costs; not a test
+npm run bench:delete                       # why DELETE_BATCH is one; not a test
 ```
+
+`npm run test:longterm [pages] [days]` and `npm run test:limits [pages]` both
+take a size. The defaults are 4,000 pages and 700; the numbers in
+`ARCHITECTURE.md` come from runs at 10,000 and 30,000.
 
 ## Loading it
 

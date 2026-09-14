@@ -1,51 +1,65 @@
-:root {
-  --bg: #fbfbfa; --fg: #1a1a19; --muted: #6b6b66;
-  --line: #e3e3df; --accent: #1f6f5c; --warn: #b45309; --danger: #a33a2e; --card: #fff;
-}
-@media (prefers-color-scheme: dark) {
-  :root {
-    --bg: #16171a; --fg: #e8e8e4; --muted: #9a9a94;
-    --line: #2a2c30; --accent: #5eb79c; --warn: #d19a4a; --danger: #d9705f; --card: #1c1e22;
-  }
-}
-* { box-sizing: border-box; }
+@import url("../shared/base.css");
 
-/* An author rule that sets display wins over the user agent's [hidden]
-   rule, so anything hidden by attribute has to be told twice. */
-[hidden] { display: none !important; }
+/* The popup. Three hundred pixels wide, opened for a couple of seconds at a
+ * time, so everything here is about answering one question at a glance: is
+ * the page in front of me being kept, and if not, why not.
+ */
+
 body {
-  width: 304px; margin: 0; padding: 14px;
-  background: var(--bg); color: var(--fg);
-  font: 13px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif;
+  width: 312px; padding: 14px;
+  font-size: var(--t-meta); line-height: 1.5;
 }
-h2 { font-size: 11px; text-transform: uppercase; letter-spacing: .04em;
-     color: var(--muted); margin: 16px 0 6px; }
-.primary {
-  width: 100%; padding: 9px; font: inherit; font-weight: 600;
-  color: #fff; background: var(--accent); border: 0; border-radius: 7px; cursor: pointer;
+
+.primary { width: 100%; padding: 10px; border-radius: var(--radius); }
+
+/* --- the page in front of you -------------------------------------------- */
+
+.page {
+  margin-top: 14px; padding: 12px;
+  border: 1px solid var(--line); border-radius: var(--radius);
+  background: var(--surface);
 }
-.page { margin-top: 14px; padding: 11px 12px; border: 1px solid var(--line);
-        border-radius: 8px; background: var(--card); }
-.status { margin: 0; font-weight: 600; }
+.status { margin: 0; font-weight: 600; font-size: var(--t-body); line-height: 1.4; }
 .status.dim { font-weight: 400; color: var(--muted); }
-.host { color: var(--muted); font-size: 11.5px; margin: 3px 0 0;
-        overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.actions { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 9px; }
+.host {
+  color: var(--faint); font-size: var(--t-small); margin: 4px 0 0;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+
+.actions { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 11px; }
 .actions:empty { display: none; }
 .actions button {
-  font: inherit; font-size: 12px; padding: 5px 9px; border-radius: 6px;
-  border: 1px solid var(--line); background: var(--bg); color: var(--fg); cursor: pointer;
+  font-size: var(--t-small); padding: 5px 10px; border-radius: var(--radius-sm);
+  border: 1px solid var(--line-strong); background: var(--bg); color: var(--fg);
 }
-.actions button.go { border-color: var(--accent); color: var(--accent); }
-.actions button.no { border-color: var(--line); color: var(--danger); }
-.budget { margin-top: 12px; }
-.bar { height: 4px; background: var(--line); border-radius: 3px; overflow: hidden; }
-.bar span { display: block; height: 100%; background: var(--accent); }
-.bar span.warn { background: var(--warn); }
+.actions button:hover { border-color: var(--faint); }
+.actions button.go { border-color: var(--accent); color: var(--accent); font-weight: 600; }
+.actions button.no { color: var(--danger); border-color: var(--line-strong); }
+.actions button.no:hover { border-color: var(--danger); }
+.actions button:disabled { opacity: .5; cursor: default; }
+
+/* --- the budget ----------------------------------------------------------- */
+
+.callout { font-size: var(--t-small); line-height: 1.45; }
+
+.budget { margin-top: 16px; }
+.budget .host { margin-top: 0; white-space: normal; }
+
+/* --- recently kept -------------------------------------------------------- */
+
+h2 {
+  font-size: var(--t-micro); text-transform: uppercase; letter-spacing: .06em;
+  font-weight: 600; color: var(--faint); margin: 18px 0 2px;
+}
 .recent { list-style: none; margin: 0; padding: 0; }
-.recent li { padding: 5px 0; border-bottom: 1px solid var(--line); }
-.recent a { color: var(--fg); text-decoration: none; display: block;
-            overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.recent a:hover { text-decoration: underline; }
-.row { display: flex; justify-content: space-between; margin-top: 12px; }
-.link { border: 0; background: 0; color: var(--accent); font: inherit; cursor: pointer; padding: 0; }
+.recent li { border-bottom: 1px solid var(--line); }
+.recent li.host { padding: 8px 0; white-space: normal; }
+.recent a {
+  color: var(--fg); text-decoration: none; display: block; padding: 7px 0;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.recent a:hover { text-decoration: underline; text-underline-offset: 2px; }
+
+.row { display: flex; justify-content: space-between; align-items: center; margin-top: 14px; }
+.row .link { font-size: var(--t-small); color: var(--muted); }
+.row .link:hover { color: var(--accent); }

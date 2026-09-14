@@ -12,19 +12,40 @@
 
       <section>
         <h2>What gets read</h2>
+        <div class="rows modes">
+          <label><input type="radio" name="mode" value="broad" />
+            <span>Everything except what I exclude</span>
+            <span class="desc">needs access to all sites</span></label>
+          <label><input type="radio" name="mode" value="strict" />
+            <span>Only sites I add</span>
+            <span class="desc">Chrome enforces this, not this extension</span></label>
+        </div>
         <p id="modeLine" class="note"></p>
-        <div id="presets" class="rows"></div>
-        <label class="field block">
-          <span>Never read these, one pattern per line</span>
+
+        <div id="allowBlock" hidden>
+          <h3 class="sub">Sites you have added</h3>
+          <ul id="allowlist" class="log"></ul>
+          <p class="note">Removing one here also takes back Chrome's permission for it, so this extension can no longer read that site at all.</p>
+        </div>
+
+        <div id="presetBlock">
+          <h3 class="sub">Never read these kinds of site</h3>
+          <div id="presets" class="rows"></div>
+          <label class="field block">
+          <span>And never these, one pattern per line</span>
           <textarea id="rules" rows="5" spellcheck="false" placeholder="example.com&#10;*.internal.example&#10;example.com/private/*"></textarea>
         </label>
         <p class="note">Patterns match a host and its subdomains. <code>*.example.com</code> matches only subdomains, and a trailing <code>/path/*</code> narrows it further.</p>
+        </div>
       </section>
 
       <section>
         <h2>How much is kept</h2>
         <div class="bar"><span id="fill"></span></div>
         <p id="usage" class="note"></p>
+        <p id="clockNote" class="callout" hidden></p>
+        <p id="storageNote" class="callout warn" hidden></p>
+        <p id="migrationNote" class="callout good" hidden></p>
         <label class="field"><span>Keep pages for</span>
           <select id="months">
             <option value="6">6 months</option>
@@ -59,7 +80,7 @@
           <button id="wipe" class="danger">Delete everything</button>
         </div>
         <input id="importFile" type="file" accept="application/json,.json" hidden />
-        <div id="progress" class="bar" hidden><span id="progressFill"></span></div>
+        <div id="progress" class="progress" hidden><span id="progressFill"></span></div>
         <p id="dataNote" class="note"></p>
       </section>
 

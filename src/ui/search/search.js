@@ -1,4 +1,5 @@
 import { MSG } from '../../shared/messages.js';
+import { whenText } from '../shared/when.js';
 import { phraseFrom } from '../../core/text-fragment.js';
 
 const PAGE_SIZE = 20;
@@ -46,24 +47,21 @@ function highlight(text, ranges) {
   return parts.join('');
 }
 
-function whenText(timestamp) {
-  const days = Math.floor((Date.now() - timestamp) / 86400000);
-  if (days <= 0) return 'today';
-  if (days === 1) return 'yesterday';
-  if (days < 30) return days + ' days ago';
-  if (days < 365) return Math.round(days / 30) + ' months ago';
-  return Math.round(days / 365) + ' years ago';
-}
 
 function cardFor(row, index) {
   return (
+    // The pin comes last in the markup and is lifted into the corner by CSS.
+    // On a narrow window it stays where it is, after the result rather than
+    // ahead of its own title, which is also the order anything reading this
+    // aloud should hear it in.
     '<article class="' + (index === selected ? 'selected' : '') + '" data-index="' + index + '">' +
-    '<button class="pin" data-pin="' + index + '" aria-pressed="' + (row.pinned ? 'true' : 'false') + '">' +
-    (row.pinned ? 'pinned' : 'pin') + '</button>' +
     '<h2><a href="#" data-open="' + index + '">' + escapeHtml(row.title || row.url) + '</a></h2>' +
     '<p class="source">' + escapeHtml(row.domain || '') +
     '<span class="dot">·</span>' + whenText(row.lastSeen) + '</p>' +
     '<p class="snippet">' + highlight(row.snippet.text, row.snippet.ranges) + '</p>' +
+    '<button class="pin" data-pin="' + index + '" aria-pressed="' + (row.pinned ? 'true' : 'false') + '"' +
+    ' title="Pinned pages are never removed to make room">' +
+    (row.pinned ? 'Pinned' : 'Pin') + '</button>' +
     '</article>'
   );
 }
@@ -112,7 +110,10 @@ async function run({ append = false } = {}) {
     filters.hidden = true;
     moreButton.hidden = true;
     meta.textContent = '';
-    list.innerHTML = '<p class="empty">Type a phrase you remember.</p>';
+    list.innerHTML =
+      '<p class="empty"><strong>Type a phrase you remember.</strong>' +
+      'Any words from the page, in any order. Add <code>site:example.com</code> to narrow it ' +
+      'down, or put "quotation marks" around an exact phrase.</p>';
     return;
   }
 
@@ -134,7 +135,7 @@ async function run({ append = false } = {}) {
     moreButton.hidden = true;
     meta.textContent = '';
     list.innerHTML =
-      '<p class="empty"><strong>Search is not available right now.</strong><br />' +
+      '<p class="empty"><strong>Search is not available right now.</strong>' +
       'The extension could not reach its storage. Reloading this page usually fixes it.</p>';
     return;
   }
@@ -150,7 +151,9 @@ async function run({ append = false } = {}) {
     selected = 0;
     list.innerHTML = rows.length
       ? rows.map(cardFor).join('')
-      : '<p class="empty"><strong>Nothing matched.</strong><br />Try fewer words, or a phrase you are more sure of.</p>';
+      : '<p class="empty"><strong>Nothing matched.</strong>' +
+        'Try fewer words, or the one word you are most sure of. Only pages read since this ' +
+        'extension was set up are in here.</p>';
   }
 
   renderMeta(result);
@@ -229,7 +232,7 @@ list.addEventListener('click', async (event) => {
     await ask(MSG.PIN, { id: row.id, pinned: next });
     row.pinned = next;
     pinTarget.setAttribute('aria-pressed', next ? 'true' : 'false');
-    pinTarget.textContent = next ? 'pinned' : 'pin';
+    pinTarget.textContent = next ? 'Pinned' : 'Pin';
   }
 });
 

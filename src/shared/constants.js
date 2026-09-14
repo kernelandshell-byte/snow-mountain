@@ -60,3 +60,54 @@ export const DEFAULTS = {
   scrollDepth: 0.35,
   shortPageWords: 400,
 };
+
+// How many of the oldest pages one eviction round reads. Only the oldest can
+// be evicted by either rule, so the sweep never needs the rest, and reading
+// the whole archive once an hour to discover it has no work is the difference
+// between a background job and a background problem.
+export const EVICTION_SCAN = 500;
+
+// Pages deleted per transaction during a sweep. One, which looks absurd until
+// you measure it.
+//
+// IndexedDB starts transactions in creation order, and one search is not one
+// transaction: it reads a posting list per word and then the pages, each
+// created only after the last resolved. A sweep that never yields creates its
+// next batch before a waiting search has created anything, so the search ends
+// up behind the whole queue rather than behind one piece of it. The pause
+// between batches fixes the ordering, and then the batch size decides the wait.
+//
+// Deleting 400 pages while searching every 80ms, measured by
+// test/browser/run-delete-batch.mjs:
+//
+//   batch   typical search   worst   sweep, alone
+//      10            520ms  1237ms             8s
+//       3            224ms   465ms            10s
+//       1             93ms   253ms            13s
+//
+// Unlike the latency, the throughput is not free: one page at a time is about
+// sixty percent slower to get through. That is the right way round. Search is
+// the thing somebody is waiting for, and the sweep is a background job on an
+// hourly alarm with nothing waiting on it -- and because deletion is split
+// across transactions, a sweep that runs out of time keeps what it did and the
+// next alarm carries on. A person who halves their size cap gets a sweep
+// spread over several hours instead of a browser that stutters for one.
+export const DELETE_BATCH = 1;
+
+// One sweep is one event to the person reading the storage log, even when it
+// goes round twenty times. Consecutive rounds with the same reason inside this
+// window are merged into one row rather than pushing a year of history out of
+// a list that shows fifteen.
+export const EVICTION_LOG_MERGE_MS = 10 * 60 * 1000;
+
+// The storage log is the record of everything ever removed, and it is the only
+// one. It is also unbounded: a couple of rows a day is a few hundred a year,
+// which is nothing on its own and is still a list that grows for ever. Keeping
+// the newest few hundred means the log covers about two years of sweeps and
+// stops there.
+export const EVICTION_LOG_MAX = 500;
+
+// A sweep gives up its turn rather than running until Chrome stops it. What is
+// left is picked up by the next hourly alarm, and the progress made is kept
+// because deletion is split across transactions.
+export const MAX_SWEEP_MS = 20 * 1000;

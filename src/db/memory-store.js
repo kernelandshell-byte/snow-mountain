@@ -5,10 +5,14 @@
 // specification: if this and idb-store ever disagree, one of them is wrong,
 // and the contract test is what says which.
 
+import { DELETE_BATCH, EVICTION_LOG_MERGE_MS, EVICTION_LOG_MAX } from '../shared/constants.js';
 import { tokenize } from '../core/tokenizer.js';
-import { buildPostings, bucketOf, upsertDoc, removeDoc } from '../core/index-writer.js';
+import {
+  buildPostings, bucketOf, upsertDoc, removeDoc, postingEntryBytes, postingRecordBytes,
+} from '../core/index-writer.js';
 import { urlKey, domainOf } from '../core/url-key.js';
 import { contentHash, byteLength } from '../core/hash.js';
+import { pageRecordBytes } from './schema.js';
 
 export function createMemoryStore() {
   const pages = new Map();
@@ -16,6 +20,7 @@ export function createMemoryStore() {
   const buckets = new Map();
   const evictionLog = [];
   let nextId = 1;
+  let nextLogId = 1;
   let totalTokens = 0;
   let totalBytes = 0;
 
@@ -37,12 +42,19 @@ export function createMemoryStore() {
     }
   }
 
+  // Returns what this document added to the index. Has to agree with
+  // idb-store to the byte, or the contract stops meaning anything.
   function writePostings(id, tokens) {
     const bucket = bucketOf(id);
+    let bytes = 0;
     for (const [term, entry] of buildPostings(tokens)) {
       const key = bucketKey(term, bucket);
-      buckets.set(key, upsertDoc(buckets.get(key) || [], { id, tf: entry.tf, pos: entry.pos }));
+      const existing = buckets.get(key);
+      if (!existing) bytes += postingRecordBytes(term);
+      bytes += postingEntryBytes(entry.pos.length);
+      buckets.set(key, upsertDoc(existing || [], { id, tf: entry.tf, pos: entry.pos }));
     }
+    return bytes;
   }
 
   return {
@@ -92,13 +104,13 @@ export function createMemoryStore() {
         lastSeen,
         visitCount: visitCount || (existing ? (existing.visitCount || 0) + 1 : 1),
         pinned: existing ? existing.pinned : pinned ? 1 : 0,
-        bytes: byteLength(text) + byteLength(title),
+        bytes: 0,
         lang: null,
       };
 
       pages.set(id, record);
       byUrlKey.set(key, id);
-      writePostings(id, tokens);
+      record.bytes = pageRecordBytes(record, byteLength) + writePostings(id, tokens);
       totalTokens += tokens.length;
       totalBytes += record.bytes;
 
@@ -137,10 +149,13 @@ export function createMemoryStore() {
       };
     },
 
-    async deletePages(ids) {
+    // The batching that matters in idb-store has nothing to do here, but the
+    // signature has to match or the contract stops meaning anything.
+    async deletePages(ids, { batch = DELETE_BATCH, signal = null } = {}) {
       let deleted = 0;
       let bytesFreed = 0;
       for (const id of ids) {
+        if (signal && signal.aborted) break;
         const page = pages.get(id);
         if (!page) continue;
         dropPostings(page);
@@ -152,6 +167,23 @@ export function createMemoryStore() {
         deleted += 1;
       }
       return { deleted, bytesFreed };
+    },
+
+    // Only the oldest pages can be evicted by either rule, so the sweep reads
+    // those and nothing else. `before` narrows it to the retention cutoff.
+    async oldestPages(limit = 500, before = null) {
+      return [...pages.values()]
+        .filter((page) => (before === null ? true : page.lastSeen < before))
+        .sort((a, b) => a.lastSeen - b.lastSeen)
+        .slice(0, limit)
+        .map((page) => ({
+          id: page.id,
+          domain: page.domain,
+          lastSeen: page.lastSeen,
+          firstSeen: page.firstSeen,
+          bytes: page.bytes || 0,
+          pinned: page.pinned || 0,
+        }));
     },
 
     async setPinned(id, pinned) {
@@ -184,8 +216,44 @@ export function createMemoryStore() {
       }));
     },
 
-    async logEviction(entry) {
-      evictionLog.push({ id: evictionLog.length + 1, at: Date.now(), ...entry });
+    async pageIdsByDomain(domain) {
+      return [...pages.values()].filter((page) => page.domain === domain).map((page) => page.id);
+    },
+
+    async pageIdsBetween(from, to) {
+      return [...pages.values()]
+        .filter((page) => page.lastSeen >= from && page.lastSeen < to)
+        .map((page) => page.id);
+    },
+
+    async listPagesFrom(afterId = 0, limit = 100) {
+      return [...pages.values()]
+        .filter((page) => page.id > afterId)
+        .sort((a, b) => a.id - b.id)
+        .slice(0, limit);
+    },
+
+    async logEviction(entry, { merge = false, now = Date.now() } = {}) {
+      if (merge && evictionLog.length) {
+        const newest = evictionLog[evictionLog.length - 1];
+        if (newest.reason === entry.reason && now - newest.at < EVICTION_LOG_MERGE_MS) {
+          newest.at = now;
+          newest.count = (newest.count || 0) + (entry.count || 0);
+          newest.bytesFreed = (newest.bytesFreed || 0) + (entry.bytesFreed || 0);
+          newest.counts = {
+            age: ((newest.counts && newest.counts.age) || 0) + ((entry.counts && entry.counts.age) || 0),
+            size: ((newest.counts && newest.counts.size) || 0) + ((entry.counts && entry.counts.size) || 0),
+          };
+          newest.rounds = (newest.rounds || 1) + 1;
+          return newest;
+        }
+      }
+      const row = { id: nextLogId++, at: now, rounds: 1, ...entry };
+      evictionLog.push(row);
+      if (evictionLog.length > EVICTION_LOG_MAX) {
+        evictionLog.splice(0, evictionLog.length - EVICTION_LOG_MAX);
+      }
+      return row;
     },
 
     async readEvictionLog(limit = 20) {

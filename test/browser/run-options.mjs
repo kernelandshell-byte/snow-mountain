@@ -113,6 +113,108 @@ check('the second click deletes everything', afterWipe === 0, afterWipe);
 const logText = await page.textContent('#log');
 check('the deletion is in the log', /deleted by you/.test(logText), logText);
 
+// --- switching modes, and whether strict mode means anything --------------
+//
+// The brief calls this the difference between this extension and every other
+// one: strict mode is meant to be enforced by Chrome rather than promised by
+// us, and it only is if switching away from broad mode actually hands the wide
+// host permission back.
+//
+// chrome.permissions.remove cannot be proven end to end here, because granting
+// the optional permission in the first place needs a click on a Chrome dialog
+// that automation cannot reach, and the test harness therefore loads a copy
+// with the permission required rather than optional. So what is held down is
+// the call itself: that it is made, with the right origins, before the mode
+// changes, and that the mode does not change if Chrome says no.
+const modes = await context.newPage();
+modes.on('pageerror', (error) => errors.push('modes page: ' + String(error)));
+await modes.addInitScript(() => {
+  window.__permissionCalls = [];
+  const realRemove = chrome.permissions.remove.bind(chrome.permissions);
+  const realRequest = chrome.permissions.request.bind(chrome.permissions);
+  chrome.permissions.remove = (details) => {
+    window.__permissionCalls.push({ op: 'remove', origins: details.origins });
+    return Promise.resolve(true);
+  };
+  chrome.permissions.request = (details) => {
+    window.__permissionCalls.push({ op: 'request', origins: details.origins });
+    return Promise.resolve(window.__grant !== false);
+  };
+  window.__realPermissions = { realRemove, realRequest };
+});
+await modes.goto('chrome-extension://' + extensionId + '/src/ui/options/options.html');
+await modes.waitForTimeout(300);
+
+check('settings offers the choice of capture mode at all',
+  (await modes.$$('input[name="mode"]')).length === 2,
+  'there was no way to change mode after setup, so strict mode was unreachable');
+
+await modes.click('input[name="mode"][value="strict"]');
+await modes.waitForTimeout(400);
+let calls = await modes.evaluate(() => window.__permissionCalls);
+check('switching to strict hands the wide permission back to Chrome',
+  calls.some((call) => call.op === 'remove' && call.origins.includes('*://*/*')),
+  JSON.stringify(calls));
+
+let saved = await modes.evaluate(async () => {
+  const { MSG } = await import('/src/shared/messages.js');
+  return chrome.runtime.sendMessage({ type: MSG.SETTINGS_GET });
+});
+check('and the mode really is strict afterwards', saved.mode === 'strict', saved.mode);
+check('and the exclusion list is put away, since nothing is read by default now',
+  await modes.getAttribute('#presetBlock', 'hidden') !== null, 'exclusions still shown');
+check('and the list of added sites takes its place',
+  await modes.getAttribute('#allowBlock', 'hidden') === null, 'allowlist not shown');
+
+// Removing a site has to take its permission back too, or the list is a lie.
+await modes.evaluate(async () => {
+  const { MSG } = await import('/src/shared/messages.js');
+  await chrome.runtime.sendMessage({ type: MSG.SETTINGS_SET, payload: { allowlist: ['example.org'] } });
+});
+await modes.reload();
+await modes.waitForTimeout(400);
+check('an added site is listed', (await modes.textContent('#allowlist')).includes('example.org'),
+  await modes.textContent('#allowlist'));
+await modes.click('#allowlist .remove');
+await modes.waitForTimeout(400);
+calls = await modes.evaluate(() => window.__permissionCalls);
+check('removing a site takes back Chrome\'s permission for it',
+  calls.some((call) => call.op === 'remove' && call.origins.some((o) => o.includes('example.org'))),
+  JSON.stringify(calls));
+saved = await modes.evaluate(async () => {
+  const { MSG } = await import('/src/shared/messages.js');
+  return chrome.runtime.sendMessage({ type: MSG.SETTINGS_GET });
+});
+check('and drops it from the list', !saved.allowlist.includes('example.org'), JSON.stringify(saved.allowlist));
+
+// Going back to broad has to ask, and has to believe the answer.
+await modes.evaluate(() => { window.__grant = false; });
+await modes.click('input[name="mode"][value="broad"]');
+await modes.waitForTimeout(400);
+saved = await modes.evaluate(async () => {
+  const { MSG } = await import('/src/shared/messages.js');
+  return chrome.runtime.sendMessage({ type: MSG.SETTINGS_GET });
+});
+check('a refused permission leaves the mode where it was',
+  saved.mode === 'strict', 'it switched to broad without the access to do it');
+check('and says so rather than failing silently',
+  /did not grant/.test(await modes.textContent('#modeLine')), await modes.textContent('#modeLine'));
+check('and the radio goes back to where it was',
+  await modes.isChecked('input[name="mode"][value="strict"]'), 'the interface disagrees with the setting');
+
+await modes.evaluate(() => { window.__grant = true; });
+await modes.click('input[name="mode"][value="broad"]');
+await modes.waitForTimeout(400);
+calls = await modes.evaluate(() => window.__permissionCalls);
+saved = await modes.evaluate(async () => {
+  const { MSG } = await import('/src/shared/messages.js');
+  return chrome.runtime.sendMessage({ type: MSG.SETTINGS_GET });
+});
+check('switching back to broad asks Chrome for the access first',
+  calls.some((call) => call.op === 'request' && call.origins.includes('*://*/*')), JSON.stringify(calls));
+check('and switches once it is granted', saved.mode === 'broad', saved.mode);
+await modes.close();
+
 // --- the round trip: export, delete everything, import it back ------------
 await page.setInputFiles('#importFile', exportPath);
 await page.waitForFunction(() => /imported/.test(document.getElementById('dataNote').textContent), null, { timeout: 15000 });

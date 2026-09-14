@@ -1,144 +1,148 @@
-:root {
-  --bg: #fbfbfa;
-  --raised: #ffffff;
-  --fg: #14140f;
-  --muted: #6b6b63;
-  --faint: #93938b;
-  --line: #e5e5df;
-  --accent: #1f6f5c;
-  --mark: #fbe38e;
-  --sel: #eef3f1;
-}
+@import url("../shared/base.css");
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --bg: #141518;
-    --raised: #1b1d21;
-    --fg: #e9e9e4;
-    --muted: #9c9c95;
-    --faint: #77776f;
-    --line: #2a2c31;
-    --accent: #63bda2;
-    --mark: #6d5a20;
-    --sel: #1f2429;
-  }
-}
+/* The search page. Everything here is either layout or the result card; the
+ * palette, type scale and controls come from base.css.
+ *
+ * The one thing this page is for is recognising a page you half remember from
+ * three lines of it, so the snippet gets the room and the contrast, and
+ * everything else stays out of its way.
+ */
 
-* { box-sizing: border-box; }
+body { padding-bottom: 58px; }
 
-/* An author rule that sets display wins over the user agent's [hidden]
-   rule, so anything hidden by attribute has to be told twice. */
-[hidden] { display: none !important; }
-
-body {
-  margin: 0;
-  background: var(--bg);
-  color: var(--fg);
-  font: 15px/1.6 system-ui, -apple-system, "Segoe UI", sans-serif;
-  padding-bottom: 64px;
-}
-
-.wrap { max-width: 700px; margin: 0 auto; padding: 0 20px; }
+.wrap { max-width: 720px; margin: 0 auto; padding: 0 20px; }
 
 header {
-  position: sticky;
-  top: 0;
-  z-index: 2;
+  position: sticky; top: 0; z-index: 2;
   background: var(--bg);
   border-bottom: 1px solid var(--line);
-  padding: 22px 0 0;
+  padding: 20px 0 0;
 }
 
 input[type="search"] {
   width: 100%;
   padding: 12px 15px;
-  font: inherit;
-  font-size: 17px;
-  color: var(--fg);
-  background: var(--raised);
-  border: 1px solid var(--line);
-  border-radius: 9px;
+  font-size: var(--t-title);
+  border-radius: var(--radius);
+  border-color: var(--line-strong);
 }
-input[type="search"]:focus {
-  outline: 2px solid var(--accent);
-  outline-offset: -1px;
-  border-color: transparent;
-}
+input[type="search"]::placeholder { color: var(--faint); }
+input[type="search"]:focus-visible { outline-offset: 1px; }
 
 .controls {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  min-height: 42px;
-  padding: 5px 2px 8px;
-  flex-wrap: wrap;
+  display: flex; align-items: center; gap: 14px;
+  min-height: 40px; padding: 7px 2px 9px; flex-wrap: wrap;
 }
-.meta { color: var(--muted); font-size: 13px; margin: 0; flex: 1; min-width: 180px; }
+.meta { color: var(--faint); font-size: var(--t-small); margin: 0; flex: 1; min-width: 170px; }
 .filters { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 
-select {
-  font: inherit;
-  font-size: 12.5px;
-  color: var(--muted);
-  background: var(--raised);
-  border: 1px solid var(--line);
-  border-radius: 7px;
-  padding: 4px 6px;
-  /* Shrinkable rather than fixed, so a narrow window wraps the row instead
-     of pushing the sort control off the side of the page. */
-  flex: 0 1 auto;
-  min-width: 0;
-  max-width: min(170px, 45vw);
+.filters select {
+  font-size: var(--t-small); color: var(--muted);
+  border-color: var(--line); padding: 4px 6px;
+  /* Shrinkable rather than fixed, so a narrow window wraps the row instead of
+     pushing the sort control off the side of the page. */
+  flex: 0 1 auto; min-width: 0; max-width: min(170px, 45vw);
 }
-select:focus { outline: 2px solid var(--accent); outline-offset: -1px; }
 
-.sort { display: flex; border: 1px solid var(--line); border-radius: 7px; overflow: hidden; }
+.sort { display: flex; border: 1px solid var(--line); border-radius: var(--radius-sm); overflow: hidden; }
 .sort button {
-  font: inherit; font-size: 12.5px; padding: 4px 9px;
-  border: 0; background: var(--raised); color: var(--muted); cursor: pointer;
+  font-size: var(--t-small); padding: 4px 10px; border: 0; border-radius: 0;
+  background: var(--surface); color: var(--muted);
 }
-.sort button.on { background: var(--sel); color: var(--fg); font-weight: 600; }
+.sort button + button { border-left: 1px solid var(--line); }
+.sort button.on { background: var(--accent-soft); color: var(--fg); font-weight: 600; }
+
+/* --- a result ------------------------------------------------------------ */
+
+#results { padding-top: 6px; }
 
 article {
-  padding: 15px 14px;
-  border-radius: 10px;
-  border: 1px solid transparent;
-  margin-top: 4px;
+  position: relative;
+  padding: 14px 14px 15px;
+  /* A transparent bar on the left at all times, so marking the selected
+     result cannot shift the text sideways. */
+  border-left: 3px solid transparent;
+  border-bottom: 1px solid var(--line);
+  border-radius: 0 var(--radius) var(--radius) 0;
 }
-article + article { border-top: 1px solid var(--line); border-radius: 10px; }
-article.selected { background: var(--sel); border-color: var(--line); }
+article:last-child { border-bottom-color: transparent; }
 
-article h2 { font-size: 15.5px; font-weight: 600; margin: 0 0 3px; line-height: 1.35; }
+/* Only where there is a real pointer. On a touch screen :hover sticks to
+   whatever was tapped last, which reads as a selection that will not go away. */
+@media (hover: hover) {
+  article:hover { background: var(--sunken); }
+}
+
+/* Keyboard is the primary way through this list, so the selected result has
+   to be unmistakable, and not by colour alone: the bar carries it for anyone
+   who cannot tell the tint apart from the tint next to it. */
+article.selected {
+  background: var(--accent-soft);
+  border-left-color: var(--accent);
+}
+
+article h2 {
+  font-size: var(--t-lead); font-weight: 600; line-height: 1.38;
+  margin: 0 0 3px; padding-right: 66px;
+}
 article a { color: var(--fg); text-decoration: none; }
 article a:hover { text-decoration: underline; text-underline-offset: 2px; }
 
-.source { color: var(--faint); font-size: 12.5px; margin: 0 0 7px; }
-.source .dot { padding: 0 5px; }
-.snippet { margin: 0; font-size: 14px; color: var(--muted); }
-.snippet mark { background: var(--mark); color: var(--fg); padding: 0 2px; border-radius: 3px; }
+.source { color: var(--faint); font-size: var(--t-small); margin: 0 0 8px; }
+.source .dot { padding: 0 6px; }
 
+.snippet { margin: 0; font-size: var(--t-body); line-height: 1.62; color: var(--muted); }
+.snippet mark {
+  background: var(--mark); color: var(--fg);
+  padding: 0 2px; border-radius: 3px; font-weight: 500;
+}
+
+/* The pin is a promise, not a decoration: a pinned page is the one thing
+   eviction may never touch. So it stays out of the way until the row is in
+   play, and is unmistakable once it is on. */
 .pin {
-  float: right; margin-left: 10px;
-  border: 1px solid transparent; background: transparent;
-  color: var(--faint); cursor: pointer; font: inherit; font-size: 12px;
-  padding: 2px 8px; border-radius: 20px;
+  position: absolute; top: 13px; right: 12px;
+  border: 1px solid var(--line); background: var(--surface);
+  color: var(--muted); font-size: var(--t-small);
+  padding: 3px 10px; border-radius: 20px;
+  opacity: 0; transition: opacity .12s ease;
 }
-.pin:hover { border-color: var(--line); color: var(--muted); }
-.pin[aria-pressed="true"] { color: var(--accent); border-color: var(--accent); }
-
-.empty { color: var(--muted); padding: 48px 4px; }
-.empty strong { color: var(--fg); font-weight: 600; }
-
-.more {
-  display: block; margin: 20px auto 0; padding: 8px 18px;
-  font: inherit; font-size: 13px; color: var(--muted);
-  background: var(--raised); border: 1px solid var(--line);
-  border-radius: 8px; cursor: pointer;
+article:hover .pin,
+article.selected .pin,
+.pin:focus-visible,
+.pin[aria-pressed="true"] { opacity: 1; }
+.pin:hover { border-color: var(--faint); color: var(--fg); }
+.pin[aria-pressed="true"] {
+  color: var(--accent); border-color: var(--accent);
+  background: var(--surface); font-weight: 600;
 }
+
+/* --- the states that are not a list of results --------------------------- */
+
+.empty {
+  color: var(--muted); font-size: var(--t-body);
+  padding: 56px 4px; margin: 0; max-width: 46ch;
+}
+.empty strong { display: block; color: var(--fg); font-size: var(--t-title); font-weight: 600; margin-bottom: 6px; }
+.empty kbd { margin: 0 1px; }
+
+.more { display: block; margin: 22px auto 0; font-size: var(--t-meta); color: var(--muted); }
 
 footer {
   position: fixed; bottom: 0; left: 0; right: 0;
-  padding: 10px 20px; text-align: center;
+  padding: 9px 20px; text-align: center;
   background: var(--bg); border-top: 1px solid var(--line);
-  color: var(--faint); font-size: 12.5px;
+  color: var(--faint); font-size: var(--t-small);
+}
+
+/* A phone-width window, or a side panel. The filter row wraps rather than
+   scrolling, and the footer hint is not worth a line of a 360px screen. */
+@media (max-width: 480px) {
+  .wrap { padding: 0 14px; }
+  header { padding-top: 14px; }
+  article { padding: 12px 10px; border-left-width: 3px; }
+  article h2 { padding-right: 0; }
+  .pin { position: static; opacity: 1; display: inline-block; margin: 9px 0 0; }
+  footer { display: none; }
+  body { padding-bottom: 20px; }
 }

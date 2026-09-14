@@ -20,4 +20,6 @@ export const MSG = {
   BLOCK_SITE: 'BLOCK_SITE',
   OPEN_RESULT: 'OPEN_RESULT',
   IMPORT: 'IMPORT',
+  // Dismissing a one-off notice, so it is said once rather than for ever.
+  ACKNOWLEDGE: 'ACKNOWLEDGE',
 };
