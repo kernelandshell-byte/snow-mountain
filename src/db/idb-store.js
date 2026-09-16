@@ -8,7 +8,10 @@
 
 import { DB_NAME, DB_VERSION, createStores, pageRecordBytes } from './schema.js';
 import { MIGRATIONS, runMigrations, checkVersions } from './migrations.js';
-import { DELETE_BATCH, EVICTION_LOG_MERGE_MS, EVICTION_LOG_MAX } from '../shared/constants.js';
+import {
+  DELETE_BATCH, EVICTION_LOG_MERGE_MS, EVICTION_LOG_MAX,
+  PREFIX_EXPANSION_LIMIT, PREFIX_SCAN_LIMIT,
+} from '../shared/constants.js';
 import { tokenize } from '../core/tokenizer.js';
 import {
   buildPostings, bucketOf, upsertDoc, removeDoc, postingEntryBytes, postingRecordBytes,
@@ -32,6 +35,12 @@ const txDone = (tx) =>
 // All buckets for one term. Arrays sort after numbers in IndexedDB key
 // order, so [term, []] is an upper bound above every [term, <number>].
 const termRange = (term) => IDBKeyRange.bound([term], [term, []]);
+
+// Every bucket of every term starting with a prefix. The postings key is
+// [term, bucket] and IndexedDB keeps it ordered, so this is a range scan
+// rather than a search: prefix + \uffff sorts above every real word that
+// starts with the prefix and below the next word that does not.
+const prefixRange = (prefix) => IDBKeyRange.bound([prefix], [prefix + '\uffff', []]);
 
 async function upgrade(db, tx, oldVersion, newVersion, migrations) {
   // Version 1 has nothing to migrate from, so it only creates stores.
@@ -241,6 +250,42 @@ export function createIdbStore(db) {
       for (const record of records) out.push(...record.docs);
       out.sort((a, b) => a.id - b.id);
       return out;
+    },
+
+    // The words an unmatched query word could have meant. Returned per word
+    // rather than merged, because the caller has to be able to say which ones
+    // it used, and because a word nobody can see used is a search that lies
+    // about what it did.
+    //
+    // Ordered by how many documents each word appears in, so a cap keeps the
+    // words that are actually worth having rather than the alphabetically
+    // luckiest. The scan is bounded separately from the result, because a
+    // three letter prefix in a large archive can start thousands of words.
+    async readTermsWithPrefix(prefix, { limit = PREFIX_EXPANSION_LIMIT, scan = PREFIX_SCAN_LIMIT } = {}) {
+      if (!prefix) return [];
+      const tx = db.transaction('postings', 'readonly');
+      const byTerm = new Map();
+      await new Promise((resolve, reject) => {
+        const request = tx.objectStore('postings').openCursor(prefixRange(prefix));
+        request.onsuccess = () => {
+          const cursor = request.result;
+          if (!cursor) return resolve();
+          const record = cursor.value;
+          let docs = byTerm.get(record.term);
+          if (!docs) {
+            if (byTerm.size >= scan) return resolve();
+            docs = [];
+            byTerm.set(record.term, docs);
+          }
+          docs.push(...record.docs);
+          cursor.continue();
+        };
+        request.onerror = () => reject(request.error);
+      });
+      return [...byTerm.entries()]
+        .map(([term, docs]) => ({ term, docs: docs.sort((a, b) => a.id - b.id) }))
+        .sort((a, b) => b.docs.length - a.docs.length || (a.term < b.term ? -1 : 1))
+        .slice(0, limit);
     },
 
     async readDocs(ids) {

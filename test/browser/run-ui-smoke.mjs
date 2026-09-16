@@ -208,6 +208,28 @@ if (moreVisible) {
   check('paging is offered when there is more', firstPage <= 20, firstPage);
 }
 
+// ---------------------------------------------------------------------------
+// Prefix matching, through the real index rather than the memory store. Typing
+// half a word is the commonest way a half remembered search is typed, and it
+// used to return nothing at all.
+
+await page.fill('#q', 'retrospe');
+await page.waitForTimeout(500);
+const prefixCount = await page.$$eval('article', (nodes) => nodes.length);
+check('half a word finds the pages the whole word would have', prefixCount > 0, prefixCount);
+
+const prefixNote = await page.textContent('#meta');
+check('and the page says which words it actually matched',
+  /retrospe/.test(prefixNote) && /matched/.test(prefixNote), prefixNote);
+
+// The other half of the rule, and the reason this is a fallback: a word that
+// stands on its own is never quietly widened into its longer neighbours.
+await page.fill('#q', 'retro');
+await page.waitForTimeout(500);
+const exactNote = await page.textContent('#meta');
+check('a word that matches on its own is searched exactly',
+  !/matched/.test(exactNote), exactNote);
+
 // Escape clears
 await page.fill('#q', 'retro fatigue');
 await page.waitForTimeout(300);

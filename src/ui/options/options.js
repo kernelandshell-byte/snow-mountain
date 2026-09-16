@@ -3,6 +3,7 @@ import { PRESET_LABELS } from '../../shared/presets.js';
 import { BYTES_PER_PAGE_ESTIMATE } from '../../shared/constants.js';
 import { bytes as mb, pageCount } from '../../shared/format.js';
 import { requestPersistence } from '../../shared/persistence.js';
+import { MB, GB, showLimit, syncCustom, limitValue, pagesFor, describeSize } from '../shared/limits.js';
 
 const ask = (type, payload) => chrome.runtime.sendMessage({ type, payload });
 const byId = (id) => document.getElementById(id);
@@ -140,12 +141,74 @@ rules.addEventListener('input', () => {
   }, 700);
 });
 
-byId('months').value = String(settings.retentionMonths);
-byId('size').value = String(Math.round(settings.sizeCapBytes / 1048576));
-byId('months').addEventListener('change', (event) => save({ retentionMonths: Number(event.target.value) }));
-byId('size').addEventListener('change', (event) => {
-  save({ sizeCapBytes: Number(event.target.value) * 1048576 }).then(refreshUsage);
+// The budget controls. Presets for the people who want one, a custom field
+// for the people who do not, and no ceiling on either: it is their disk.
+const months = byId('months');
+const monthsCustom = byId('monthsCustom');
+const size = byId('size');
+const sizeCustom = byId('sizeCustom');
+
+// Presets are megabytes, the custom field is gigabytes, because nobody wants
+// to type fifty one thousand two hundred.
+const capBytes = () => {
+  const value = limitValue(size, sizeCustom);
+  if (value === null) return null;
+  return size.value === 'custom' ? Math.round(value * GB) : Math.round(value * MB);
+};
+
+showLimit(months, monthsCustom, settings.retentionMonths);
+showLimit(size, sizeCustom, Math.round(settings.sizeCapBytes / MB));
+// A custom size was stored in bytes, so showLimit put megabytes in the field.
+if (size.value === 'custom') sizeCustom.value = String(+(settings.sizeCapBytes / GB).toFixed(3));
+
+// Said before it is saved, not after, because this is the one setting whose
+// consequence cannot be undone. Lowering the cap does not delete anything by
+// itself, but the next sweep will, and being told afterwards is not being told.
+let usedBytes = null;
+function describeLimits() {
+  const bytes = capBytes();
+  const note = byId('capacityNote');
+  const shrink = byId('shrinkNote');
+  if (bytes === null) {
+    note.textContent = 'Type a number and this will say what it holds.';
+    shrink.hidden = true;
+    return;
+  }
+  note.textContent = 'Room for roughly ' + pagesFor(bytes) + ' pages, at the size real articles come out at.';
+  const over = usedBytes !== null && usedBytes > bytes;
+  shrink.hidden = !over;
+  if (over) {
+    const losing = Math.max(1, Math.round((usedBytes - bytes) / BYTES_PER_PAGE_ESTIMATE));
+    shrink.textContent =
+      'You are keeping ' + mb(usedBytes) + ' now, which is more than ' + describeSize(bytes) +
+      '. The next sweep would remove roughly ' + losing.toLocaleString() +
+      ' of your oldest unpinned pages. Pinned pages are never removed.';
+  }
+}
+
+for (const control of [months, monthsCustom, size, sizeCustom]) {
+  control.addEventListener('input', () => {
+    syncCustom(months, monthsCustom);
+    syncCustom(size, sizeCustom);
+    describeLimits();
+  });
+}
+
+months.addEventListener('change', () => {
+  const value = limitValue(months, monthsCustom);
+  if (value !== null) save({ retentionMonths: value });
 });
+monthsCustom.addEventListener('change', () => {
+  const value = limitValue(months, monthsCustom);
+  if (value !== null) save({ retentionMonths: value });
+});
+const saveSize = () => {
+  const bytes = capBytes();
+  if (bytes !== null) save({ sizeCapBytes: bytes }).then(refreshUsage);
+};
+size.addEventListener('change', saveSize);
+sizeCustom.addEventListener('change', saveSize);
+describeLimits();
 
 // An archive that cannot be opened is not an empty one. Going quiet here, or
 // showing a zeroed meter, tells somebody their year of reading is gone when it
@@ -170,6 +233,8 @@ async function refreshUsage() {
   fill.style.width = Math.max(1, fraction * 100) + '%';
   fill.classList.toggle('warn', stats.budget.level !== 'ok');
 
+  usedBytes = stats.usedBytes;
+  describeLimits();
   const capacity = Math.round(stats.budget.sizeCapBytes / BYTES_PER_PAGE_ESTIMATE / 1000) * 1000;
   const parts = [
     pageCount(stats.docCount) + ', ' + mb(stats.usedBytes) + ' of ' + mb(stats.budget.sizeCapBytes),
@@ -210,6 +275,26 @@ async function refreshUsage() {
       'without warning when the disk gets full. Exporting now and then is worth doing.'
     );
   }
+  // Capture failing is the one failure that leaves no trace to notice later:
+  // the pages simply are not there, and an empty result looks like a page you
+  // never read rather than one that was never kept.
+  const watch = stats.captureWatch;
+  if (watch && watch.mode === 'strict') {
+    if (watch.ungranted && watch.ungranted.length) {
+      warnings.push(
+        'These sites are on your list but Chrome has not granted access to them, so nothing is ' +
+        'being kept from them: ' + watch.ungranted.join(', ') + '. Removing and adding them again ' +
+        'asks for access properly.'
+      );
+    }
+    if (watch.refused && watch.refused.length) {
+      warnings.push(
+        'Chrome refused to watch ' + watch.refused.join(', ') + ', so nothing is being kept from ' +
+        'them. The other sites on your list are unaffected.'
+      );
+    }
+  }
+
   const storageNote = byId('storageNote');
   if (storageNote) {
     storageNote.hidden = warnings.length === 0;

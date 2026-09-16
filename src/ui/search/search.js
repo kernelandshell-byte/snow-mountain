@@ -74,6 +74,14 @@ function renderMeta(result) {
   for (const [asked, used] of Object.entries(result.relaxed || {})) {
     notes.push('searched "' + used + '" for "' + asked + '"');
   }
+  // A widened word has to be visible. Showing results for words the person
+  // did not type, without saying which, is the search quietly answering a
+  // different question.
+  for (const [asked, words] of Object.entries(result.expanded || {})) {
+    const shown = words.slice(0, 3).join(', ');
+    const more = words.length > 3 ? ' and ' + (words.length - 3) + ' more' : '';
+    notes.push('"' + asked + '" matched ' + shown + more);
+  }
   meta.textContent = notes.join(' · ');
 }
 

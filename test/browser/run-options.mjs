@@ -253,6 +253,98 @@ await page.waitForTimeout(500);
 check('a file that is not an export is refused clearly',
   /does not look like an export/.test(await page.textContent('#dataNote')), await page.textContent('#dataNote'));
 
+// ---------------------------------------------------------------------------
+// The budget controls. Presets are for the common case; the custom field is
+// there because the limit is on somebody's own disk and a ceiling nobody can
+// pass is a judgement about how much reading they are allowed to keep.
+
+await page.selectOption('#size', 'custom');
+check('choosing a custom size reveals somewhere to type it',
+  await page.isVisible('#sizeCustom'), 'the custom field stayed hidden');
+
+await page.fill('#sizeCustom', '40');
+await page.dispatchEvent('#sizeCustom', 'input');
+const roomFor40 = await page.textContent('#capacityNote');
+check('and says what that number holds, in pages rather than bytes',
+  /pages/.test(roomFor40) && /00/.test(roomFor40), roomFor40);
+
+await page.dispatchEvent('#sizeCustom', 'change');
+await page.waitForTimeout(400);
+const savedBig = await page.evaluate(async () => {
+  const { MSG } = await import('/src/shared/messages.js');
+  return (await chrome.runtime.sendMessage({ type: MSG.SETTINGS_GET })).sizeCapBytes;
+});
+check('a limit far above every preset is accepted',
+  savedBig === 40 * 1024 * 1024 * 1024, savedBig);
+
+// Reopening has to show the custom number back, or a custom limit is one you
+// can set and never see again.
+const reopened = await context.newPage();
+await reopened.goto('chrome-extension://' + extensionId + '/src/ui/options/options.html');
+await reopened.waitForTimeout(600);
+check('and comes back on the control when settings is reopened',
+  (await reopened.inputValue('#size')) === 'custom' &&
+    Math.abs(Number(await reopened.inputValue('#sizeCustom')) - 40) < 0.01,
+  (await reopened.inputValue('#size')) + ' / ' + (await reopened.inputValue('#sizeCustom')));
+await reopened.close();
+
+// The one direction where a typo cannot be undone.
+const used = await page.evaluate(async () => {
+  const { MSG } = await import('/src/shared/messages.js');
+  return (await chrome.runtime.sendMessage({ type: MSG.STATS })).usedBytes;
+});
+await page.fill('#sizeCustom', String(used / 2 / (1024 * 1024 * 1024)));
+await page.dispatchEvent('#sizeCustom', 'input');
+await page.waitForTimeout(200);
+const shrink = await page.textContent('#shrinkNote');
+check('a limit below what is already kept says so before it is saved',
+  (await page.isVisible('#shrinkNote')) && /would remove/.test(shrink), shrink);
+check('and promises pinned pages are safe from it', /[Pp]inned/.test(shrink), shrink);
+
+// Months take a custom value too.
+await page.selectOption('#months', 'custom');
+await page.fill('#monthsCustom', '84');
+await page.dispatchEvent('#monthsCustom', 'change');
+await page.waitForTimeout(400);
+const savedMonths = await page.evaluate(async () => {
+  const { MSG } = await import('/src/shared/messages.js');
+  return (await chrome.runtime.sendMessage({ type: MSG.SETTINGS_GET })).retentionMonths;
+});
+check('a retention nobody offered is accepted too', savedMonths === 84, savedMonths);
+
+// Put it back so nothing below inherits a silly cap.
+await page.selectOption('#size', '500');
+await page.dispatchEvent('#size', 'change');
+await page.selectOption('#months', '12');
+await page.dispatchEvent('#months', 'change');
+await page.waitForTimeout(400);
+
+// ---------------------------------------------------------------------------
+// Capture failing is the one failure that leaves nothing behind to notice.
+
+const watch = await page.evaluate(async () => {
+  const { MSG } = await import('/src/shared/messages.js');
+  await chrome.runtime.sendMessage({
+    type: MSG.SETTINGS_SET,
+    payload: { mode: 'strict', allowlist: ['never-granted.example', 'also-not.example'] },
+  });
+  await new Promise((r) => setTimeout(r, 400));
+  return (await chrome.runtime.sendMessage({ type: MSG.STATS })).captureWatch;
+});
+check('sites the extension cannot actually watch are recorded',
+  watch && watch.ungranted && watch.ungranted.length === 2, JSON.stringify(watch));
+
+await page.reload();
+await page.waitForTimeout(700);
+const note = await page.textContent('#storageNote');
+check('and settings says so rather than looking fine',
+  /never-granted\.example/.test(note) && /also-not\.example/.test(note), note);
+
+await page.evaluate(async () => {
+  const { MSG } = await import('/src/shared/messages.js');
+  await chrome.runtime.sendMessage({ type: MSG.SETTINGS_SET, payload: { mode: 'broad', allowlist: [] } });
+});
+
 await context.close();
 
 let failed = 0;

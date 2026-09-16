@@ -288,7 +288,8 @@ problem rather than a rewrite.
 - **`morphology.js`** the smallest possible amount of stemming: a query term
   with no postings at all gets one attempt at its singular. Applied only as
   a query time fallback, never at index time, so nothing is conflated in
-  storage.
+  storage. If that also finds nothing, the term is widened to the words it
+  is the start of. See "Half a word" below.
 - **`url-key.js`** the dedupe key. Conservative on purpose: merging two
   different pages loses data, failing to merge two spellings only costs a
   row, so only unambiguous tracking parameters are stripped and a bare
@@ -313,10 +314,60 @@ problem rather than a rewrite.
 1. Parse the query.
 2. Read postings for each term across the buckets that matter.
 3. Intersect with AND semantics by default. If AND returns nothing, fall back to OR and say so in the UI. Half remembered phrases usually contain one wrong word, and a search that returns nothing when four of five terms matched feels broken.
+
+   Note what AND does and does not require. Bare terms have to appear in the
+   page, and that is all: not in the order typed, not next to each other, not
+   in the same sentence. Order and adjacency are opt-in, through quotes, and
+   are verified against stored positions. So "retro fatigue teams" finds a
+   page carrying all three words anywhere in it, which is the shape a half
+   remembered query actually has.
 4. Score with BM25, add a mild logarithmic recency boost, and a small boost for matches in the title.
 5. For phrase queries, verify with positions.
 6. Load the top N page records and build snippets.
 7. Return with timing, because the timing goes in the UI and slow search is a bug we want visible.
+
+## Half a word
+
+`BRIEF.md` says prefix matching is what stands in for stemming, on the grounds
+that an English stemmer damages German and Dutch and no stemming at all leaves
+the commonest near miss unhandled. Typing half a word is that near miss: "isra"
+should find the article about Israel.
+
+The rule is that widening is a **fallback and never a default**. A term with
+postings of its own is searched exactly, always. Only a term that found
+nothing, and has at least `MIN_PREFIX_CHARS` characters, is widened to the
+terms it is the start of. That ordering is the whole design:
+
+- It cannot make a working query worse. "car" has postings, so "car" is never
+  quietly turned into carbon, carry and cardigan, and precision on ordinary
+  queries is untouched.
+- It costs nothing on the common path. The widening read only happens for a
+  term that already came back empty, which for a word somebody meant to type
+  is rare.
+- It is the same shape as the two relaxations already here, the singular
+  attempt and the OR fallback: try the strict thing, relax only on failure,
+  and say in the interface that you did. A search that quietly answers a
+  different question is worse than one that finds nothing.
+
+The read is a range scan rather than a search, because the postings key is
+`[term, bucket]` and IndexedDB already keeps it in order: everything from
+`[prefix]` to `[prefix + '\uffff']` is exactly the terms starting with the
+prefix. Terms are returned most widely used first and capped, with the walk
+bounded separately from the result, because a three letter prefix in a large
+archive can start thousands of words.
+
+The matched terms are then treated as one term: a page carrying "israel" twice
+and "israeli" once has three reasons to match "isra", and counting them as
+three is what makes the ranking sensible. A widened term scores at
+`PREFIX_SCORE_FACTOR`, which only changes anything when a query mixes a widened
+term with an exact one, and there the exact one should carry more of the
+answer.
+
+Two things are deliberately excluded. A term inside a quoted phrase is never
+widened, because a phrase is checked against stored positions and the merged
+positions of several different words do not describe any real sentence. And
+matching is on the start of a word only, never the middle, so "sola" does not
+find "isolation".
 
 ## The storage sweep
 
@@ -537,6 +588,38 @@ a site from the strict mode allowlist takes back that site's origins too.
 `permissions.request` has to be the first statement in its click handler:
 awaiting anything before it spends the user gesture and Chrome refuses.
 
+**Registering for a site Chrome will not allow.** The allowlist and the granted
+permissions are two records of one intention and they drift: a permission can
+be taken back from Chrome's own settings screen without this extension hearing
+about it in a form it can act on. `registerContentScripts` rejects the whole
+call rather than the bad entry, so a single stale row used to stop capture on
+every other site in the list, silently, for ever. That is the worst kind of
+bug this project can have: capture failing leaves nothing behind to notice,
+and an empty result looks like a page you never read rather than one that was
+never kept.
+
+So the allowlist is checked against `permissions.contains` before anything is
+registered, a registration that still fails is retried one site at a time so
+that one bad entry cannot take the others down with it, and what is left
+unwatched is written where settings can say so out loud.
+
+## A limit somebody else chose is not a limit
+
+Both budget controls are a short list of presets plus a custom field, and
+neither has a ceiling. The presets are there because most people want one of
+them and should not have to do arithmetic. The custom field is there because
+the archive is on somebody's own disk, `unlimitedStorage` means Chrome is not
+the thing stopping them, and a maximum picked by the author is a judgement
+about how much reading a stranger is allowed to keep.
+
+Two things sit next to the number, both in `ui/shared/limits.js` so setup and
+settings cannot drift. The size is quoted back in pages as it is typed, because
+a figure in gigabytes means nothing and a figure in pages means something. And
+a limit below what is already stored says so before it is saved, naming how
+many of the oldest pages the next sweep would remove and that pinned pages are
+exempt. Lowering the cap is the one control here whose consequence cannot be
+undone, and being told afterwards is not being told.
+
 ## Performance, measured
 
 Numbers from `test/browser/run-benchmark.mjs`, `run-longterm.mjs` and
@@ -646,6 +729,7 @@ src/
   ui/
     shared/base.css        one palette, one type scale, one set of controls
     shared/when.js         "last month", not "1 months ago"
+    shared/limits.js       the budget controls, shared by setup and settings
     setup/  search/  popup/  options/
 test/
   *.test.js                the Node suite
@@ -691,14 +775,25 @@ made the test suite worth having before any of the fiddly parts existed.
     disk, housekeeping that has to survive a restart~~
 18. ~~Switching capture modes, and making strict mode true~~
 
-Left for the release checklist: icons, LICENSE, a privacy policy, the threat
-model written down, a name, and store listing assets.
+Left for the release checklist: a name, and store listing assets. Icons are in
+`icons/`, the licence is MIT with Readability's Apache 2.0 kept beside it, and
+`PRIVACY.md` and `THREAT-MODEL.md` are written. The threat model is the one
+worth rereading before publishing, because it is where the claim about network
+access is stated precisely enough to be checked and weakly enough to be true.
+
+The `favicon` permission was dropped on the way: nothing ever used it, and a
+permission a reader has to take on trust for no return is the opposite of what
+the brief asks for.
 
 What is deliberately not done:
 
 - **Language aware stemming.** The singular fallback covers the common
-  English case. German and Dutch compounds need real morphology, and doing
+  English case, and prefix matching covers the rest of what stemming would
+  have bought. German and Dutch compounds need real morphology, and doing
   that badly is worse than not doing it.
+- **Excluding a word.** The query parser has bare terms, quoted phrases,
+  `site:`, `before:` and `after:`, but no `-word`. It is usually the second
+  operator people reach for.
 - **PDF capture.** A different extraction path entirely.
 - **Semantic search.** A local embedding model is a large dependency for a
   gain that BM25 plus the OR fallback already approximates on a personal

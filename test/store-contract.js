@@ -183,6 +183,46 @@ export const contractCases = [
     },
   },
   {
+    name: 'words can be looked up by the start of them, commonest first',
+    async run(store) {
+      const { id: a } = await store.putPage({
+        url: 'https://n.example/one',
+        title: '',
+        text: 'israel israel israeli policy',
+      });
+      const { id: b } = await store.putPage({
+        url: 'https://n.example/two',
+        title: '',
+        text: 'israel again, and something about islands',
+      });
+      const matches = await store.readTermsWithPrefix('isra');
+      assertEqual(matches.length, 2, 'two words start with isra');
+      assertEqual(matches[0].term, 'israel', 'the one in most documents comes first');
+      assertEqual(matches[0].docs.length, 2, 'israel is in both pages');
+      assertEqual(matches[1].term, 'israeli', 'and the rarer one after it');
+      assertEqual(matches[1].docs[0].id, a, 'pointing at the right page');
+
+      const capped = await store.readTermsWithPrefix('isra', { limit: 1 });
+      assertEqual(capped.length, 1, 'the cap is honoured');
+
+      assertEqual((await store.readTermsWithPrefix('isl')).length, 1, 'a different prefix');
+      assertEqual((await store.readTermsWithPrefix('zzz')).length, 0, 'a prefix nothing starts with');
+      assertEqual((await store.readTermsWithPrefix('')).length, 0, 'an empty prefix is not a search');
+      assert(b, 'both pages were stored');
+    },
+  },
+  {
+    name: 'a prefix lookup does not return words that merely contain it',
+    async run(store) {
+      await store.putPage({
+        url: 'https://n.example/three',
+        title: '',
+        text: 'disraeli wrote about misrule',
+      });
+      assertEqual((await store.readTermsWithPrefix('isra')).length, 0, 'start of a word, not any part');
+    },
+  },
+  {
     name: 'a page can be found by any spelling of its url',
     async run(store) {
       const { id } = await store.putPage(PAGE);

@@ -23,6 +23,32 @@ export const MAX_POSITIONS_PER_TERM = 32;
 
 export const MAX_TEXT_BYTES = 200 * 1024;
 
+// Prefix matching, which BRIEF.md always intended as the thing that stands in
+// for stemming. It is a fallback and never a default: a word that has
+// postings of its own is searched exactly, so a query that already works can
+// never be made worse or noisier by this. Only a word that found nothing at
+// all is widened, which is where "isra" lives and "car" does not.
+//
+// Three characters is the floor. Two would expand to most of the index for no
+// gain, and one is not a search.
+export const MIN_PREFIX_CHARS = 3;
+
+// How many of the matching words a widened search actually uses, most common
+// first. A cap matters because a short prefix in a large archive can match
+// thousands of words, and reading all of them to answer one query is how a
+// search that was meant to be forgiving becomes a search that is slow.
+export const PREFIX_EXPANSION_LIMIT = 24;
+
+// How many distinct words the index is walked over before choosing those. The
+// walk is a range scan on the postings key, which is already ordered by term,
+// so this bounds the work rather than the result.
+export const PREFIX_SCAN_LIMIT = 200;
+
+// A widened word is a guess, and it scores as one. This only changes anything
+// when a query mixes a word that matched exactly with one that had to be
+// widened: there, the solid word should carry more weight than the guess.
+export const PREFIX_SCORE_FACTOR = 0.75;
+
 // Below this there is nothing to find later. Pages whose content lives in a
 // shadow root or an iframe extract to twenty or thirty characters, and an
 // archive full of those husks is worse than one without them.

@@ -65,7 +65,12 @@
             <option value="12" selected>12 months</option>
             <option value="24">2 years</option>
             <option value="120">as long as it fits</option>
+            <option value="custom">a number of months I choose</option>
           </select>
+        </label>
+        <label class="field" hidden>
+          <span>Months</span>
+          <input id="monthsCustom" type="number" min="1" step="1" inputmode="numeric" />
         </label>
         <label class="field">
           <span>Use at most</span>
@@ -74,7 +79,12 @@
             <option value="500" selected>500MB</option>
             <option value="1000">1GB</option>
             <option value="2000">2GB</option>
+            <option value="custom">a size I choose</option>
           </select>
+        </label>
+        <label class="field" hidden>
+          <span>Gigabytes</span>
+          <input id="sizeCustom" type="number" min="0.05" step="0.5" inputmode="decimal" />
         </label>
         <p id="capacity" class="note"></p>
         <div class="row">

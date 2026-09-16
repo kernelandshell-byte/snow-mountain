@@ -17,8 +17,9 @@ paragraph that matched.
   parsing, snippets, the storage budget, quote matching, text fragment URLs
 - Two stores, `memory-store` and `idb-store`, held to one contract that runs
   against both
-- Search with an AND to OR fallback, a singular fallback for plurals, site
-  and date filters, sorting, and paging
+- Search with an AND to OR fallback, a singular fallback for plurals, prefix
+  matching for a word that found nothing at all, site and date filters,
+  sorting, and paging
 - Jump to passage: a text fragment for a new tab, and a highlight in place
   for a tab already open or a page that renders late
 - Extraction through vendored Readability, injected only into pages that

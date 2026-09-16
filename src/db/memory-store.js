@@ -5,7 +5,10 @@
 // specification: if this and idb-store ever disagree, one of them is wrong,
 // and the contract test is what says which.
 
-import { DELETE_BATCH, EVICTION_LOG_MERGE_MS, EVICTION_LOG_MAX } from '../shared/constants.js';
+import {
+  DELETE_BATCH, EVICTION_LOG_MERGE_MS, EVICTION_LOG_MAX,
+  PREFIX_EXPANSION_LIMIT, PREFIX_SCAN_LIMIT,
+} from '../shared/constants.js';
 import { tokenize } from '../core/tokenizer.js';
 import {
   buildPostings, bucketOf, upsertDoc, removeDoc, postingEntryBytes, postingRecordBytes,
@@ -124,6 +127,29 @@ export function createMemoryStore() {
         if (key.startsWith(prefix)) out.push(...docs);
       }
       return out.sort((a, b) => a.id - b.id);
+    },
+
+    // Same contract as idb-store: the words an unmatched query word could
+    // have meant, per word, most widely used first. Bucket keys here are
+    // "term bucket", so the term is everything before the last space.
+    async readTermsWithPrefix(prefix, { limit = PREFIX_EXPANSION_LIMIT, scan = PREFIX_SCAN_LIMIT } = {}) {
+      if (!prefix) return [];
+      const byTerm = new Map();
+      for (const [key, docs] of [...buckets.entries()].sort()) {
+        const term = key.slice(0, key.lastIndexOf(' '));
+        if (!term.startsWith(prefix)) continue;
+        let into = byTerm.get(term);
+        if (!into) {
+          if (byTerm.size >= scan) break;
+          into = [];
+          byTerm.set(term, into);
+        }
+        into.push(...docs);
+      }
+      return [...byTerm.entries()]
+        .map(([term, docs]) => ({ term, docs: docs.sort((a, b) => a.id - b.id) }))
+        .sort((a, b) => b.docs.length - a.docs.length || (a.term < b.term ? -1 : 1))
+        .slice(0, limit);
     },
 
     async readDocs(ids) {

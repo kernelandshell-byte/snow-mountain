@@ -1,7 +1,7 @@
 import { MSG } from '../../shared/messages.js';
 import { PRESET_LABELS } from '../../shared/presets.js';
-import { BYTES_PER_PAGE_ESTIMATE } from '../../shared/constants.js';
 import { requestPersistence } from '../../shared/persistence.js';
+import { MB, GB, syncCustom, limitValue, pagesFor } from '../shared/limits.js';
 
 // The one moment everybody passes through, and the only context that is
 // allowed to ask. See shared/persistence.js.
@@ -73,25 +73,45 @@ presets.addEventListener('change', (event) => {
   if (key) presetState[key] = event.target.checked;
 });
 
-// Step four. A cap in megabytes means nothing; a cap in pages does.
-function describeCapacity() {
-  const mb = Number(byId('size').value);
-  const pages = Math.round((mb * 1048576) / BYTES_PER_PAGE_ESTIMATE / 1000) * 1000;
-  byId('capacity').textContent =
-    'Roughly ' + pages.toLocaleString() + ' pages, measured on real articles. ' +
-    'Once there are a few weeks of history the extension can tell you the date instead.';
+// Step four. A cap in megabytes means nothing; a cap in pages does. The
+// presets cover what most people want, and the custom field is there because
+// this is their disk and a number somebody else picked is not a budget.
+const sizeSelect = byId('size');
+const sizeCustom = byId('sizeCustom');
+const monthsSelect = byId('months');
+const monthsCustom = byId('monthsCustom');
+
+function capBytes() {
+  const value = limitValue(sizeSelect, sizeCustom);
+  if (value === null) return null;
+  return sizeSelect.value === 'custom' ? Math.round(value * GB) : Math.round(value * MB);
 }
-byId('size').addEventListener('change', describeCapacity);
+
+function describeCapacity() {
+  syncCustom(sizeSelect, sizeCustom);
+  syncCustom(monthsSelect, monthsCustom);
+  const bytes = capBytes();
+  byId('capacity').textContent = bytes === null
+    ? 'Type a number and this will say what it holds.'
+    : 'Roughly ' + pagesFor(bytes) + ' pages, measured on real articles. ' +
+      'Once there are a few weeks of history the extension can tell you the date instead.';
+}
+for (const control of [sizeSelect, sizeCustom, monthsSelect, monthsCustom]) {
+  control.addEventListener('input', describeCapacity);
+  control.addEventListener('change', describeCapacity);
+}
 describeCapacity();
 
 byId('finish').addEventListener('click', async () => {
-  const months = Number(byId('months').value);
+  // A custom field left empty or nonsense falls back to the recommended
+  // default rather than to zero, which would mean "keep nothing".
+  const months = limitValue(monthsSelect, monthsCustom) || 12;
   await ask(MSG.SETTINGS_SET, {
     setupComplete: true,
     mode,
     presets: presetState,
     retentionMonths: months,
-    sizeCapBytes: Number(byId('size').value) * 1048576,
+    sizeCapBytes: capBytes() || 500 * MB,
   });
 
   byId('doneNote').textContent =

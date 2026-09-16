@@ -12,6 +12,7 @@ import { termScore, recencyBoost, idf } from './bm25.js';
 import { buildSnippet } from './snippet.js';
 import { terms as termsOf } from './tokenizer.js';
 import { variantsOf } from './morphology.js';
+import { MIN_PREFIX_CHARS, PREFIX_SCORE_FACTOR } from '../shared/constants.js';
 
 const PRESCORE_LIMIT = 500;
 
@@ -30,7 +31,9 @@ export async function search(
 ) {
   const started = Date.now();
   const q = parseQuery(input);
-  if (q.isEmpty) return { results: [], total: 0, mode: 'empty', relaxed: {}, tookMs: 0, query: q };
+  if (q.isEmpty) {
+    return { results: [], total: 0, mode: 'empty', relaxed: {}, expanded: {}, tookMs: 0, query: q };
+  }
 
   const stats = await store.readStats();
   const postingsByTerm = new Map();
@@ -39,6 +42,20 @@ export async function search(
   // A term that matches nothing gets one cheap second chance at its
   // singular. Recorded so the interface can say what it actually searched.
   const relaxed = {};
+
+  // And then, still only if it matched nothing, at being the start of a
+  // longer word. This is the prefix matching BRIEF.md always meant to stand
+  // in for stemming, and it is deliberately a last resort rather than the
+  // default: a word with postings of its own is searched exactly, so "car"
+  // stays "car" and never quietly becomes "carbon". Only "isra", which finds
+  // nothing at all on its own, is widened.
+  //
+  // Words inside a quoted phrase are never widened. A phrase is checked
+  // against stored positions, and the positions of several different words
+  // merged together do not describe any real sentence.
+  const expanded = {};
+  const phraseTerms = new Set(q.phrases.flat());
+  const canExpand = typeof store.readTermsWithPrefix === 'function';
 
   await Promise.all(
     q.lookup.map(async (term) => {
@@ -53,6 +70,32 @@ export async function search(
           }
         }
       }
+
+      if (
+        list.length === 0 &&
+        canExpand &&
+        term.length >= MIN_PREFIX_CHARS &&
+        !phraseTerms.has(term)
+      ) {
+        const matches = await store.readTermsWithPrefix(term);
+        if (matches.length) {
+          // The widened word behaves as one word from here on. A document
+          // that contains "israel" twice and "israeli" once has three
+          // reasons to match "isra", and counting them as three is what
+          // makes the ranking sensible.
+          const merged = new Map();
+          for (const match of matches) {
+            for (const entry of match.docs) {
+              const already = merged.get(entry.id);
+              if (already) already.tf += entry.tf;
+              else merged.set(entry.id, { id: entry.id, tf: entry.tf, pos: entry.pos });
+            }
+          }
+          list = [...merged.values()].sort((a, b) => a.id - b.id);
+          expanded[term] = matches.map((match) => match.term);
+        }
+      }
+
       const map = new Map();
       for (const entry of list) map.set(entry.id, entry);
       postingsByTerm.set(term, map);
@@ -81,8 +124,17 @@ export async function search(
     for (const s of sets) for (const id of s.keys()) candidates.add(id);
   }
   if (candidates.size === 0) {
-    return { results: [], total: 0, mode, relaxed, tookMs: Date.now() - started, query: q };
+    return { results: [], total: 0, mode, relaxed, expanded, tookMs: Date.now() - started, query: q };
   }
+
+  // The snippet highlights what was actually found, not what was typed.
+  // Searching "isra" and getting back a paragraph with nothing marked in it
+  // would look like the wrong page.
+  const highlightTerms = [...new Set([
+    ...q.lookup,
+    ...Object.values(relaxed),
+    ...Object.values(expanded).flat(),
+  ])];
 
   // Stage one: cheap ranking with no document loads, to bound how many
   // records the expensive stage has to read.
@@ -120,10 +172,14 @@ export async function search(
     for (const term of q.lookup) {
       const entry = postingsByTerm.get(term).get(id);
       if (!entry) continue;
-      score += termScore(
+      const contribution = termScore(
         { tf: entry.tf, df: dfByTerm.get(term), docLength: doc.wordCount || 1 },
         stats
       );
+      // A widened word is a guess. This only moves anything when a query
+      // mixes one with a word that matched exactly, which is the case where
+      // the exact word deserves to carry more of the answer.
+      score += expanded[term] ? contribution * PREFIX_SCORE_FACTOR : contribution;
     }
 
     const titleTerms = new Set(termsOf(doc.title || ''));
@@ -151,6 +207,7 @@ export async function search(
   return {
     mode,
     relaxed,
+    expanded,
     total: scored.length,
     hasMore: offset + limit < scored.length,
     domains: [...domains.entries()]
@@ -168,7 +225,7 @@ export async function search(
       domain: doc.domain,
       lastSeen: doc.lastSeen,
       pinned: !!doc.pinned,
-      snippet: buildSnippet(doc.text || '', q.lookup),
+      snippet: buildSnippet(doc.text || '', highlightTerms),
     })),
   };
 }

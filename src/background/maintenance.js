@@ -18,7 +18,7 @@ export async function collectStats() {
   const settings = await loadSettings();
   const sweepState = await loadSweepState();
   const local = await chrome.storage.local
-    .get(['persistence', 'storageFull', 'lastMigration'])
+    .get(['persistence', 'storageFull', 'lastMigration', 'contentScripts'])
     .catch(() => ({}));
 
   // Settings survive a database that does not, so the parts of the answer
@@ -34,6 +34,10 @@ export async function collectStats() {
     persisted: local.persistence ? local.persistence.granted !== false : null,
     storageFull: local.storageFull ? local.storageFull.at : null,
     lastMigration: local.lastMigration || null,
+    // Which sites the extension is actually watching, so a site that quietly
+    // stopped being captured can be said out loud rather than discovered a
+    // month later by its absence.
+    captureWatch: local.contentScripts || null,
   };
 
   // An archive that cannot be opened must never be described as an empty one.
