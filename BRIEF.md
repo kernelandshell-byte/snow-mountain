@@ -1,8 +1,9 @@
-# Project Snow Mountain
+# TextMemory
 
 A local full text memory for your browser. Everything you actually read gets indexed on your own machine, so you can find it later by any phrase you remember.
 
-Working title only. See "Naming" at the end.
+Named in September 2026, having been "Project Snow Mountain" throughout the
+build. See "Naming" at the end for what that cost.
 
 ## The problem
 
@@ -193,6 +194,31 @@ The core of this project is pure functions, which is unusually testable for an e
 
 ## Naming
 
-Not settled, and it does not need to be. The name only appears in three places: `manifest.json`, the store listing, and the repo name. All three are trivial to change right up until publication.
+Settled: **TextMemory**. Checked against the Chrome Web Store and general
+product presence before choosing, which is worth redoing, along with an EUIPO
+trademark search, immediately before publishing.
 
-The one rule that keeps it cheap: **keep the name out of the code.** No `SnowMountain` prefixes on classes, storage keys, database names or CSS classes. Put the display name in one constant and read it from there. Renaming then costs a single line instead of a refactor.
+The rule this section always carried was: **keep the name out of the code.**
+No prefixes on classes, storage keys, database names or CSS classes. Put the
+display name in one constant and read it from there, so renaming costs a
+single line instead of a refactor.
+
+The rule was half kept, and the half that was not is the interesting part. The
+constant existed, but the name had also reached seventeen other places: three
+HTML page titles, four `window.__snowMountain*` globals passed between the
+service worker and the content scripts, a CSS highlight name, the name of an
+exported file, and the format identifier written inside every export.
+
+That last one was the only one that mattered, and it is the general lesson. A
+page title is a string. An identifier stored inside a file somebody keeps, and
+checked by the importer before it will read that file, is a data format: the
+day the product is renamed is the day every export anybody already made stops
+importing. A data format must never be named after a product.
+
+So the rename that actually happened did two things. The name now genuinely
+lives in one constant, with the page titles and the export filename derived
+from it. And everything that is not a display string was renamed to say what
+it does rather than what the extension is called, so a future rename does not
+touch them at all. The export format is `reading-archive-export`, permanently,
+and the importer still accepts the old identifier because files written under
+it exist.

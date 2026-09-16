@@ -4,6 +4,7 @@
 // All of them are irreversible except the first two, so none of them guesses,
 // and every one that deletes leaves a row in the storage log.
 
+import { EXPORT_FORMAT } from '../shared/constants.js';
 import { loadSettings, saveSettings } from '../shared/settings.js';
 import { getStore } from './store-handle.js';
 import { syncContentScripts } from './content-scripts.js';
@@ -58,7 +59,7 @@ export async function buildExport({ afterId = 0, limit = 200 } = {}) {
   ]);
 
   return {
-    format: 'snow-mountain-export',
+    format: EXPORT_FORMAT,
     version: 1,
     exportedAt: new Date().toISOString(),
     total: stats.docCount,

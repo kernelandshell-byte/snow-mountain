@@ -24,7 +24,7 @@ export async function injectExtractor(tabId, { explicit = false } = {}) {
       await chrome.scripting.executeScript({
         target: { tabId },
         func: () => {
-          window.__snowMountainExplicit = true;
+          window.__readingArchiveExplicit = true;
         },
       });
     }

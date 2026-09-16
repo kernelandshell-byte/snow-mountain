@@ -1,12 +1,18 @@
 import { MSG } from '../../shared/messages.js';
 import { PRESET_LABELS } from '../../shared/presets.js';
-import { BYTES_PER_PAGE_ESTIMATE } from '../../shared/constants.js';
+import {
+  BYTES_PER_PAGE_ESTIMATE, DISPLAY_NAME, SLUG, EXPORT_FORMATS_ACCEPTED,
+} from '../../shared/constants.js';
 import { bytes as mb, pageCount } from '../../shared/format.js';
 import { requestPersistence } from '../../shared/persistence.js';
 import { MB, GB, showLimit, syncCustom, limitValue, pagesFor, describeSize } from '../shared/limits.js';
 
 const ask = (type, payload) => chrome.runtime.sendMessage({ type, payload });
 const byId = (id) => document.getElementById(id);
+
+// Read from the one constant rather than written into the markup, so the name
+// really does live in a single place. See the naming section of BRIEF.md.
+document.title = DISPLAY_NAME + ' settings';
 
 // Asking here as well as during setup, because persistence can be refused the
 // first time and granted later, and because somebody opening settings is
@@ -391,7 +397,7 @@ byId('export').addEventListener('click', async () => {
   const url = URL.createObjectURL(blob);
   const link = document.createElement('a');
   link.href = url;
-  link.download = 'snow-mountain-' + new Date().toISOString().slice(0, 10) + '.json';
+  link.download = SLUG + '-' + new Date().toISOString().slice(0, 10) + '.json';
   link.click();
   URL.revokeObjectURL(url);
 
@@ -418,7 +424,9 @@ byId('importFile').addEventListener('change', async (event) => {
     note.textContent = 'That file is not valid JSON.';
     return;
   }
-  if (archive.format !== 'snow-mountain-export' || !Array.isArray(archive.pages)) {
+  // Exports written under the old format identifier still import, because
+  // somebody's file on disk is not something to break over a rename.
+  if (!EXPORT_FORMATS_ACCEPTED.includes(archive.format) || !Array.isArray(archive.pages)) {
     note.textContent = 'That does not look like an export from this extension.';
     return;
   }

@@ -136,7 +136,7 @@ await resultTab.waitForTimeout(2000);
 const landed = await resultTab.evaluate(() => ({ y: Math.round(window.scrollY), href: location.href }));
 check('opening it scrolls to the passage rather than the top', landed.y > 0, JSON.stringify(landed));
 const highlighted = await resultTab.evaluate(() =>
-  !!(window.CSS && CSS.highlights && CSS.highlights.get('snow-mountain'))
+  !!(window.CSS && CSS.highlights && CSS.highlights.get('reading-archive'))
 );
 // Either route is fine here: the fragment scrolls without leaving a trace we
 // can read, and the fallback paints one. What matters is that it landed.

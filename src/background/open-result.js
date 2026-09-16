@@ -20,8 +20,8 @@ export async function runHighlight(tabId, quote, onlyIfUnscrolled) {
     await chrome.scripting.executeScript({
       target: { tabId },
       func: (text, only) => {
-        window.__snowMountainQuote = text;
-        window.__snowMountainOnlyIfUnscrolled = only;
+        window.__readingArchiveQuote = text;
+        window.__readingArchiveOnlyIfUnscrolled = only;
       },
       args: [quote, onlyIfUnscrolled === true],
     });

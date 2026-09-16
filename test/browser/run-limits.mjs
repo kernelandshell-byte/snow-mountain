@@ -175,7 +175,7 @@ note('the exported file is ' + (exportBytes / 1048576).toFixed(1) + 'MB');
 check('the whole archive still reaches the file', exported.pages.length === seeded.docCount,
   exported.pages.length + ' of ' + seeded.docCount);
 check('the file assembled from slices is valid JSON with the expected shape',
-  exported.format === 'snow-mountain-export' && Array.isArray(exported.pages) && exported.settings,
+  exported.format === 'reading-archive-export' && Array.isArray(exported.pages) && exported.settings,
   Object.keys(exported).join(','));
 check('and every page in it carries its full text',
   exported.pages.every((page) => page.text && page.text.length > 200), 'text was lost on the way out');

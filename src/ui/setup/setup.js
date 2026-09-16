@@ -1,7 +1,10 @@
 import { MSG } from '../../shared/messages.js';
+import { DISPLAY_NAME } from '../../shared/constants.js';
 import { PRESET_LABELS } from '../../shared/presets.js';
 import { requestPersistence } from '../../shared/persistence.js';
 import { MB, GB, syncCustom, limitValue, pagesFor } from '../shared/limits.js';
+
+document.title = 'Set up ' + DISPLAY_NAME;
 
 // The one moment everybody passes through, and the only context that is
 // allowed to ask. See shared/persistence.js.

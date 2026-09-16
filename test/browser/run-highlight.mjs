@@ -65,8 +65,8 @@ async function highlightOn(url, quote, options = {}) {
   if (options.waitFor) await page.waitForTimeout(options.waitFor);
   await page.evaluate(
     ({ text, only }) => {
-      window.__snowMountainQuote = text;
-      window.__snowMountainOnlyIfUnscrolled = only;
+      window.__readingArchiveQuote = text;
+      window.__readingArchiveOnlyIfUnscrolled = only;
     },
     { text: quote, only: options.onlyIfUnscrolled === true }
   );
@@ -74,7 +74,7 @@ async function highlightOn(url, quote, options = {}) {
   await page.waitForTimeout(300);
   const state = await page.evaluate(() => ({
     scrollY: Math.round(window.scrollY),
-    highlighted: !!(window.CSS && CSS.highlights && CSS.highlights.get('snow-mountain')),
+    highlighted: !!(window.CSS && CSS.highlights && CSS.highlights.get('reading-archive')),
     targetTop: document.getElementById('target')
       ? Math.round(document.getElementById('target').getBoundingClientRect().top + window.scrollY)
       : null,
@@ -122,8 +122,8 @@ const scrolled = await context.newPage();
 await scrolled.goto('https://fixture.example/article');
 await scrolled.evaluate(() => window.scrollTo(0, 400));
 await scrolled.evaluate(() => {
-  window.__snowMountainQuote = 'Filler paragraph 39, here only to make the document tall enough that scrolling is unambiguous.';
-  window.__snowMountainOnlyIfUnscrolled = true;
+  window.__readingArchiveQuote = 'Filler paragraph 39, here only to make the document tall enough that scrolling is unambiguous.';
+  window.__readingArchiveOnlyIfUnscrolled = true;
 });
 await scrolled.addScriptTag({ path: path.join(root, 'src/content/highlight.js') });
 await scrolled.waitForTimeout(300);

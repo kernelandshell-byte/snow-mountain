@@ -83,7 +83,7 @@ const download = await Promise.all([
 ]).then(([d]) => d);
 const exportPath = await download.path();
 const exported = JSON.parse(await readFile(exportPath, 'utf8'));
-check('the export is named for the day it was made', /snow-mountain-\d{4}-\d{2}-\d{2}\.json/.test(download.suggestedFilename()), download.suggestedFilename());
+check('the export is named for the day it was made', /textmemory-\d{4}-\d{2}-\d{2}\.json/.test(download.suggestedFilename()), download.suggestedFilename());
 check('the export holds every page', exported.pages.length === 6, exported.pages.length);
 check('the export carries the full text, not a summary',
   exported.pages[0].text.length > 200, exported.pages[0].text.length);
@@ -244,6 +244,35 @@ await page.setInputFiles('#importFile', exportPath);
 await page.waitForFunction(() => /already here/.test(document.getElementById('dataNote').textContent), null, { timeout: 15000 });
 const secondNote = await page.textContent('#dataNote');
 check('importing the same archive twice changes nothing', /6 already here/.test(secondNote), secondNote);
+
+// An export written before the rename. Somebody's file on disk is not
+// something to break over a marketing decision, so the old identifier is
+// accepted for ever.
+const legacy = path.join(path.dirname(exportPath), 'legacy-export.json');
+await writeFile(legacy, JSON.stringify({
+  format: 'snow-mountain-export',
+  version: 1,
+  pages: [{
+    url: 'https://legacy.example/kept',
+    title: 'Written under the old name',
+    text: 'This page was exported before the extension was called anything in particular, and it still comes back.',
+    firstSeen: new Date(Date.now() - 86400000).toISOString(),
+    lastSeen: new Date(Date.now() - 86400000).toISOString(),
+    visitCount: 1,
+    pinned: false,
+  }],
+}));
+await page.setInputFiles('#importFile', legacy);
+await page.waitForFunction(() => /restored|already here/.test(document.getElementById('dataNote').textContent), null, { timeout: 15000 });
+const legacyFound = await page.evaluate(async () => {
+  const { MSG } = await import('/src/shared/messages.js');
+  const found = await chrome.runtime.sendMessage({
+    type: MSG.SEARCH,
+    payload: { query: 'exported before the extension' },
+  });
+  return found.results.length;
+});
+check('an export written under the old name still imports', legacyFound === 1, legacyFound);
 
 // And something that is not an export at all.
 const junk = path.join(path.dirname(exportPath), 'not-an-export.json');

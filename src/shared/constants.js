@@ -1,6 +1,24 @@
 // The display name lives here and nowhere else, so renaming the project
-// stays a one line change. See the naming section of BRIEF.md.
-export const DISPLAY_NAME = 'Snow Mountain';
+// stays a one line change. See the naming section of BRIEF.md. Everything
+// that shows a name to somebody reads it from here, including the page
+// titles and the name of an exported file.
+export const DISPLAY_NAME = 'TextMemory';
+
+// A lowercase form for filenames.
+export const SLUG = DISPLAY_NAME.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+
+// The identifier inside an export file, and the one thing here that must not
+// track the display name.
+//
+// An export is a file somebody keeps, and the importer checks this string
+// before it will read one. Naming it after the product means the day the
+// product is renamed is the day every export anybody already has stops being
+// importable, which is a data format broken by a marketing decision. So it
+// says what the file is rather than what the extension is called, and it
+// never changes again. The old name is still accepted, because files written
+// under it exist.
+export const EXPORT_FORMAT = 'reading-archive-export';
+export const EXPORT_FORMATS_ACCEPTED = [EXPORT_FORMAT, 'snow-mountain-export'];
 
 export const DB_NAME = 'archive';
 export const DB_VERSION = 1;

@@ -12,10 +12,10 @@
 // business rearranging someone else's article.
 
 (() => {
-  const quote = window.__snowMountainQuote;
-  const onlyIfUnscrolled = window.__snowMountainOnlyIfUnscrolled === true;
-  delete window.__snowMountainQuote;
-  delete window.__snowMountainOnlyIfUnscrolled;
+  const quote = window.__readingArchiveQuote;
+  const onlyIfUnscrolled = window.__readingArchiveOnlyIfUnscrolled === true;
+  delete window.__readingArchiveQuote;
+  delete window.__readingArchiveOnlyIfUnscrolled;
   if (!quote) return;
 
   // The fragment already did the job, so leave the page where it is.
@@ -120,12 +120,12 @@
   // Paint it, without touching the document's own nodes.
   if (window.CSS && CSS.highlights && window.Highlight) {
     const sheet = new CSSStyleSheet();
-    sheet.replaceSync('::highlight(snow-mountain){background:#fde68a;color:inherit}');
+    sheet.replaceSync('::highlight(reading-archive){background:#fde68a;color:inherit}');
     document.adoptedStyleSheets = [...document.adoptedStyleSheets, sheet];
-    CSS.highlights.set('snow-mountain', new Highlight(range));
+    CSS.highlights.set('reading-archive', new Highlight(range));
 
     setTimeout(() => {
-      CSS.highlights.delete('snow-mountain');
+      CSS.highlights.delete('reading-archive');
       document.adoptedStyleSheets = document.adoptedStyleSheets.filter((s) => s !== sheet);
     }, 6000);
   }

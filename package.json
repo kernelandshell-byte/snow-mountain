@@ -1,9 +1,9 @@
 {
-  "name": "snow-mountain",
+  "name": "textmemory",
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "description": "Local full text memory for your browser.",
+  "description": "Search the full text of everything you read, stored on your own computer.",
   "scripts": {
     "test": "node --test test/*.test.js",
     "test:browser": "node test/browser/run-store-contract.mjs",

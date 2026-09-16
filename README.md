@@ -1,8 +1,9 @@
-# Snow Mountain
+# TextMemory
 
 A local full text memory for your browser. Everything you actually read gets indexed on your own machine, so you can find it later by any phrase you remember.
 
-Working title. See the naming note at the end of `BRIEF.md`.
+Nothing leaves the computer. See `THREAT-MODEL.md` for what that claim does
+and does not cover, and `PRIVACY.md` for the short version.
 
 - `BRIEF.md` is what this is and why, including the privacy model and v1 scope.
 - `ARCHITECTURE.md` is how it is built, and it settles the decisions that are expensive to reverse.

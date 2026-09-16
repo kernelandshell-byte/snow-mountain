@@ -30,8 +30,8 @@
   );
 
   const canonical = document.querySelector('link[rel="canonical"]');
-  const explicit = window.__snowMountainExplicit === true;
-  delete window.__snowMountainExplicit;
+  const explicit = window.__readingArchiveExplicit === true;
+  delete window.__readingArchiveExplicit;
 
   chrome.runtime.sendMessage({
     type: 'PAGE_CONTENT',
