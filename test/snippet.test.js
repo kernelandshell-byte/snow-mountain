@@ -48,3 +48,15 @@ test('still marks a truncation that lands mid sentence', () => {
   const s = buildSnippet(long, ['needle'], { maxChars: 60 });
   assert.ok(s.text.endsWith('…'), 'got: ' + s.text);
 });
+
+test('stays fast on a page that is one word repeated many thousands of times', () => {
+  // A spammy page, well inside the real MAX_TEXT_BYTES capture cap, gives one
+  // query term tens of thousands of hits in a single document. The window
+  // search has to stay linear in the number of hits, not quadratic, or one
+  // such document in a result page hangs the search for everyone.
+  const text = 'spam '.repeat(40000);
+  const started = Date.now();
+  const s = buildSnippet(text, ['spam']);
+  assert.ok(Date.now() - started < 500, 'buildSnippet took too long on a repetitive document');
+  assert.match(s.text, /spam/);
+});

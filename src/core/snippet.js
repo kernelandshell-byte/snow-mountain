@@ -22,20 +22,40 @@ export function buildSnippet(text, queryTerms, { maxChars = 260, windowTokens = 
 
   // Slide a token window over the hits, preferring distinct terms covered,
   // then raw hit count. Ties go to the earliest window.
+  //
+  // Two pointers rather than a hit-by-hit rescan: `hits` is already sorted
+  // (tokens are visited in order), so as the window's left edge advances,
+  // its right edge only ever moves forward too. A page whose text is one
+  // word repeated many thousands of times, well within MAX_TEXT_BYTES,
+  // otherwise turns this into a hits x hits scan run once per search result.
   let best = { start: hits[0], score: -1, end: hits[0] };
-  for (const startHit of hits) {
-    const windowEnd = startHit + windowTokens;
-    const distinct = new Set();
-    let count = 0;
-    let lastHit = startHit;
-    for (const h of hits) {
-      if (h < startHit || h > windowEnd) continue;
-      distinct.add(tokens[h].term);
-      count += 1;
-      lastHit = h;
+  let right = 0;
+  const counts = new Map();
+  let distinctCount = 0;
+  let windowSize = 0;
+  for (let left = 0; left < hits.length; left++) {
+    if (right < left) right = left;
+    while (right < hits.length && hits[right] <= hits[left] + windowTokens) {
+      const term = tokens[hits[right]].term;
+      const next = (counts.get(term) || 0) + 1;
+      counts.set(term, next);
+      if (next === 1) distinctCount += 1;
+      windowSize += 1;
+      right += 1;
     }
-    const score = distinct.size * 1000 + count;
-    if (score > best.score) best = { start: startHit, end: lastHit, score };
+
+    const score = distinctCount * 1000 + windowSize;
+    if (score > best.score) best = { start: hits[left], end: hits[right - 1], score };
+
+    const leftTerm = tokens[hits[left]].term;
+    const remaining = counts.get(leftTerm) - 1;
+    if (remaining === 0) {
+      counts.delete(leftTerm);
+      distinctCount -= 1;
+    } else {
+      counts.set(leftTerm, remaining);
+    }
+    windowSize -= 1;
   }
 
   const firstToken = Math.max(0, best.start - 8);
