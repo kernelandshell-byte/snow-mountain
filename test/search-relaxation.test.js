@@ -30,3 +30,19 @@ test('a word that matches nothing at all stays unmatched', async () => {
   assert.equal(result.results.length, 0);
   assert.deepEqual(result.relaxed, {});
 });
+
+test("a phrase word is never relaxed to a different word's positions", async () => {
+  // This document never contains the word "cars" anywhere, only the
+  // unrelated literal run "car are great" (singular). Relaxing "cars" to
+  // "car" for phrase checking would make the quoted phrase match a page
+  // that does not contain it, which is worse than finding nothing.
+  const s = createMemoryStore();
+  await s.putPage({
+    url: 'https://a.example/1',
+    title: 'Towing',
+    text: 'This car are great for towing, according to the review.',
+  });
+  const result = await search('"cars are great"', { store: s });
+  assert.equal(result.results.length, 0);
+  assert.deepEqual(result.relaxed, {});
+});

@@ -60,7 +60,13 @@ export async function search(
   await Promise.all(
     q.lookup.map(async (term) => {
       let list = await store.readTerm(term);
-      if (list.length === 0) {
+
+      // A phrase word is checked against stored positions, and a singular
+      // swapped in from a different word does not describe any position the
+      // page's text actually has -- the same reason prefix widening below
+      // excludes phrase words. Relaxing here would make phraseHit compare a
+      // phrase against another word's positions and call it a match.
+      if (list.length === 0 && !phraseTerms.has(term)) {
         for (const variant of variantsOf(term)) {
           const alternative = await store.readTerm(variant);
           if (alternative.length) {
