@@ -168,14 +168,7 @@ In:
 - Pause, per site delete, forget this page
 - Export and wipe
 - Jump to passage if the text fragment prototype holds
-
-Out of v1, deliberately:
-
-- PDF capture
-- Language aware stemming and typo tolerance
-- Semantic or embedding based search
-- Import (export first, import once the format has settled)
-- Firefox port
+- Import
 
 ## Known risks
 
@@ -195,8 +188,7 @@ The core of this project is pure functions, which is unusually testable for an e
 ## Naming
 
 Settled: **TextMemory**. Checked against the Chrome Web Store and general
-product presence before choosing, which is worth redoing, along with an EUIPO
-trademark search, immediately before publishing.
+product presence before choosing.
 
 The rule this section always carried was: **keep the name out of the code.**
 No prefixes on classes, storage keys, database names or CSS classes. Put the

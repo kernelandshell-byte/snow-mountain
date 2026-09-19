@@ -776,31 +776,15 @@ made the test suite worth having before any of the fiddly parts existed.
     disk, housekeeping that has to survive a restart~~
 18. ~~Switching capture modes, and making strict mode true~~
 
-Left for the release checklist: a name, and store listing assets. Icons are in
-`icons/`, the licence is MIT with Readability's Apache 2.0 kept beside it, and
-`PRIVACY.md` and `THREAT-MODEL.md` are written. The threat model is the one
-worth rereading before publishing, because it is where the claim about network
-access is stated precisely enough to be checked and weakly enough to be true.
+Icons are in `icons/`, the licence is MIT with Readability's Apache 2.0 kept
+beside it, and `PRIVACY.md` and `THREAT-MODEL.md` are written. The threat
+model is the one worth rereading before publishing, because it is where the
+claim about network access is stated precisely enough to be checked and
+weakly enough to be true.
 
 The `favicon` permission was dropped on the way: nothing ever used it, and a
 permission a reader has to take on trust for no return is the opposite of what
 the brief asks for.
-
-What is deliberately not done:
-
-- **Language aware stemming.** The singular fallback covers the common
-  English case, and prefix matching covers the rest of what stemming would
-  have bought. German and Dutch compounds need real morphology, and doing
-  that badly is worse than not doing it.
-- **PDF capture.** A different extraction path entirely.
-- **Semantic search.** A local embedding model is a large dependency for a
-  gain that BM25 plus the OR fallback already approximates on a personal
-  corpus.
-- **A Firefox port.** Nothing in `core/` blocks it; the manifest and the
-  permission model would need work.
-- **Splitting positions into their own store.** The benchmark says this is
-  the fix if queries made entirely of very common words ever become a real
-  complaint. They are not one yet.
 
 ## Testing
 
