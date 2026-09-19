@@ -9,7 +9,3 @@ Thumbs.db
 web-ext-artifacts/
 test/browser/.pages/
 screenshots/
-
-# Where the Claude desktop app drops files it has delivered into the chat.
-Claude outputs/
-sm-sync.tgz
