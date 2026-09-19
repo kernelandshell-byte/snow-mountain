@@ -4,7 +4,7 @@
 // All of them are irreversible except the first two, so none of them guesses,
 // and every one that deletes leaves a row in the storage log.
 
-import { EXPORT_FORMAT } from '../shared/constants.js';
+import { EXPORT_FORMAT, MAX_TEXT_BYTES } from '../shared/constants.js';
 import { loadSettings, saveSettings } from '../shared/settings.js';
 import { getStore } from './store-handle.js';
 import { syncContentScripts } from './content-scripts.js';
@@ -102,13 +102,22 @@ export async function importPages(pages) {
       continue;
     }
     try {
+      // An import file is not held to the same shape a real capture is: it
+      // can come from a corrupted file, a much older export, or one somebody
+      // never wrote themselves. The same cap capture.js enforces on the way
+      // in applies here too, and a count that is not a genuine positive
+      // integer is worth less than not trusting it at all.
+      const text = String(page.text).slice(0, MAX_TEXT_BYTES);
+      const visitCount = Number.isInteger(page.visitCount) && page.visitCount > 0
+        ? page.visitCount
+        : null;
       const result = await store.putPage({
         url: page.url,
         title: page.title || '',
-        text: page.text,
+        text,
         lastSeen: Date.parse(page.lastSeen) || Date.now(),
         firstSeen: Date.parse(page.firstSeen) || null,
-        visitCount: page.visitCount || null,
+        visitCount,
         pinned: !!page.pinned,
       });
       // Already there, unchanged: importing the same archive twice should
