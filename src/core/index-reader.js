@@ -109,6 +109,15 @@ export async function search(
     })
   );
 
+  // Excluded terms are looked up exactly, with none of the relaxation above:
+  // the point of "-word" is to name a word precisely, not to guess at what
+  // else might mean the same thing.
+  const excludedIds = new Set();
+  if (q.exclude.length) {
+    const excludedLists = await Promise.all(q.exclude.map((term) => store.readTerm(term)));
+    for (const list of excludedLists) for (const entry of list) excludedIds.add(entry.id);
+  }
+
   const sets = q.lookup.map((t) => postingsByTerm.get(t));
   let mode = 'and';
   let candidates = null;
@@ -129,6 +138,13 @@ export async function search(
     candidates = new Set();
     for (const s of sets) for (const id of s.keys()) candidates.add(id);
   }
+
+  // Applied after the AND/OR decision, not before, so excluding a word never
+  // changes which mode the interface says it used.
+  if (excludedIds.size) {
+    for (const id of excludedIds) candidates.delete(id);
+  }
+
   if (candidates.size === 0) {
     return { results: [], total: 0, mode, relaxed, expanded, tookMs: Date.now() - started, query: q };
   }

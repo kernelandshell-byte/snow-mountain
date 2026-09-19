@@ -8,11 +8,12 @@ function parseWhen(value) {
   return Number.isNaN(parsed) ? null : parsed;
 }
 
-// Supports bare terms, "quoted phrases", site: and before:/after:.
+// Supports bare terms, "quoted phrases", site:, before:/after: and -word.
 export function parseQuery(input) {
   const raw = String(input || '');
   const phrases = [];
   const bare = [];
+  const exclude = [];
   let site = null;
   let after = null;
   let before = null;
@@ -40,6 +41,14 @@ export function parseQuery(input) {
       before = parseWhen(token.slice(7));
       continue;
     }
+    // A leading hyphen excludes a word, the way most search engines already
+    // work. Only a bare word: excluding a phrase would mean checking that no
+    // position in the page carries it, which is a different, bigger feature.
+    if (token.startsWith('-') && token.length > 1) {
+      const words = token.slice(1).match(/[\p{L}\p{N}]+/gu) || [];
+      for (const w of words) exclude.push(foldTerm(w));
+      continue;
+    }
     const words = token.match(/[\p{L}\p{N}]+/gu) || [];
     for (const w of words) bare.push(foldTerm(w));
   }
@@ -50,6 +59,7 @@ export function parseQuery(input) {
   return {
     terms: bare,
     phrases,
+    exclude: [...new Set(exclude)],
     site,
     after,
     before,

@@ -296,7 +296,8 @@ problem rather than a rewrite.
   `ref` is kept.
 - **`bm25.js`** scoring, with corpus statistics passed in rather than read,
   plus a mild logarithmic recency preference.
-- **`query-parser.js`** bare terms, quoted phrases, `site:`.
+- **`query-parser.js`** bare terms, quoted phrases, `site:`, `before:`/`after:`,
+  and `-word` to exclude a term.
 - **`snippet.js`** picks the densest window of query terms and expands to
   sentence boundaries. This is what makes a result recognisable at a glance.
 - **`text-fragment.js`** builds the `#:~:text=` URL, following the rules the
@@ -791,9 +792,6 @@ What is deliberately not done:
   English case, and prefix matching covers the rest of what stemming would
   have bought. German and Dutch compounds need real morphology, and doing
   that badly is worse than not doing it.
-- **Excluding a word.** The query parser has bare terms, quoted phrases,
-  `site:`, `before:` and `after:`, but no `-word`. It is usually the second
-  operator people reach for.
 - **PDF capture.** A different extraction path entirely.
 - **Semantic search.** A local embedding model is a large dependency for a
   gain that BM25 plus the OR fallback already approximates on a personal

@@ -44,3 +44,16 @@ test('a date that makes no sense is ignored rather than breaking the query', () 
   assert.equal(q.after, null);
   assert.deepEqual(q.terms, ['churn']);
 });
+
+test('a leading hyphen excludes a bare word', () => {
+  const q = parseQuery('retro -fatigue');
+  assert.deepEqual(q.terms, ['retro']);
+  assert.deepEqual(q.exclude, ['fatigue']);
+  assert.deepEqual(q.lookup, ['retro']);
+});
+
+test('a lone hyphen is not an exclusion', () => {
+  const q = parseQuery('retro - fatigue');
+  assert.deepEqual(q.exclude, []);
+  assert.deepEqual(q.terms, ['retro', 'fatigue']);
+});

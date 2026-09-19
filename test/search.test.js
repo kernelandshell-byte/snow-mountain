@@ -144,3 +144,19 @@ test('paging reports whether there is more and never repeats a result', async ()
   const past = await search('retrospectives', { store, limit: 20, offset: 0 });
   assert.equal(past.hasMore, false);
 });
+
+test('a -word excludes pages that contain it', async () => {
+  const store = await corpus();
+  const withBoth = await search('retrospectives', { store });
+  assert.equal(withBoth.results.length, 2);
+
+  const excluded = await search('retrospectives -fatigue', { store });
+  assert.equal(excluded.results.length, 1);
+  assert.ok(!excluded.results.some((r) => r.url.includes('retro-fatigue')));
+});
+
+test('excluding a word never changes whether the search ran as and or or', async () => {
+  const store = await corpus();
+  const result = await search('churn -fatigue', { store });
+  assert.equal(result.mode, 'and');
+});

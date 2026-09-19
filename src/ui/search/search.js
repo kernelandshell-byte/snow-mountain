@@ -121,7 +121,8 @@ async function run({ append = false } = {}) {
     list.innerHTML =
       '<p class="empty"><strong>Type a phrase you remember.</strong>' +
       'Any words from the page, in any order. Add <code>site:example.com</code> to narrow it ' +
-      'down, or put "quotation marks" around an exact phrase.</p>';
+      'down, put "quotation marks" around an exact phrase, or write <code>-word</code> to leave ' +
+      'pages with that word out.</p>';
     return;
   }
 
