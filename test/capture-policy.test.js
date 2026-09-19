@@ -57,6 +57,21 @@ test('a rule for another host does not leak', () => {
   assert.equal(matchesRule('https://notexample.com/x', 'example.com'), false);
 });
 
+test('a trailing dot on the hostname does not defeat a rule', () => {
+  // mail.google.com. navigates identically to mail.google.com; the URL
+  // parser keeps the dot in `hostname`, and a naive comparison would let it
+  // slip an excluded site straight past its own exclusion rule.
+  assert.equal(matchesRule('https://mail.google.com./inbox', 'mail.google.com'), true);
+  const r = decide({ ...base, url: 'https://mail.google.com./inbox', rules: ['mail.google.com'] });
+  assert.equal(r.capture, false);
+});
+
+test('a leading-label wildcard matches any host starting with that label', () => {
+  assert.equal(matchesRule('https://webmail.gmx.net/inbox', 'webmail.*'), true);
+  assert.equal(matchesRule('https://banking.mybank.example/x', 'banking.*'), true);
+  assert.equal(matchesRule('https://notwebmail.example.com/x', 'webmail.*'), false);
+});
+
 test('a search results page is excluded by the shipped preset', () => {
   const rules = ['google.com/search', 'duckduckgo.com'];
   assert.equal(decide({ ...base, url: 'https://www.google.com/search?q=retro+fatigue', rules }).capture, false);

@@ -14,6 +14,7 @@ export const MODE = { BROAD: 'broad', STRICT: 'strict' };
 // Patterns are deliberately not regex. Supported forms:
 //   example.com            host and its subdomains
 //   *.example.com          subdomains only
+//   webmail.*              any host whose first label is "webmail"
 //   example.com/private/*  host plus a path prefix
 export function matchesRule(rawUrl, pattern) {
   let u;
@@ -22,7 +23,11 @@ export function matchesRule(rawUrl, pattern) {
   } catch {
     return false;
   }
-  const host = u.hostname.toLowerCase().replace(/^www\./, '');
+  // A trailing dot is a valid, identically-resolving root-label marker
+  // (`mail.google.com.` navigates exactly like `mail.google.com`), and the
+  // URL parser keeps it in `hostname`. Stripped here so a rule cannot be
+  // defeated by a single dot at the end of a link.
+  const host = u.hostname.toLowerCase().replace(/^www\./, '').replace(/\.+$/, '');
   const path = u.pathname;
 
   const [hostPart, ...pathParts] = pattern.trim().toLowerCase().split('/');
@@ -32,6 +37,8 @@ export function matchesRule(rawUrl, pattern) {
   if (hostPart.startsWith('*.')) {
     const base = hostPart.slice(2);
     hostOk = host.endsWith('.' + base);
+  } else if (hostPart.length > 2 && hostPart.endsWith('.*')) {
+    hostOk = host.startsWith(hostPart.slice(0, -1));
   } else {
     hostOk = host === hostPart || host.endsWith('.' + hostPart);
   }

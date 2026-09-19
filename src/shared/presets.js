@@ -21,8 +21,12 @@ export const PRESETS = {
     '*.gov', '*.gov.uk', '*.gov.cz', '*.bund.de', 'mojedatovaschranka.cz',
   ],
   intranet: ['localhost', '*.local', '*.internal', '*.lan'],
+  // matchesRule strips a leading "www." from the real URL before comparing,
+  // so a bare host already covers its www subdomain -- a "www.<host>" entry
+  // here would only ever compare against an already-stripped host and could
+  // never match anything.
   searchResults: [
-    'google.com/search', 'www.google.com/search', 'google.de/search', 'google.nl/search',
+    'google.com/search', 'google.de/search', 'google.nl/search',
     'bing.com/search', 'duckduckgo.com', 'search.brave.com', 'ecosia.org/search',
     'startpage.com/sp/search', 'search.marcia.com',
   ],
