@@ -68,14 +68,48 @@ inaccessible (cross-process rendering, not a same-origin iframe); zero
 screen. This is not a gap in the spike, it is the actual limit: the PDFium
 plugin paginates internally and tells nothing outside itself.
 
-**Decision, not a further-research item: PDF capture policy is dwell-only.**
-`read-heuristic.js`'s scroll-depth requirement already has one exemption
-(pages short enough that scrolling was never needed); a PDF candidate is
-the second one, for a different reason (the signal doesn't exist, not that
-it isn't needed). Whether the dwell threshold should differ for PDFs (a long
-report read a screenful at a time might sit under the current 8-10s more
-often than an HTML page would) is worth watching after real use, not
-guessing now.
+**Decision: PDF capture policy is dwell-only. But the mechanism has to be
+explicit, not inherited by accident**, which an earlier draft of this spec
+got wrong. Checking `read-heuristic.js` and `observer.js` against the spike
+output rather than assuming turned up two things:
+
+- `wordCount()` in `observer.js` reads `document.body.innerText`, which is
+  empty on a native PDF viewer tab (the body is a wrapper around one opaque
+  `<embed>`). `isRead()`'s short-page exemption is `wordCount > 0 &&
+  wordCount <= cfg.shortPageWords` -- and `wordCount` is exactly `0` for a
+  PDF, which does **not** satisfy `> 0`. So the existing short-page
+  exemption never fires for a PDF; it isn't the mechanism.
+- `observer.js`'s own `scrollDepth()` is `doc.scrollHeight - innerHeight <=
+  0 ? 1 : ...`. The scroll spike measured exactly that: a native-viewer
+  tab's `document.documentElement.scrollHeight` sits pinned to
+  `window.innerHeight`, because the top-level document never scrolls at
+  all. So `scrollDepth()` already, coincidentally, returns `1` on the very
+  first tick for every PDF tab today, for the same numeric reason a
+  genuinely short HTML page does. **Dwell-only behaviour for PDFs may
+  already happen, right now, in the shipped code, by accident.**
+
+Relying on that would be a mistake, not a shortcut. It is the exact shape of
+bug this project is written to be paranoid about: something that works by
+coincidence, isn't tested as intentional behaviour, and would fail silently
+and invisibly the moment the coincidence stops holding -- a future Chrome
+version reporting the embed's scrollHeight one pixel taller than the
+viewport, a zoomed page, a print-layout PDF with visible margins, anything
+that makes `scrollHeight - innerHeight` land above zero would push a PDF
+candidate back onto a scroll requirement that can structurally never be
+satisfied, and PDFs would simply, quietly, stop being captured. Nobody
+would notice until "why doesn't this find any of my PDFs" turned up, with
+no error and no log line pointing at why.
+
+So the real decision is: `observer.js` gains an explicit
+`document.contentType === 'application/pdf'` check and reports it as its
+own field (`isPdf: true`) on `PAGE_CANDIDATE`, and `read-heuristic.js`
+gains one explicit branch reading that field, not a repurposing of
+`wordCount` or `scrollDepth`. That is a real, small change to `core/`, and
+"no changes to core/" in the pipeline section below was wrong until this
+revision -- corrected there. Whether the dwell threshold should differ for
+PDFs (a long report read a screenful at a time might sit under the current
+8-10s more often than an HTML page would) is worth watching after real
+use, not guessing now.
 
 ### Reasoned through, not spiked: revisit and content-hash semantics
 
@@ -153,14 +187,24 @@ permission, and is a worse story to explain in a threat model than "one
 ## Pipeline
 
 1. `observer.js` gains one check, before the existing Readability path:
-   `document.contentType === 'application/pdf'`. On match, skip dwell/scroll
-   measurement for scroll (dwell only, per the finding above) and skip
-   Readability entirely.
+   `document.contentType === 'application/pdf'`, reported as `isPdf` on
+   `PAGE_CANDIDATE`. `read-heuristic.js` gains one explicit branch reading
+   it, per the correction above -- a real, small, tested change to `core/`,
+   not zero changes.
 2. `content/pdf-fetch.js` (new, small, the one file named in the threat
    model exception): `fetch(location.href)`, confirm the response starts
    `%PDF-`, return the bytes. Refuses anything that doesn't have the magic
    header, so a server that lies about `Content-Type` doesn't hand a content
-   script an arbitrary blob to pass along.
+   script an arbitrary blob to pass along. The header check itself belongs
+   in `core/` as a one-line pure function (`looksLikePdf(bytes)`, next to
+   `hash.js` or its own tiny module) rather than living only as an assertion
+   inside the content script: it is the one thing standing between a
+   paywalled or login-walled PDF URL and indexing an HTML error page as if
+   it were the document, and "asserted in the spec, never exercised by a
+   test" is not good enough for the one line doing that job. Wants a fixture
+   in whatever suite ends up covering PDF capture: an HTTP response that
+   claims `Content-Type: application/pdf` but is actually an HTML login
+   page, confirming the fetch path refuses it rather than indexing it.
 3. Bytes go to the service worker in the existing `PAGE_CANDIDATE` /
    capture flow, as a typed-array payload alongside url/title, the same
    message shape as today plus one field.
@@ -176,7 +220,32 @@ permission, and is a worse story to explain in a threat model than "one
    that fails Readability's threshold is treated today: not captured, not
    an error.
 6. From here on, identical to an HTML page: `putPage`, indexing, search,
-   snippets, export. No changes to `core/`, `db/`, or the search pipeline.
+   snippets, export. No changes to `db/` or the search pipeline. `core/`
+   gets the two small, testable additions above (the `isPdf` branch in
+   `read-heuristic.js`, `looksLikePdf`); nothing downstream of extracted
+   text changes at all.
+
+### Vendoring pdf.js
+
+Same shape as `src/vendor/readability/`, but it is worth being explicit
+about where the shape stretches rather than letting the comparison imply
+it's identical. Readability is one 90KB file, unmodified, with a
+`README.md` stating the exact upstream version, the licence, and the update
+recipe (`npm pack @mozilla/readability`, copy the file and licence out,
+rerun the extraction test). pdf.js needs the same treatment but is two
+files, `pdf.min.mjs` and `pdf.worker.min.mjs`, both prebuilt by upstream
+(the spike copied them from `pdfjs-dist`'s `build/` directory untouched,
+no bundler step on either side), totalling roughly 1.7MB against
+Readability's 90KB. Both are Apache 2.0, so the licence file is the same
+shape. `src/vendor/pdfjs/README.md` should say, same as Readability's does:
+the exact `pdfjs-dist` version pinned, that both files are copied verbatim
+from `build/` (not `legacy/`), and the update recipe. The size difference
+is worth a line in that README too, with the reason it's acceptable: unlike
+Readability, which is injected into every tab that earns capture, pdf.js is
+never injected into a web page at all -- it loads once into the offscreen
+document, which is created on demand and only for a PDF candidate, so the
+1.7MB cost is paid by the extension's own background context, not by every
+page someone reads.
 
 ### Offscreen document lifecycle
 
@@ -235,7 +304,26 @@ In roughly the order they'd block someone:
    a page wasn't kept (password field, excluded site, too short). A PDF
    that parsed to nothing needs its own reason string, following the
    existing pattern in `capture-policy.js` rather than a new one.
+6. **A fixture exercising the magic-header rejection**: an HTTP response
+   claiming `Content-Type: application/pdf` that isn't one, confirmed to be
+   refused rather than indexed. Cheap, and it is the one line standing
+   between a login wall and a bad capture, so it should not ship unverified.
 
 Nothing above needs code to answer except (2) and (3), which are more
-spiking in the same shape as this document. (1) is yours. (4) and (5) are
-small enough to settle when implementation starts.
+spiking in the same shape as this document, and (6), which is a small
+fixture rather than a spike. (1) is yours. (4) and (5) are small enough to
+settle when implementation starts.
+
+## Review
+
+An independent pass (real re-runs of all four spikes, not a read-through)
+confirmed the headline findings reproduce and checked the CSP-scoping claim
+and the content-hash reasoning against the actual code rather than trusting
+this document. It found one real problem, since fixed above: an earlier
+draft's "no changes to `core/`" was wrong, because the dwell-only decision
+needs an explicit signal rather than relying on `wordCount()` or
+`scrollDepth()`'s existing branches, which turned out to already produce
+dwell-only behaviour for PDFs today by numeric coincidence rather than by
+design. It also flagged the magic-header check as asserted but unexercised
+(now item 6 above) and asked for vendoring parity with `src/vendor/readability/`
+(now under "Vendoring pdf.js" above). See the PR thread for the full review.
