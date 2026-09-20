@@ -200,25 +200,24 @@ permission, and is a worse story to explain in a threat model than "one
    `hash.js` or its own tiny module) rather than living only as an assertion
    inside the content script: it is the one thing standing between a
    paywalled or login-walled PDF URL and indexing an HTML error page as if
-   it were the document, and "asserted in the spec, never exercised by a
-   test" is not good enough for the one line doing that job. Wants a fixture
-   in whatever suite ends up covering PDF capture: an HTTP response that
-   claims `Content-Type: application/pdf` but is actually an HTML login
-   page, confirming the fetch path refuses it rather than indexing it.
-3. Bytes go to the service worker in the existing `PAGE_CANDIDATE` /
-   capture flow, as a typed-array payload alongside url/title, the same
-   message shape as today plus one field.
+   it were the document. Exercised in `test:pdf` with exactly that: an HTTP
+   response claiming `Content-Type: application/pdf` while actually serving
+   an HTML login page, confirmed refused rather than indexed.
+3. Bytes go to the service worker as a new `PDF_BYTES` message, alongside
+   url/title/explicit, in a new `PAGE_CANDIDATE`-adjacent path rather than
+   reusing `PAGE_CONTENT` (which carries text, not bytes). The bytes travel
+   as a plain array of numbers, not a typed array: see "Built" below for why
+   that is not optional.
 4. `background/pdf-extract.js` (new): ensures the offscreen document exists
    (`chrome.offscreen.createDocument({reasons: ['WORKERS']})`, the first
    real use of the offscreen document `ARCHITECTURE.md` reserved), sends the
    bytes over, gets back `{text, numPages}` or an error.
-5. Offscreen document (`ui/offscreen/` or `background/offscreen/`, still
-   undecided which, see open questions): vendored pdf.js, `getDocument()`,
+5. Offscreen document (`src/offscreen/`): vendored pdf.js, `getDocument()`,
    `getTextContent()` per page, joined. This is where "is there anything
    worth keeping" lives for PDFs -- a scanned, image-only PDF returns near-
    empty text, and that is treated the same way a non-article HTML page
    that fails Readability's threshold is treated today: not captured, not
-   an error.
+   an error. Title does not come from here: see "Built" below.
 6. From here on, identical to an HTML page: `putPage`, indexing, search,
    snippets, export. No changes to `db/` or the search pipeline. `core/`
    gets the two small, testable additions above (the `isPdf` branch in
@@ -249,15 +248,17 @@ page someone reads.
 
 ### Offscreen document lifecycle
 
-Not spiked, a design choice: close it after a short idle window (proposed:
-30 seconds since the last parse) rather than immediately after every single
-PDF, so a page with several PDF links opened in succession doesn't pay
-creation cost per document, and rather than leaving it open indefinitely,
-matching the service worker's own "dies constantly, holds nothing
-important" ethos extended to its one helper process. `chrome.alarms`
-already exists for the maintenance sweep; reusing it for this rather than
-`setTimeout` (which a suspended service worker would drop) is the
-consistent choice.
+Closed after a short idle window (`background/pdf-extract.js`,
+`OFFSCREEN_IDLE_ALARM`) rather than immediately after every single PDF, so a
+page with several PDF links opened in succession doesn't pay creation cost
+per document, and rather than leaving it open indefinitely, matching the
+service worker's own "dies constantly, holds nothing important" ethos
+extended to its one helper process. `chrome.alarms` rather than
+`setTimeout`, which a suspended service worker would drop. The window is
+one minute, not the 30 seconds an earlier draft of this section proposed
+before being checked against the real API: `chrome.alarms.create` has a
+floor of about a minute for a published extension, and a shorter
+`delayInMinutes` does not get honoured.
 
 ## Performance
 
@@ -279,40 +280,66 @@ its own Worker) rather than the parse itself; and this fixture is 55KB,
 where real PDFs run from tens of KB to tens of MB, so the message-passing
 cost at a realistic size is genuinely unmeasured, not just unoptimised.
 
-## Open questions before implementation starts
+## Built
 
-In roughly the order they'd block someone:
+Implemented and green: `npm test` (207 Node tests) and the full existing
+browser suite, plus a new `test:pdf` (`test/browser/run-pdf-capture.mjs`)
+driving the real extension end to end -- a real PDF read for its dwell
+period with no scrolling at all, a scanned/image-only PDF correctly not
+kept, a login page served with `Content-Type: application/pdf` correctly
+refused, and "keep this page now" working immediately on a PDF tab. Of the
+open questions above: (1) is answered -- `THREAT-MODEL.md` now carries the
+narrowed claim, isolating the exception to `content/pdf-fetch.js`. (4) is
+settled as `src/offscreen/`. (5) turned out to need nothing new: a PDF that
+parses to empty text hits `onPageContent`'s existing "too little text"
+floor, the same message an empty HTML extraction already gets. (6) is
+exercised by the new browser suite. (2) and (3) are still genuinely open --
+nothing here needed them, but nothing here answered them either.
 
-1. **Your call on "The fetch problem" above.** Everything else can be built
-   speculatively; this one changes a document you show to users, and I'm
-   not comfortable defaulting it.
-2. **A fixture PDF that needs non-embedded font substitution or CJK cmaps**,
-   to settle whether `standard_fonts`/`cmaps` need vendoring alongside the
-   worker, or whether the fixtures this project actually cares about (per
-   `BRIEF.md`: English, German, Dutch) never hit that path.
-3. **Message-passing cost at realistic file sizes** (low tens of MB), since
-   the existing `bytes` accounting in `ARCHITECTURE.md` and the message-size
-   limits `test:limits` already tests for export apply here too, and a PDF
-   is a second place a single message can be too big.
-4. **Where the offscreen document's files live** in `src/` -- a new
-   top-level directory (`src/offscreen/`) reads cleanest against the
-   existing `background/content/core/db/shared/ui` split, since it's
-   neither a content script, service-worker-owned logic, nor an extension
-   page in the `ui/` sense, but it does talk to the service worker the way
-   `ui/` pages do (by message, never by opening its own DB connection).
-5. **The scanned-PDF "nothing to extract" UI.** The popup already says why
-   a page wasn't kept (password field, excluded site, too short). A PDF
-   that parsed to nothing needs its own reason string, following the
-   existing pattern in `capture-policy.js` rather than a new one.
-6. **A fixture exercising the magic-header rejection**: an HTTP response
-   claiming `Content-Type: application/pdf` that isn't one, confirmed to be
-   refused rather than indexed. Cheap, and it is the one line standing
-   between a login wall and a bad capture, so it should not ship unverified.
+Three things surfaced only by building this rather than by reasoning about
+it, all found the same way everything else in this document was: run it for
+real and check, don't assume.
 
-Nothing above needs code to answer except (2) and (3), which are more
-spiking in the same shape as this document, and (6), which is a small
-fixture rather than a spike. (1) is yours. (4) and (5) are small enough to
-settle when implementation starts.
+**`chrome.runtime.sendMessage` does not preserve a `Uint8Array` or
+`ArrayBuffer` between a content script and the background.** The very first
+end-to-end run sent real bytes from `pdf-fetch.js` and they arrived at the
+service worker as `{}` -- an empty plain object, not a typed array, not an
+error, nothing that would have shown up short of actually checking what
+came out the other end. The fix is the one the earlier spike happened to
+use for an unrelated reason (Playwright's own argument-passing constraint
+into `page.evaluate`, nothing to do with the real extension messaging
+layer): send `Array.from(bytes)`, a plain array of numbers, and
+reconstruct with `new Uint8Array(...)` wherever it is used as bytes again.
+Both `content/pdf-fetch.js` (content script to service worker) and
+`background/pdf-extract.js` (service worker to offscreen document) do this
+now. This is exactly the message-passing cost open question (3) above made
+concrete rather than answered: a plain array of numbers is a real, measured
+worse shape to send than packed bytes would be, and it is now the shape
+this code actually uses, at every size, not just the one this spike
+measured.
+
+**`doc.getMetadata()` throws inside this `pdfjs-dist` build.** Getting a
+PDF's title looked like the obvious next step once extraction worked, and
+calling it on the very first real PDF crashed with
+`TypeError: this[#Yr].getOrInsertComputed is not a function` -- a `Map`
+method this Chromium does not have, reached through code `getMetadata()`
+shares internally with unrelated editor and telemetry modules in the
+minified bundle. `getTextContent()`, the only pdf.js call this code
+actually depends on, has been run dozens of times across every test above
+with no error at all; this is a narrow, specific crash in one unused
+codepath, not a reason to distrust the rest of the library. Fixed by not
+calling it: see the next finding.
+
+**`document.title` reads empty on Chrome's native PDF viewer, always,
+however long the wait -- but `chrome.tabs.get(tabId).title` already has the
+PDF's real metadata title, immediately, correctly, and needs no pdf.js
+metadata call at all.** Checked directly: a PDF with a title embedded via
+`pdf-lib`'s `setTitle()` showed `document.title === ''` for ten full
+seconds of polling in the same tab where `chrome.tabs.query` reported the
+correct title from the first check. `background/capture.js`'s `pdfTitle()`
+asks Chrome, with `payload.title` (the content script's `document.title`,
+in practice always empty) and the URL's filename as fallbacks in that
+order, and the whole `getMetadata()` question above became moot.
 
 ## Review
 

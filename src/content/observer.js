@@ -27,6 +27,11 @@
 
   const hasPasswordField = () => !!document.querySelector('input[type="password"]');
 
+  // Chrome's native PDF viewer renders on top of the original PDF URL rather
+  // than navigating away from it, so this content script still runs and
+  // this is a free, reliable way to tell the two apart. See PDF-CAPTURE.md.
+  const isPdf = () => document.contentType === 'application/pdf';
+
   // innerText forces layout, and this runs on every page the person opens,
   // so the answer is cached. It only has to be roughly right: it decides
   // whether a page is short enough to excuse not scrolling.
@@ -67,6 +72,7 @@
           focusedMs,
           scrollDepth: maxScroll,
           wordCount: wordCount(),
+          isPdf: isPdf(),
         },
       })
       .catch(() => null);

@@ -2,6 +2,9 @@
 export const MSG = {
   PAGE_CANDIDATE: 'PAGE_CANDIDATE',
   PAGE_CONTENT: 'PAGE_CONTENT',
+  PDF_BYTES: 'PDF_BYTES',
+  // Service worker to the offscreen document only: parse bytes with pdf.js.
+  PARSE_PDF: 'PARSE_PDF',
   HIGHLIGHT: 'HIGHLIGHT',
   SEARCH: 'SEARCH',
   PIN: 'PIN',

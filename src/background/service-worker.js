@@ -13,7 +13,8 @@ import { loadSettings, saveSettings, loadSweepState } from '../shared/settings.j
 import { refreshPersistence } from '../shared/persistence.js';
 import { getStore, withStore } from './store-handle.js';
 import { syncContentScripts } from './content-scripts.js';
-import { onPageCandidate, onPageContent } from './capture.js';
+import { onPageCandidate, onPageContent, onPdfBytes } from './capture.js';
+import { closeOffscreenIfIdle, OFFSCREEN_IDLE_ALARM } from './pdf-extract.js';
 import { openResult, pageStatus, captureNow } from './open-result.js';
 import {
   allowSite, blockSite, buildExport, importPages, wipeEverything, forget,
@@ -69,6 +70,7 @@ chrome.commands.onCommand.addListener((command) => {
 
 chrome.alarms.onAlarm.addListener((alarm) => {
   if (alarm.name === 'maintenance') runMaintenance();
+  if (alarm.name === OFFSCREEN_IDLE_ALARM) closeOffscreenIfIdle();
 });
 
 const escapeXml = (text) =>
@@ -123,6 +125,9 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
     case MSG.PAGE_CONTENT:
       return reply(onPageContent(payload));
+
+    case MSG.PDF_BYTES:
+      return reply(onPdfBytes(payload, sender));
 
     case MSG.SEARCH:
       return reply(

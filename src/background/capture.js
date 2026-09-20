@@ -11,12 +11,29 @@ import { loadSettings, isPaused } from '../shared/settings.js';
 import { rulesFor } from '../shared/presets.js';
 import { isQuotaError } from '../db/idb-store.js';
 import { getStore, withStore } from './store-handle.js';
+import { extractPdfText } from './pdf-extract.js';
+
+// Only used when a caller does not already know (the ambient path reports it
+// on PAGE_CANDIDATE already; the explicit "keep this page now" path does not
+// get a candidate message at all, so it has to ask).
+async function isPdfTab(tabId) {
+  try {
+    const [{ result }] = await chrome.scripting.executeScript({
+      target: { tabId },
+      func: () => document.contentType,
+    });
+    return result === 'application/pdf';
+  } catch {
+    return false;
+  }
+}
 
 // Extraction is injected only once a page has earned it. Putting 90KB of
-// parser into every page a person opens would be a strange thing to do to
-// their browser, and most pages never qualify.
-export async function injectExtractor(tabId, { explicit = false } = {}) {
+// parser (or pdf.js's fetch script) into every page a person opens would be
+// a strange thing to do to their browser, and most pages never qualify.
+export async function injectExtractor(tabId, { explicit = false, isPdf } = {}) {
   if (typeof tabId !== 'number') return false;
+  const pdf = typeof isPdf === 'boolean' ? isPdf : await isPdfTab(tabId);
   try {
     if (explicit) {
       // Carried through a global, the same way the quote reaches the
@@ -28,10 +45,17 @@ export async function injectExtractor(tabId, { explicit = false } = {}) {
         },
       });
     }
-    await chrome.scripting.executeScript({
-      target: { tabId },
-      files: ['src/vendor/readability/Readability.js', 'src/content/extract.js'],
-    });
+    if (pdf) {
+      await chrome.scripting.executeScript({
+        target: { tabId },
+        files: ['src/content/pdf-fetch.js'],
+      });
+    } else {
+      await chrome.scripting.executeScript({
+        target: { tabId },
+        files: ['src/vendor/readability/Readability.js', 'src/content/extract.js'],
+      });
+    }
     return true;
   } catch {
     // A tab that navigated away, or a page the extension has no access to.
@@ -57,10 +81,13 @@ export async function onPageCandidate(payload, sender) {
     focusedMs: payload.focusedMs,
     scrollDepth: payload.scrollDepth,
     wordCount: payload.wordCount,
+    isPdf: payload.isPdf,
   });
   if (!read) return { capture: false, reason: 'still reading' };
 
-  const injected = await injectExtractor(sender && sender.tab ? sender.tab.id : null);
+  const injected = await injectExtractor(sender && sender.tab ? sender.tab.id : null, {
+    isPdf: payload.isPdf,
+  });
   return { capture: true, reason: injected ? 'read' : 'read, but extraction could not be injected' };
 }
 
@@ -137,5 +164,51 @@ export async function onPageContent(payload) {
       await chrome.action.setBadgeBackgroundColor({ color: '#b45309' }).catch(() => {});
       return { ok: false, reason: 'there is no room left on this disk', quota: true };
     }
+  });
+}
+
+// document.title reads empty on Chrome's native PDF viewer, but Chrome's own
+// tab title does not: it already carries the PDF's metadata title, checked
+// by testing rather than assumed (see PDF-CAPTURE.md), so this asks Chrome
+// instead of pdf.js. A PDF with no title of its own falls back to its
+// filename rather than showing nothing in search results.
+async function pdfTitle(payload, sender) {
+  const tabId = sender && sender.tab ? sender.tab.id : null;
+  const tab = tabId != null ? await chrome.tabs.get(tabId).catch(() => null) : null;
+  if (tab && tab.title) return tab.title;
+  if (payload.title) return payload.title;
+  try {
+    const last = new URL(payload.url).pathname.split('/').filter(Boolean).pop() || '';
+    return decodeURIComponent(last.replace(/\.pdf$/i, ''));
+  } catch {
+    return '';
+  }
+}
+
+// content/pdf-fetch.js hands over bytes rather than text: everything from
+// here on is identical to an HTML page, so this turns bytes into text and
+// then calls the exact same function an HTML page's PAGE_CONTENT does,
+// rather than duplicating the shrink-detection, dedupe and quota handling
+// above. See PDF-CAPTURE.md.
+export async function onPdfBytes(payload, sender) {
+  if (!payload.ok) {
+    return { ok: false, reason: payload.reason || 'could not read this pdf' };
+  }
+
+  const extracted = await extractPdfText(payload.bytes);
+  if (!extracted.ok) {
+    // A corrupted or encrypted file. A scanned, image-only PDF is not this:
+    // pdf.js succeeds and returns empty text, which onPageContent's own
+    // "too little text" floor already catches with the same message an
+    // empty HTML extraction gets.
+    return { ok: false, reason: 'could not read this pdf' };
+  }
+
+  return onPageContent({
+    url: payload.url,
+    title: await pdfTitle(payload, sender),
+    text: extracted.text,
+    capturedAt: payload.capturedAt,
+    explicit: payload.explicit,
   });
 }

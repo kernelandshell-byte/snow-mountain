@@ -66,7 +66,7 @@ Four places code can run, and the rule that keeps this sane is that **only one c
 
 **Extension pages** (search, setup, options, popup). Read only with respect to the database, and they get their data by messaging the service worker rather than opening their own connection. This costs a message hop and buys a single writer with no cross context races.
 
-**Offscreen document**, not in v1. Reserved for bulk jobs: a schema migration, a full reindex, an import. Created with `chrome.offscreen` using the `WORKERS` reason, closed as soon as the job finishes. Named here so that when a bulk job is needed, nobody invents a second architecture for it.
+**Offscreen document**, `src/offscreen/`. First used for PDF capture: pdf.js needs its own Worker, which a service worker cannot reliably spawn (see the assumption log). Created with `chrome.offscreen` using the `WORKERS` reason, closed again after a short idle window rather than immediately, so several PDFs opened in succession don't each pay creation cost. Never touches the database -- it only turns bytes into text and hands the answer back to the service worker, the one context that writes. Still reserved, beyond that one use, for the bulk jobs this paragraph originally named: a schema migration, a full reindex, an import. See `PDF-CAPTURE.md`.
 
 Indexing a single page is small work, tens of milliseconds for a normal article, and it happens in the service worker where blocking costs nothing visible. Batching exists to protect the database, not the UI.
 
@@ -221,16 +221,31 @@ All messages are `{type, payload}` with types declared as constants in
 
 Content script to service worker:
 
-- `PAGE_CANDIDATE` `{url, title, hasPasswordField, focusedMs, scrollDepth, wordCount}`
+- `PAGE_CANDIDATE` `{url, title, hasPasswordField, focusedMs, scrollDepth, wordCount, isPdf}`
   answered with `{capture, reason}`. The content script measures; the worker
-  judges, so the rules exist in exactly one place.
+  judges, so the rules exist in exactly one place. `isPdf` comes from
+  `document.contentType`, which stays readable and accurate even though the
+  page itself is Chrome's native PDF viewer, not a document this extension
+  rendered.
 - `PAGE_CONTENT` `{url, title, text, capturedAt}` answered with
   `{ok, id, created, reindexed}`.
+- `PDF_BYTES` `{url, title, bytes, capturedAt, explicit, ok, reason}`, sent
+  by `content/pdf-fetch.js` in place of `PAGE_CONTENT` when the candidate is
+  a PDF. `bytes` is a plain array of numbers, not a typed array:
+  `chrome.runtime.sendMessage` does not preserve a `Uint8Array` between a
+  content script and the background, found by testing rather than assumed.
+  See `PDF-CAPTURE.md`.
 
 Service worker to content script:
 
 - `HIGHLIGHT` `{quote}`, the fallback jump to passage path for a tab that is
   already open or a page that renders late.
+
+Service worker to the offscreen document:
+
+- `PARSE_PDF` `{bytes}` (also a plain array, same reason) answered with
+  `{ok, text, numPages}` or `{ok: false, error}`. The only message this
+  extension's offscreen document handles; it never touches the database.
 
 Extension pages to service worker:
 
@@ -281,7 +296,13 @@ problem rather than a rewrite.
   documentation.
 - **`read-heuristic.js`** decides what counts as read, from dwell, scroll
   depth and length. Short pages are exempt from the scroll requirement,
-  because there was nothing to scroll.
+  because there was nothing to scroll, and so is a PDF, because a PDF tab
+  has no scroll signal to give at all: Chrome's native viewer never scrolls
+  the top-level document, by design, not as a gap in what this extension
+  can observe. See `PDF-CAPTURE.md`.
+- **`pdf-detect.js`** `looksLikePdf(bytes)`, checking the `%PDF-` magic
+  header. The one thing standing between a paywalled or login-gated PDF URL
+  and indexing an HTML error page as if it were the document.
 - **`tokenizer.js`** lowercase, Unicode aware, diacritic folding, and an
   explicit fold of the German sharp s, which NFKD leaves alone and which
   would otherwise keep "Straße" and "Strasse" apart forever.
@@ -708,22 +729,27 @@ src/
     service-worker.js      every listener, registered synchronously; nothing else
     store-handle.js        the one connection, and the rules for keeping it
     content-scripts.js     registering where the extension may watch
-    capture.js             candidate to stored page
+    capture.js             candidate to stored page, pdf bytes to stored page
+    pdf-extract.js         the offscreen document's lifecycle
     open-result.js         opening a result, and what to say about this tab
     archive.js             allow, block, export, import, forget, wipe
     maintenance.js         the sweep, and the numbers the meter shows
   content/
     observer.js            dwell, scroll, password fields; a sensor only
+    pdf-fetch.js           the one file with a fetch() call; see THREAT-MODEL.md
   core/                    pure, no chrome.*, fully tested
     capture-policy.js  read-heuristic.js  tokenizer.js  morphology.js
     url-key.js         hash.js            bm25.js      query-parser.js
     snippet.js         text-fragment.js   eviction.js  content-change.js
-    index-writer.js    index-reader.js    quote-match.js
+    index-writer.js    index-reader.js    quote-match.js     pdf-detect.js
   db/
     schema.js              stores, indexes, version
     migrations.js          the policy, as code
     memory-store.js        reference implementation, used by tests
     idb-store.js           the real one
+  offscreen/
+    offscreen.html  offscreen.js   vendored pdf.js, parses bytes, never
+                                    touches the database
   shared/
     messages.js  settings.js  presets.js  constants.js  format.js
     persistence.js         asking Chrome not to throw the archive away
@@ -732,16 +758,21 @@ src/
     shared/when.js         "last month", not "1 months ago"
     shared/limits.js       the budget controls, shared by setup and settings
     setup/  search/  popup/  options/
+  vendor/
+    readability/           Mozilla's Readability, one file
+    pdfjs/                 pdf.js, prebuilt, two files; see its own README
 test/
   *.test.js                the Node suite
   store-contract.js        one contract, run against both stores
   fixtures/corpus.js       24 documents for the relevance harness
+  fixtures/pdf/            two small real PDFs, an article and a blank one
   browser/
     invariants.mjs          what must be true whatever happened
     harness.mjs             a copy of the extension with the grant shortcut
     run-*.mjs               one file per suite; see Testing
 spikes/
   text-fragment/           the experiment that settled jump to passage
+  pdf-capture/             the experiments PDF-CAPTURE.md is built on
 ```
 
 Two rules hold this together. Nothing in `core/` imports `chrome.*`.
@@ -775,12 +806,14 @@ made the test suite worth having before any of the fiddly parts existed.
 17. ~~The limits: an export bigger than a message, persistent storage, a full
     disk, housekeeping that has to survive a restart~~
 18. ~~Switching capture modes, and making strict mode true~~
+19. ~~PDF capture: spec, spike, then build~~ (see `PDF-CAPTURE.md`)
 
-Icons are in `icons/`, the licence is MIT with Readability's Apache 2.0 kept
-beside it, and `PRIVACY.md` and `THREAT-MODEL.md` are written. The threat
-model is the one worth rereading before publishing, because it is where the
-claim about network access is stated precisely enough to be checked and
-weakly enough to be true.
+Icons are in `icons/`, the licence is MIT with Readability's and pdf.js's
+Apache 2.0 kept beside them, and `PRIVACY.md` and `THREAT-MODEL.md` are
+written. The threat model is the one worth rereading before publishing,
+because it is where the claim about network access is stated precisely
+enough to be checked and weakly enough to be true -- including its one
+named exception, added for PDF capture.
 
 The `favicon` permission was dropped on the way: nothing ever used it, and a
 permission a reader has to take on trust for no return is the opposite of what
@@ -788,8 +821,8 @@ the brief asks for.
 
 ## Testing
 
-Twenty-two suites. One runs in Node, the rest drive a real Chromium with the
-extension loaded.
+Twenty-three suites. One runs in Node, the rest drive a real Chromium with
+the extension loaded.
 
 **`npm test`** is the Node suite: every pure module, the store contract
 against `memory-store`, and the relevance harness. No dependencies, about a
@@ -801,6 +834,7 @@ The browser suites need Playwright (`npm install --no-save playwright`):
 |---|---|
 | `test:browser` | the store contract against real IndexedDB |
 | `test:capture` | a page read with real dwell and scrolling, plus pause, rules and a single page app changing route |
+| `test:pdf` | a real PDF captured dwell-only with no scrolling, a scanned pdf with no text layer left uncaptured, an html login page served as `application/pdf` refused, and "keep now" on a pdf tab |
 | `test:journey` | one whole session: setup, read, popup, search, open, pin, sweep, export |
 | `test:e2e` | capture, revisit, search, pin, forget, eviction, through the worker |
 | `test:extraction` | Readability against a page full of navigation, banners and footers |

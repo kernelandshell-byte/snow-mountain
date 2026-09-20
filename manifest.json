@@ -28,7 +28,8 @@
     "unlimitedStorage",
     "tabs",
     "alarms",
-    "scripting"
+    "scripting",
+    "offscreen"
   ],
   "optional_host_permissions": [
     "*://*/*"

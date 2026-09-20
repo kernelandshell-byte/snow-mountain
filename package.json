@@ -14,6 +14,7 @@
     "test:popup": "node test/browser/run-popup.mjs",
     "test:highlight": "node test/browser/run-highlight.mjs",
     "test:capture": "node test/browser/run-capture.mjs",
+    "test:pdf": "node test/browser/run-pdf-capture.mjs",
     "test:ui": "node test/browser/run-ui-smoke.mjs",
     "test:adversarial": "node test/browser/run-adversarial.mjs",
     "test:journey": "node test/browser/run-journey.mjs",

@@ -25,6 +25,10 @@ paragraph that matched.
   for a tab already open or a page that renders late
 - Extraction through vendored Readability, injected only into pages that
   have earned it
+- PDF capture: the same dwell heuristic minus the scroll signal a native PDF
+  viewer cannot give, vendored pdf.js running in an offscreen document, and
+  one narrowly scoped exception to "no network calls" for the one fetch
+  needed to get a PDF's own bytes out of Chrome's viewer. See `PDF-CAPTURE.md`.
 - A four screen setup flow that requests host access at the moment it is
   explained, and asks for nothing at all in strict mode
 - A popup about the page in front of you: whether it is kept, why not if it
@@ -39,13 +43,14 @@ paragraph that matched.
 - A migration policy that is code rather than a paragraph: build the new
   shape alongside the old, verify it, and only then give up the old one, all
   inside one transaction so a failure leaves the archive exactly as it was
-- 177 Node tests and 625 browser checks across twenty-two suites, including
+- 207 Node tests and 633 browser checks across twenty-three suites, including
   extraction against 32 real page snapshots, the page shapes that are not
   articles at all, a resilience suite that deletes the database underneath a
   running extension, a consistency check that churns the index and then
   verifies it has not drifted, a year of accumulation with both caps biting,
-  and a migration suite whose failing migrations all have to leave the old
-  database untouched
+  a migration suite whose failing migrations all have to leave the old
+  database untouched, and a PDF capture suite proving a login page served as
+  `application/pdf` is refused rather than indexed
 
 ## Tests
 
@@ -56,6 +61,7 @@ npm install --no-save playwright      # only needed for the browser suites
 npm run test:browser                  # the store contract against real IndexedDB
 npm run test:e2e                      # capture, search, pin, forget, evict, through the real worker
 npm run test:extraction               # Readability against a page full of clutter
+npm run test:pdf                      # a real pdf, a scanned one, and a login page pretending to be one
 npm run test:setup                    # the setup flow, including a refused permission
 npm run test:options                  # settings, capture modes, export and delete everything
 npm run test:migration                # the migration policy, including migrations that fail

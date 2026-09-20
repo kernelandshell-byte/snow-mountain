@@ -17,3 +17,17 @@ test('a long page that was scrolled is read', () => {
 test('a short page needs no scrolling, because there was none to do', () => {
   assert.equal(isRead({ focusedMs: 12000, scrollDepth: 0, wordCount: 120 }), true);
 });
+
+test('a pdf needs no scrolling either, because there is no such signal at all', () => {
+  assert.equal(isRead({ focusedMs: 12000, scrollDepth: 0, wordCount: 0, isPdf: true }), true);
+});
+
+test('a pdf still has to clear the dwell floor', () => {
+  assert.equal(isRead({ focusedMs: 2000, scrollDepth: 0, wordCount: 0, isPdf: true }), false);
+});
+
+test('a pdf with wordCount 0 is not treated as a short html page', () => {
+  // wordCount 0 fails the short-page check's `> 0`, so a pdf's dwell-only
+  // behaviour has to come from the explicit isPdf branch, not this one.
+  assert.equal(isRead({ focusedMs: 12000, scrollDepth: 0, wordCount: 0, isPdf: false }), false);
+});

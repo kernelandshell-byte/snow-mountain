@@ -27,20 +27,51 @@ analytics. Not "anonymised" versions of those. None of them.
 
 ## The central claim, stated exactly
 
-**No line of this code contacts the network.**
+**No line of this code contacts the network, except one, for one reason.**
 
-That is a claim about the code, and it is checkable in one command:
+`content/pdf-fetch.js` calls `fetch(location.href)` -- once, on the tab's own
+URL, only after `observer.js` has already decided a PDF in that tab is worth
+keeping. It exists because there is no other way to get a PDF's bytes out of
+Chrome's native viewer: the viewer renders the file without ever handing this
+extension a copy of it, so the only way to see it is to ask for the exact same
+URL the tab is already showing. It reaches nowhere the tab had not already
+reached, sends no body and no header this extension controls, and returns
+bytes that are checked against the PDF magic number before anything is done
+with them -- an HTML login or paywall page served at that URL is refused, not
+indexed. See `PDF-CAPTURE.md` for the reasoning and the spike that ruled out
+every alternative found.
+
+Apart from that one file, the claim is checkable in one command, with one
+more exclusion that needs explaining rather than hiding:
 
 ```
-grep -rnE "fetch\(|XMLHttpRequest|WebSocket|sendBeacon|EventSource" src/
+grep -rnE "fetch\(|XMLHttpRequest|WebSocket|sendBeacon|EventSource" src/ \
+  | grep -v "content/pdf-fetch.js" | grep -v "src/vendor/pdfjs/"
 ```
 
-It returns nothing, including in the vendored copy of Mozilla's Readability,
-which is the only third party code in the project. There are no other
-dependencies at runtime. The extension's own pages additionally ship a content
-security policy of `connect-src 'none'`, so even a bug that tried to open a
-connection from one of them would be refused by Chrome rather than by our good
-intentions.
+`src/vendor/pdfjs/` is excluded too, and unlike `pdf-fetch.js` this is code
+this project never calls, not code it wrote. pdf.js is a general-purpose
+library that can fetch a PDF from a URL itself, in chunks, for streaming
+large remote files; that code ships inside the vendored file because pdf.js
+is not built to order, the same way Readability's full parser ships even
+though only part of it runs on any given page. It is never reached here:
+`src/offscreen/offscreen.js` is the only call site, and it is checkable in
+one line that it never does --
+
+```
+grep -n "getDocument" src/offscreen/offscreen.js
+```
+
+-- and the one call there passes `data` (bytes already in hand), never
+`url`, which is the only way to make pdf.js's own network code run. Once
+that one file is excluded on that basis, the grep above returns nothing.
+There are no other dependencies at runtime. The extension's own pages
+additionally ship a content security policy of `connect-src 'none'`, so even
+a bug that tried to open a connection from one of them would be refused by
+Chrome rather than by our good intentions -- that CSP directive governs the
+extension's own pages, not a content script, which is why it does not and
+cannot cover `pdf-fetch.js` itself; the fetch it makes is deliberate, not a
+hole the policy missed.
 
 **What that claim is not.** It is not a guarantee that exfiltration is
 impossible. Capturing a page requires permission to inject a script into it,
@@ -67,6 +98,7 @@ setup, in context, at the moment the reason for it is on screen.
 | `tabs` | Finding an already open tab when you open a result, and knowing which page the popup is about | Seeing the URL and title of every open tab |
 | `alarms` | The hourly sweep that applies your storage budget | Nothing |
 | `scripting` | Registering the content script at runtime, so install time asks for no host access at all | Combined with host access, running code in pages |
+| `offscreen` | Running pdf.js in a hidden document to extract a PDF's text, off the service worker's own thread | Nothing beyond what `optional_host_permissions` already allows; this only lets the extension parse bytes it already has |
 | `optional_host_permissions` | Reading the pages you read. Granted per mode, never at install | Reading every page you visit |
 
 `favicon` was in an earlier draft and has been removed, because nothing ended
@@ -128,18 +160,22 @@ pinned pages are never evicted by either cap.
 ## Threats it does not handle
 
 **A malicious update, to this extension or to a dependency.** If this project
-ever changed hands, or a future version added a network call, nothing in the
-current design would stop it. The mitigations available are the ordinary ones:
-the source is public, there is no build step, the vendored Readability is
-pinned and inspectable, and the repository history is the record. Pinning the
-version you trust, or building from source yourself, is the only real defence,
-and it is the same defence every extension offers whether it says so or not.
+ever changed hands, or a future version added a network call somewhere other
+than the one named above, nothing in the current design would stop it. The
+mitigations available are the ordinary ones: the source is public, there is
+no build step, the vendored Readability and pdf.js are both pinned and
+inspectable, and the repository history is the record. Pinning the version
+you trust, or building from source yourself, is the only real defence, and
+it is the same defence every extension offers whether it says so or not.
 
 **A compromised operating system.** Anything with your file system has the
 archive. There is no encryption at rest beyond whatever your disk provides.
 
-**Traffic analysis or anything on the network.** Out of scope, because nothing
-here uses the network.
+**Traffic analysis or anything on the network.** Out of scope for the same
+reason the central claim holds: the one fetch this design makes is a
+same-tab, same-URL re-read of a resource the tab already loaded, not a
+request to a remote server of ours, and there is no remote server on the
+other end of anything here to analyse traffic to.
 
 **Legal or physical compulsion.** The archive is on your disk, in plain form,
 and a wipe is one button. That is the whole story.
@@ -148,11 +184,15 @@ and a wipe is one button. That is the whole story.
 
 ```
 grep -rnE "fetch\(|XMLHttpRequest|WebSocket|sendBeacon" src/   # network calls
+grep -n "getDocument" src/offscreen/offscreen.js               # ...and that pdf.js is never told to fetch one
 grep -rn "storage.sync" src/                                   # anything synced
 grep -rhoE "chrome\.[a-zA-Z]+\.[a-zA-Z]+" src/ | sort -u       # every Chrome API used
 cat manifest.json                                              # every permission asked for
 ```
 
-The first two return nothing. The third is a list of about thirty calls, none
-of which is a network call. The fourth is five permissions and one optional
-host permission.
+The first turns up three files: `content/pdf-fetch.js`, discussed above, and
+the two vendored `pdf.js` files, which contain library code for fetching a
+PDF from a URL that this project never calls -- the second command confirms
+the one call site passes bytes, never a URL. The third returns nothing. The
+fourth is a list of about thirty calls, none of which is a network call. The
+fifth is six permissions and one optional host permission.
