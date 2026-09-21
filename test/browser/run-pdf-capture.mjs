@@ -15,6 +15,7 @@ const granted = await buildGrantedExtension(root);
 
 const article = await readFile(path.join(root, 'test/fixtures/pdf/article.pdf'));
 const blank = await readFile(path.join(root, 'test/fixtures/pdf/blank.pdf'));
+const manyPages = await readFile(path.join(root, 'test/fixtures/pdf/many-pages.pdf'));
 
 const context = await chromium.launchPersistentContext('', {
   headless: false,
@@ -35,6 +36,9 @@ await context.route('**/*', (route) => {
   }
   if (p === '/blank.pdf') {
     return route.fulfill({ status: 200, contentType: 'application/pdf', body: blank });
+  }
+  if (p === '/many-pages.pdf') {
+    return route.fulfill({ status: 200, contentType: 'application/pdf', body: manyPages });
   }
   if (p === '/login-wall.pdf') {
     // A server claiming application/pdf while actually serving a login page,
@@ -118,6 +122,31 @@ const loginWallStatus = await ask('PAGE_STATUS', { url: 'https://reader.example/
 check('a login page served as application/pdf is not indexed as one',
   loginWallStatus.kept === null, JSON.stringify(loginWallStatus));
 await loginWallTab.close();
+
+// A PDF with far more pages than MAX_TEXT_BYTES could ever hold text for.
+// onPageContent truncates any text to that cap regardless, but the
+// offscreen document has its own early exit once it has extracted enough,
+// so a document like this does not pay full pdf.js extraction cost for
+// pages whose text would only be thrown away. This is the only committed
+// fixture big enough to actually exercise that loop; see PDF-CAPTURE.md for
+// the measurement (a 12,000 page, 14.5MB fixture: ~47.5s uncapped, ~9s
+// with the early exit).
+const manyPagesTab = await open('https://reader.example/many-pages.pdf', 12);
+await driver.bringToFront();
+await driver.waitForTimeout(2000);
+const manyPagesStatus = await ask('PAGE_STATUS', { url: 'https://reader.example/many-pages.pdf' });
+check('a pdf with far more pages than the text cap holds is still kept',
+  manyPagesStatus.kept !== null, JSON.stringify(manyPagesStatus));
+const manyPagesStored = await driver.evaluate(async () => {
+  const { MSG } = await import('/src/shared/messages.js');
+  const { MAX_TEXT_BYTES } = await import('/src/shared/constants.js');
+  const recent = await chrome.runtime.sendMessage({ type: MSG.RECENT, payload: { limit: 1 } });
+  return { text: recent[0].text, cap: MAX_TEXT_BYTES };
+});
+check('and its stored text is truncated to the cap, not the whole document',
+  manyPagesStored.text.length === manyPagesStored.cap,
+  'stored ' + manyPagesStored.text.length + ' chars, cap is ' + manyPagesStored.cap);
+await manyPagesTab.close();
 
 // Explicit "keep this page now" from the popup, on a PDF, without waiting
 // for any dwell at all -- exercises injectExtractor's own content-type probe

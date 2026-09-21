@@ -272,13 +272,11 @@ benchmark corpus makes), 55KB file:
 | 2nd call | 710ms | 338ms |
 | 3rd call | 697ms | 325ms |
 
-Two things not yet explained and worth resolving before this ships rather
-than after: roughly 350-400ms is unaccounted for between wall time and
-in-document time, most likely the cost of moving a `Uint8Array` across two
-message hops (service worker to offscreen document, offscreen document to
-its own Worker) rather than the parse itself; and this fixture is 55KB,
-where real PDFs run from tens of KB to tens of MB, so the message-passing
-cost at a realistic size is genuinely unmeasured, not just unoptimised.
+That 350-400ms gap between wall time and in-document time turned out to be
+message-passing and reconstruction overhead, confirmed against a real
+14.5MB, 12,000 page fixture rather than left as a guess (see "Built"
+below): real, but small next to the actual cost at that size, which is
+pdf.js parsing every page.
 
 ## Built
 
@@ -293,12 +291,32 @@ narrowed claim, isolating the exception to `content/pdf-fetch.js`. (4) is
 settled as `src/offscreen/`. (5) turned out to need nothing new: a PDF that
 parses to empty text hits `onPageContent`'s existing "too little text"
 floor, the same message an empty HTML extraction already gets. (6) is
-exercised by the new browser suite. (2) and (3) are still genuinely open --
-nothing here needed them, but nothing here answered them either.
+exercised by the new browser suite. (3) is answered, and the answer was not
+the one expected: see below. (2) is still genuinely open -- nothing here
+needed it, but nothing here answered it either.
 
-Three things surfaced only by building this rather than by reasoning about
+Four things surfaced only by building this rather than by reasoning about
 it, all found the same way everything else in this document was: run it for
 real and check, don't assume.
+
+**Message-passing was not the bottleneck at a realistic large size; pdf.js
+parsing every page was.** Built a 14.5MB, 12,000 page fixture specifically
+to answer open question (3) rather than leave it a guess. The plain-array
+conversion this document worried about (see the next finding) cost under a
+second on the content-script side. What actually took time was the
+offscreen document calling `getPage()` and `getTextContent()` once per
+page: 38.6 of a 47.5 second total capture, almost all of it text that
+`onPageContent`'s existing `MAX_TEXT_BYTES` cap was going to throw away
+regardless, since it truncates stored text to 200KB no matter how much
+came in. Fixed by stopping the extraction loop once accumulated text
+reaches that cap, in `src/offscreen/offscreen.js`: the same fixture now
+captures in about 9 seconds, roughly five times faster, for identical
+stored output (`onPageContent`'s own truncation made the result
+byte-for-byte the same either way; only the wasted work changed). A
+correctness test for this lives in `test:pdf` against a small committed
+fixture built to exceed the cap (`test/fixtures/pdf/many-pages.pdf`, 130
+dense pages, 161KB) -- the 12,000 page fixture used to find and confirm
+the fix is not committed, being large for what it is worth keeping around.
 
 **`chrome.runtime.sendMessage` does not preserve a `Uint8Array` or
 `ArrayBuffer` between a content script and the background.** The very first
@@ -312,11 +330,12 @@ layer): send `Array.from(bytes)`, a plain array of numbers, and
 reconstruct with `new Uint8Array(...)` wherever it is used as bytes again.
 Both `content/pdf-fetch.js` (content script to service worker) and
 `background/pdf-extract.js` (service worker to offscreen document) do this
-now. This is exactly the message-passing cost open question (3) above made
-concrete rather than answered: a plain array of numbers is a real, measured
-worse shape to send than packed bytes would be, and it is now the shape
-this code actually uses, at every size, not just the one this spike
-measured.
+now. Found with the original 1010-byte fixture, before the large-file
+question above was even asked: a plain array of numbers is a measurably
+worse shape to send than packed bytes, but per the finding above it turns
+out not to be the dominant cost even at 14.5MB, so it was fixed for
+correctness (bytes have to actually arrive) rather than for the
+performance question it happens to also touch.
 
 **`doc.getMetadata()` throws inside this `pdfjs-dist` build.** Getting a
 PDF's title looked like the obvious next step once extraction worked, and
