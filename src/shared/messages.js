@@ -1,0 +1,30 @@
+// Every message is { type, payload }. No string literals at call sites.
+export const MSG = {
+  PAGE_CANDIDATE: 'PAGE_CANDIDATE',
+  PAGE_CONTENT: 'PAGE_CONTENT',
+  PDF_BYTES: 'PDF_BYTES',
+  // Service worker to the offscreen document only: parse bytes with pdf.js.
+  PARSE_PDF: 'PARSE_PDF',
+  HIGHLIGHT: 'HIGHLIGHT',
+  SEARCH: 'SEARCH',
+  PIN: 'PIN',
+  FORGET: 'FORGET',
+  STATS: 'STATS',
+  EXPORT: 'EXPORT',
+  RECENT: 'RECENT',
+  SETTINGS_GET: 'SETTINGS_GET',
+  SETTINGS_SET: 'SETTINGS_SET',
+  MAINTENANCE: 'MAINTENANCE',
+  WIPE: 'WIPE',
+  LOG: 'LOG',
+  PAGE_STATUS: 'PAGE_STATUS',
+  CAPTURE_NOW: 'CAPTURE_NOW',
+  ALLOW_SITE: 'ALLOW_SITE',
+  BLOCK_SITE: 'BLOCK_SITE',
+  // Apply an exclusion to pages already kept, or count what it would remove.
+  REMOVE_EXCLUDED: 'REMOVE_EXCLUDED',
+  OPEN_RESULT: 'OPEN_RESULT',
+  IMPORT: 'IMPORT',
+  // Dismissing a one-off notice, so it is said once rather than for ever.
+  ACKNOWLEDGE: 'ACKNOWLEDGE',
+};

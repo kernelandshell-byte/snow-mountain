@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Search what you have read</title>
+    <link rel="stylesheet" href="search.css" />
+  </head>
+  <body>
+    <header>
+      <div class="wrap">
+        <div class="topbar">
+          <span class="brand"><img src="../../../icons/icon-32.png" alt="" />TextMemory</span>
+          <a id="settings" class="settings-link" href="../options/options.html">Settings</a>
+        </div>
+        <div class="search-field">
+          <input
+            id="q"
+            type="search"
+            autocomplete="off"
+            spellcheck="false"
+            placeholder="A phrase you remember"
+            aria-label="Search what you've read"
+            autofocus
+          />
+        </div>
+        <div class="controls">
+          <p id="meta" class="meta" role="status" aria-live="polite"></p>
+          <div id="filters" class="filters" hidden>
+            <select id="site" aria-label="Filter by site"></select>
+            <select id="when" aria-label="Filter by when you read it">
+              <option value="">Any time</option>
+              <option value="7">Past week</option>
+              <option value="30">Past month</option>
+              <option value="365">Past year</option>
+            </select>
+            <div class="sort" role="group" aria-label="Sort">
+              <button data-sort="relevance" class="on">Best match</button>
+              <button data-sort="recent">Newest</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <main class="wrap">
+      <div id="results"></div>
+      <p id="announce" class="visually-hidden" aria-live="polite"></p>
+      <div id="sentinel"></div>
+      <button id="more" class="more" hidden>Show more</button>
+    </main>
+
+    <footer class="wrap">
+      <span><kbd>↑</kbd> <kbd>↓</kbd> to move, <kbd>enter</kbd> to open at the passage, <kbd>esc</kbd> to clear</span>
+    </footer>
+
+    <script type="module" src="search.js"></script>
+  </body>
+</html>

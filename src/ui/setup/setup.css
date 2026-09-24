@@ -1,0 +1,61 @@
+@import url("../shared/base.css");
+
+/* First run. Five screens, no account, no carousel.
+ *
+ * This is the only place the privacy model gets explained, and the only place
+ * the host permission is asked for, so the screen that asks is the screen that
+ * explains why. It is written to be read rather than clicked through.
+ */
+
+body { padding: 48px 24px 72px; }
+main { max-width: 620px; margin: 0 auto; }
+p { font-size: var(--t-lead); line-height: 1.65; color: var(--muted); }
+h1 { max-width: 20ch; }
+p { margin: 0 0 16px; }
+.note { font-size: var(--t-meta); margin: 0 0 16px; }
+.warn { color: var(--warn); font-size: var(--t-meta); }
+
+.brand { margin-bottom: 32px; }
+.dots { display: flex; gap: 6px; list-style: none; padding: 0; margin: 0 0 28px; }
+.dots li { flex: 1; max-width: 64px; height: 4px; border-radius: 999px; background: var(--line); }
+.dots li.on { background: var(--accent); }
+
+ul.plain { list-style: none; padding: 0; margin: 0 0 24px; }
+ul.plain li { padding: 14px 0; border-top: 1px solid var(--line); color: var(--fg); }
+ul.plain li:first-child { border-top: 2px solid var(--fg); }
+ul.plain li:last-child { border-bottom: 1px solid var(--line); }
+
+.choice { display: grid; gap: 10px; margin-bottom: 20px; }
+.choice label {
+  display: grid; grid-template-columns: 20px 1fr; gap: 4px 12px;
+  padding: 18px; border: 1px solid var(--line-strong); border-radius: 18px;
+  background: var(--surface); cursor: pointer;
+  transition: border-color .12s ease, background-color .12s ease, box-shadow .12s ease;
+}
+.choice label:hover { border-color: var(--fg); }
+.choice label:has(input:checked) { border-color: var(--accent); background: var(--accent-soft); box-shadow: 0 0 0 2px var(--accent); }
+.choice input { grid-row: span 2; align-self: start; margin-top: 6px; }
+.choice .label { font-weight: 750; font-size: var(--t-lead); letter-spacing: -0.015em; color: var(--fg); }
+.choice .note { grid-column: 2; margin: 0; }
+
+.presets { display: grid; margin-bottom: 20px; }
+.presets label {
+  display: flex; align-items: center; gap: 10px;
+  padding: 11px 2px; border-bottom: 1px solid var(--line);
+}
+.presets label:first-child { border-top: 1px solid var(--line); }
+.presets .desc { color: var(--faint); font-size: var(--t-meta); margin-left: auto; text-align: right; }
+
+#languages { margin: 4px 0 12px; }
+
+.field { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; flex-wrap: wrap; }
+.field span { min-width: 120px; }
+
+.row { display: flex; align-items: center; gap: 16px; margin-top: 28px; }
+.row .link { color: var(--muted); }
+.row .link:hover { color: var(--accent); }
+
+@media (max-width: 480px) {
+  body { padding: 32px 16px 60px; }
+  .presets .desc { display: none; }
+}

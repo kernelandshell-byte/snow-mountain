@@ -1,0 +1,52 @@
+{
+  "manifest_version": 3,
+  "name": "TextMemory",
+  "short_name": "TextMemory",
+  "version": "0.1.0",
+  "description": "Search the full text of pages you've read. Stored on your computer, never sent anywhere.",
+  "minimum_chrome_version": "116",
+  "background": {
+    "service_worker": "src/background/service-worker.js",
+    "type": "module"
+  },
+  "action": {
+    "default_popup": "src/ui/popup/popup.html",
+    "default_icon": {
+      "16": "icons/icon-16.png",
+      "32": "icons/icon-32.png"
+    }
+  },
+  "options_page": "src/ui/options/options.html",
+  "icons": {
+    "16": "icons/icon-16.png",
+    "32": "icons/icon-32.png",
+    "48": "icons/icon-48.png",
+    "128": "icons/icon-128.png"
+  },
+  "permissions": [
+    "storage",
+    "unlimitedStorage",
+    "tabs",
+    "alarms",
+    "scripting",
+    "offscreen"
+  ],
+  "optional_host_permissions": [
+    "*://*/*"
+  ],
+  "omnibox": {
+    "keyword": "tm"
+  },
+  "content_security_policy": {
+    "extension_pages": "default-src 'self'; script-src 'self'; object-src 'none'; connect-src 'none'; img-src 'self' data:; style-src 'self'; font-src 'self'; media-src 'none'; frame-src 'none'; worker-src 'self'; form-action 'none'; base-uri 'none'"
+  },
+  "commands": {
+    "open-search": {
+      "suggested_key": {
+        "default": "Ctrl+Shift+F",
+        "mac": "Command+Shift+F"
+      },
+      "description": "Search what you have read"
+    }
+  }
+}

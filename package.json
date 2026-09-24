@@ -1,0 +1,43 @@
+{
+  "name": "textmemory",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Search the full text of everything you read, stored on your own computer.",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/kernelandshell-byte/snow-mountain.git"
+  },
+  "scripts": {
+    "test": "node --test test/*.test.js",
+    "test:browser": "node test/browser/run-store-contract.mjs",
+    "test:e2e": "node test/browser/run-e2e.mjs",
+    "test:extraction": "node test/browser/run-extraction.mjs",
+    "test:setup": "node test/browser/run-setup.mjs",
+    "test:options": "node test/browser/run-options.mjs",
+    "test:popup": "node test/browser/run-popup.mjs",
+    "test:highlight": "node test/browser/run-highlight.mjs",
+    "test:capture": "node test/browser/run-capture.mjs",
+    "test:pdf": "node test/browser/run-pdf-capture.mjs",
+    "test:ui": "node test/browser/run-ui-smoke.mjs",
+    "test:adversarial": "node test/browser/run-adversarial.mjs",
+    "test:journey": "node test/browser/run-journey.mjs",
+    "test:consistency": "node test/browser/run-consistency.mjs",
+    "test:resilience": "node test/browser/run-resilience.mjs",
+    "test:real-pages": "node test/browser/run-real-pages.mjs",
+    "test:presentation": "node test/browser/run-presentation.mjs",
+    "test:shapes": "node test/browser/run-shapes.mjs",
+    "test:longterm": "node test/browser/run-longterm.mjs",
+    "test:hostile": "node test/browser/run-hostile.mjs",
+    "bench:delete": "node test/browser/run-delete-batch.mjs",
+    "bench:fallback": "node test/browser/run-fallback-benchmark.mjs",
+    "test:migration": "node test/browser/run-migration.mjs",
+    "test:limits": "node test/browser/run-limits.mjs",
+    "shots": "node test/browser/run-screenshots.mjs",
+    "test:storage": "node test/browser/run-storage.mjs",
+    "verify:stemmers": "node test/oracle/verify-stemmers.mjs",
+    "test:review": "node test/browser/run-review.mjs",
+    "package": "sh tools/package.sh"
+  }
+}

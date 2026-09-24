@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Setup</title>
+    <link rel="stylesheet" href="setup.css" />
+  </head>
+  <body>
+    <main>
+      <span class="brand"><img src="../../../icons/icon-32.png" alt="" />TextMemory</span>
+      <ol class="dots" aria-hidden="true">
+        <li class="on"></li><li></li><li></li><li></li><li></li>
+      </ol>
+
+      <section data-step="0">
+        <h1>A memory for your browser</h1>
+        <p>It saves the text of pages you read, on this computer, so you can find them again from any bit you remember.</p>
+        <ul class="plain">
+          <li><strong>It stays on this computer.</strong> No account, no server, no sync. Nothing you read is uploaded anywhere.</li>
+          <li><strong>Only what you actually read.</strong> A page counts once it's been in front of you for a few seconds and you've scrolled it.</li>
+          <li><strong>Some pages are skipped.</strong> Pages that ask for a password or card number, plus common sites in the categories you pick in a moment. You can add your own too.</li>
+        </ul>
+        <button class="primary" data-next>Continue</button>
+      </section>
+
+      <section data-step="1" hidden>
+        <h1>What should it watch?</h1>
+        <p>You can change this later in settings.</p>
+        <div class="choice">
+          <label>
+            <input type="radio" name="mode" value="broad" checked />
+            <span class="label">Everywhere, minus your exclusions</span>
+            <span class="note">Needs access to all sites. Sites you exclude aren't read.</span>
+          </label>
+          <label>
+            <input type="radio" name="mode" value="strict" />
+            <span class="label">Only sites I add myself</span>
+            <span class="note">Needs no access up front. You add sites one at a time, and Chrome keeps the extension out of everything else.</span>
+          </label>
+        </div>
+        <p id="permissionNote" class="warn" hidden></p>
+        <div class="row">
+          <button class="link" data-back>Back</button>
+          <button class="primary" id="chooseMode">Continue</button>
+        </div>
+      </section>
+
+      <section data-step="2" hidden>
+        <h1>Skip these kinds of sites</h1>
+        <p>Each category covers a lot of common sites, but not every one out there. You can add your own sites any time in settings.</p>
+        <div id="presets" class="presets"></div>
+        <div class="row">
+          <button class="link" data-back>Back</button>
+          <button class="primary" data-next>Continue</button>
+        </div>
+      </section>
+
+      <section data-step="3" hidden>
+        <h1>How much should it keep?</h1>
+        <p>Whichever limit is reached first applies. The oldest pages make room for new ones, every removal is listed in settings, and pinned pages are never removed.</p>
+        <label class="field">
+          <span>Keep pages for</span>
+          <select id="months">
+            <option value="6">6 months</option>
+            <option value="12" selected>12 months</option>
+            <option value="24">2 years</option>
+            <option value="1200">as long as it fits</option>
+            <option value="custom">a number of months I choose</option>
+          </select>
+        </label>
+        <label class="field" hidden>
+          <span>Months</span>
+          <input id="monthsCustom" type="number" min="1" step="1" inputmode="numeric" />
+        </label>
+        <label class="field">
+          <span>Use at most</span>
+          <select id="size">
+            <option value="250">250MB</option>
+            <option value="500" selected>500MB</option>
+            <option value="1024">1GB</option>
+            <option value="2048">2GB</option>
+            <option value="custom">a size I choose</option>
+          </select>
+        </label>
+        <label class="field" hidden>
+          <span>Gigabytes</span>
+          <input id="sizeCustom" type="number" min="0.05" step="0.5" inputmode="decimal" />
+        </label>
+        <p id="capacity" class="note"></p>
+        <div class="row">
+          <button class="link" data-back>Back</button>
+          <button class="primary" data-next>Continue</button>
+        </div>
+      </section>
+
+      <section data-step="4" hidden>
+        <h1>What languages do you read?</h1>
+        <p>If a word you search for finds nothing, search also tries its other forms in these languages. So <em>running</em> finds a page that says <em>run</em>.</p>
+        <div id="languages"></div>
+        <p class="note">Ticked based on your browser's languages. You can change this in settings.</p>
+        <div class="row">
+          <button class="link" data-back>Back</button>
+          <button class="primary" id="finish">Start remembering</button>
+        </div>
+      </section>
+
+      <section data-step="5" hidden>
+        <h1>Done</h1>
+        <p id="doneNote"></p>
+        <p class="note"><span id="shortcutLine">Press <kbd>Ctrl</kbd> <kbd>Shift</kbd> <kbd>F</kbd> to search, or t</span><span id="shortcutLead" hidden>T</span>ype <kbd id="keyword">tm</kbd> then space in the address bar.</p>
+        <button class="primary" id="close">Close</button>
+      </section>
+    </main>
+    <script type="module" src="setup.js"></script>
+  </body>
+</html>

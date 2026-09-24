@@ -1,0 +1,292 @@
+/* The one visual system.
+ *
+ * Four surfaces used to carry four palettes, four type scales and four copies
+ * of the same reset, which is why they looked like three different tools that
+ * happened to ship together. Everything shared lives here; each page's own
+ * stylesheet holds only what is genuinely particular to it.
+ *
+ * The character this is refining rather than replacing: quiet, text first, no
+ * chrome for its own sake. A tool for finding something you already read
+ * should get out of the way of the thing you are reading.
+ */
+
+:root {
+  /* Editorial rather than utilitarian: paper white, ink black, one loud
+     accent, and type doing the work that boxes and shadows used to. */
+  --bg: #ffffff;
+  --surface: #ffffff;
+  --sunken: #f5f5f3;
+
+  --fg: #0b0b0c;
+  /* Every text colour here clears 4.5:1 against every surface it is allowed
+     to sit on -- checked in test:presentation. */
+  --muted: #4a4a50;   /* secondary text: 8.9:1 */
+  --faint: #66666d;   /* metadata, the quietest allowed: 5.8:1, 5.3:1 on sunken */
+
+  --line: #e7e7e4;
+  --line-strong: #cfcfcb;
+  /* The edge of something you type into or pick from: clears 3:1. */
+  --control: #85858b;
+
+  --accent: #5a2cf5;
+  --accent-soft: #f1edff;
+  --accent-fg: #ffffff;
+  --mark: #e3ff4f;
+  --mark-fg: #0b0b0c;
+  --warn: #9a5200;
+  --warn-soft: #fff4e5;
+  --danger: #c0282d;
+
+  --radius-sm: 6px;
+  --radius: 10px;
+  --radius-lg: 16px;
+
+  --shadow-sm: 0 1px 2px rgb(11 11 12 / .06);
+  --shadow: 0 1px 2px rgb(11 11 12 / .05), 0 12px 32px -8px rgb(11 11 12 / .12);
+
+  /* One type scale, used everywhere. Bigger at the top end than before:
+     headlines are allowed to be headlines. */
+  --t-micro: 11px;
+  --t-small: 12.5px;
+  --t-meta: 13px;
+  --t-body: 15px;
+  --t-lead: 16px;
+  --t-title: 19px;
+  --t-head: 24px;
+  --t-display: 40px;
+
+  color-scheme: light dark;
+
+  --stack: "Inter", "SF Pro Display", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, "DejaVu Sans Mono", monospace;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0a0a0b;
+    --surface: #131315;
+    --sunken: #1a1a1d;
+
+    --fg: #f4f4f2;
+    --muted: #b4b4bb;   /* 9.6:1 */
+    --faint: #909098;   /* 6.2:1, 5.6:1 on surface */
+
+    --line: #232326;
+    --line-strong: #34343a;
+    --control: #6e6e76;   /* 3.7:1 on bg, 3.4:1 on surface */
+
+    --accent: #a48bff;
+    --accent-soft: #1c1730;
+    --accent-fg: #0a0a0b;
+    --mark: #d4f53c;
+    --mark-fg: #0a0a0b;
+    --warn: #f0a84a;
+    --warn-soft: #261c0f;
+    --danger: #ff6b6b;
+
+    --shadow-sm: 0 1px 2px rgb(0 0 0 / .4);
+    --shadow: 0 1px 2px rgb(0 0 0 / .4), 0 12px 32px -8px rgb(0 0 0 / .6);
+  }
+}
+
+* { box-sizing: border-box; }
+
+/* Checkboxes and radios are the only controls Chrome paints in its own blue,
+   which on a green surface reads as somebody else's interface embedded in
+   this one. One line puts them in the palette. */
+input[type="checkbox"], input[type="radio"] { accent-color: var(--accent); }
+
+/* An author rule that sets display wins over the user agent's [hidden] rule,
+   so anything hidden by attribute has to be told twice. */
+[hidden] { display: none !important; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--fg);
+  font: var(--t-lead)/1.6 var(--stack);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+::selection { background: var(--accent); color: var(--accent-fg); }
+
+/* Focus that is actually visible, on everything, rather than on the two
+   controls somebody remembered. Keyboard use is a stated requirement of this
+   project and an invisible focus ring quietly breaks it. */
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 3px;
+}
+:focus:not(:focus-visible) { outline: none; }
+
+h1 { font-size: var(--t-display); font-weight: 800; line-height: 1.04; letter-spacing: -0.035em; margin: 0 0 14px; }
+h2 { font-size: var(--t-head); font-weight: 750; line-height: 1.15; letter-spacing: -0.02em; margin: 0 0 10px; }
+
+/* The small caps section label used on the settings and popup surfaces. */
+.eyebrow {
+  font: 600 var(--t-micro)/1.4 var(--mono); text-transform: uppercase; letter-spacing: .12em;
+  color: var(--faint); margin: 0 0 8px;
+}
+
+.note { color: var(--muted); font-size: var(--t-meta); margin: 8px 0 0; }
+.note.warn { color: var(--warn); }
+
+/* A notice that has to be noticed, as opposed to a note that is just quiet
+   explanation. Used for a full disk, refused persistence, a clock that looked
+   wrong, and an upgrade that moved somebody's archive. */
+.callout {
+  margin: 12px 0 0; padding: 10px 12px;
+  border: 1px solid var(--line); border-left: 4px solid var(--faint);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--muted); font-size: var(--t-meta);
+}
+.callout.warn { border-left-color: var(--warn); background: var(--warn-soft); color: var(--warn); }
+.callout.good { border-left-color: var(--accent); background: var(--accent-soft); color: var(--muted); }
+
+button { font: inherit; cursor: pointer; border-radius: var(--radius-sm); }
+
+.primary {
+  font-weight: 650; color: var(--bg); background: var(--fg);
+  border: 1px solid var(--fg); padding: 10px 20px; border-radius: 999px;
+  letter-spacing: -0.005em;
+}
+.primary:hover { background: var(--accent); border-color: var(--accent); color: var(--accent-fg); }
+.primary:disabled { opacity: .5; cursor: default; filter: none; }
+
+.secondary {
+  background: var(--surface); color: var(--fg); border: 1px solid var(--line-strong);
+  padding: 9px 18px; border-radius: 999px; font-weight: 550;
+}
+.secondary:hover { border-color: var(--fg); }
+.secondary:disabled { opacity: .5; cursor: default; border-color: var(--line); }
+
+.danger {
+  background: transparent; color: var(--danger); border: 1px solid var(--danger);
+  padding: 9px 18px; border-radius: 999px; font-weight: 550;
+}
+.danger:hover { background: var(--danger); color: var(--accent-fg); }
+.danger:disabled { opacity: .5; cursor: default; background: transparent; color: var(--danger); }
+
+.link {
+  border: 0; background: none; color: var(--accent);
+  font: inherit; padding: 0; text-align: left;
+}
+.link:hover { text-decoration: underline; text-underline-offset: 2px; }
+
+/* Chrome's own clear button on a search field is a fixed blue, which is
+   nobody's palette. Same shape, drawn in the page's own colour. */
+input[type="search"]::-webkit-search-cancel-button {
+  -webkit-appearance: none; appearance: none;
+  width: 14px; height: 14px; cursor: pointer;
+  background: var(--faint);
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 14 14'%3E%3Cpath d='M3 3l8 8M11 3l-8 8' stroke='black' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E") center / contain no-repeat;
+}
+input[type="search"]::-webkit-search-cancel-button:hover { background: var(--fg); }
+
+input, select, textarea {
+  font: inherit; color: var(--fg); background: var(--surface);
+  border: 1px solid var(--control); border-radius: var(--radius-sm);
+  padding: 7px 10px;
+  transition: border-color .12s ease, box-shadow .12s ease;
+}
+input:hover, select:hover, textarea:hover { border-color: var(--fg); }
+textarea { width: 100%; font-family: var(--mono); font-size: var(--t-small); line-height: 1.55; }
+
+/* The storage meter, on both the popup and the settings page. */
+.bar {
+  height: 6px; background: var(--line); border-radius: 999px;
+  overflow: hidden; margin-bottom: 7px;
+}
+.bar span { display: block; height: 100%; border-radius: 999px; background: var(--accent); transition: width .25s ease; }
+.bar span.warn { background: var(--warn); }
+
+/* A list of rows with a rule between them: exclusion bundles, capture modes,
+   the storage log, the allowlist. */
+.rows label {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 2px; border-bottom: 1px solid var(--line);
+}
+.rows label:first-child { border-top: 1px solid var(--line); }
+.rows .desc { color: var(--faint); font-size: var(--t-meta); margin-left: auto; text-align: right; }
+
+.log { list-style: none; padding: 0; margin: 10px 0 0; }
+.log li { padding: 8px 2px; border-bottom: 1px solid var(--line); font-size: var(--t-meta); }
+.log li:first-child { border-top: 1px solid var(--line); }
+.log .when { color: var(--faint); }
+
+code, kbd { font-family: var(--mono); font-size: var(--t-small); }
+code {
+  background: var(--accent-soft); color: var(--accent);
+  border-radius: 4px; padding: 1px 5px;
+}
+kbd {
+  border: 1px solid var(--line-strong); background: var(--surface);
+  border-radius: 5px; padding: 1px 6px; font-size: var(--t-micro);
+  box-shadow: 0 1px 0 var(--line-strong);
+}
+
+/* The language picker, on the setup screen and in settings. A filter above
+   a short list, rather than a longer and longer row of checkboxes. */
+.picker {
+  border: 1px solid var(--line); border-radius: var(--radius);
+  background: var(--surface); overflow: hidden;
+}
+.picker-search { padding: 8px; border-bottom: 1px solid var(--line); background: var(--sunken); }
+.picker-search input { width: 100%; font-size: var(--t-body); padding: 7px 10px; }
+.picker-list { max-height: 264px; overflow-y: auto; }
+.picker-row {
+  display: flex; align-items: center; gap: 10px;
+  padding: 9px 12px; border-bottom: 1px solid var(--line); cursor: pointer;
+}
+.picker-row:last-child { border-bottom: 0; }
+.picker-row:hover { background: var(--sunken); }
+.picker-row:has(input:checked) .picker-name { font-weight: 600; }
+.picker-native { margin-left: auto; color: var(--faint); font-size: var(--t-meta); }
+.picker-empty { margin: 0; padding: 12px; color: var(--muted); font-size: var(--t-meta); }
+.picker-summary {
+  margin: 0; padding: 9px 12px; border-top: 1px solid var(--line);
+  color: var(--muted); font-size: var(--t-meta); background: var(--sunken);
+}
+
+/* The name and icon, at the top of every page, so the four surfaces read as
+   one product. */
+.brand {
+  display: inline-flex; align-items: center; gap: 9px;
+  font-weight: 850; font-size: var(--t-title); letter-spacing: -0.04em;
+  color: var(--fg); text-decoration: none;
+}
+.brand img { width: 24px; height: 24px; border-radius: 7px; display: block; }
+
+/* A small square button holding only an icon, like the popup's settings. */
+.icon-button {
+  display: inline-grid; place-items: center;
+  width: 30px; height: 30px; padding: 0;
+  border: 1px solid transparent; border-radius: var(--radius-sm);
+  background: transparent; color: var(--muted);
+}
+.icon-button:hover { background: var(--sunken); color: var(--fg); }
+.icon-button { border-radius: 999px; }
+.icon-button svg { width: 17px; height: 17px; }
+
+/* A search field with a magnifier drawn in the page's own colour. */
+.search-field { position: relative; }
+.search-field::before {
+  content: ""; position: absolute; left: 13px; top: 50%;
+  width: 17px; height: 17px; transform: translateY(-50%);
+  background: var(--fg); pointer-events: none;
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.2' stroke-linecap='round'%3E%3Ccircle cx='10.5' cy='10.5' r='6.5'/%3E%3Cpath d='M15.5 15.5L21 21'/%3E%3C/svg%3E") center / contain no-repeat;
+}
+.search-field input { width: 100%; padding-left: 40px; }
+
+.primary, .secondary, .danger, .icon-button { transition: background-color .12s ease, border-color .12s ease, color .12s ease, filter .12s ease; }
+.primary { box-shadow: var(--shadow-sm); }
+
+/* Read by a screen reader, not shown. For things said aloud that the eye
+   already gets from the layout, like which result the arrow keys are on. */
+.visually-hidden {
+  position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
+}

@@ -1,0 +1,213 @@
+@import url("../shared/base.css");
+
+/* The search page. Everything here is either layout or the result card; the
+ * palette, type scale and controls come from base.css.
+ *
+ * The one thing this page is for is recognising a page you half remember from
+ * three lines of it, so the snippet gets the room and the contrast, and
+ * everything else stays out of its way.
+ */
+
+body { padding-bottom: 80px; }
+
+.wrap { max-width: 760px; margin: 0 auto; padding: 0 24px; }
+
+/* The header stays put and lets the list scroll under it, frosted rather
+   than opaque so the page keeps its depth. */
+header {
+  position: sticky; top: 0; z-index: 2;
+  background: color-mix(in srgb, var(--bg) 82%, transparent);
+  -webkit-backdrop-filter: saturate(1.6) blur(14px);
+  backdrop-filter: saturate(1.6) blur(14px);
+  border-bottom: 1px solid var(--line);
+  padding: 18px 0 0;
+}
+
+.topbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+.settings-link {
+  color: var(--fg); font-size: var(--t-meta); font-weight: 600; text-decoration: none;
+  padding: 6px 14px; border: 1px solid var(--line-strong); border-radius: 999px;
+  transition: border-color .12s ease, background-color .12s ease, color .12s ease;
+}
+.settings-link:hover { border-color: var(--fg); background: var(--fg); color: var(--bg); }
+
+.search-field::before { left: 20px; width: 20px; height: 20px; }
+input[type="search"] {
+  width: 100%;
+  padding: 16px 20px 16px 54px;
+  font-size: 21px; font-weight: 500; letter-spacing: -0.015em;
+  border-radius: var(--radius-lg);
+  border: 2px solid var(--fg);
+  background: var(--surface);
+}
+input[type="search"]:hover { border-color: var(--fg); }
+input[type="search"]::placeholder { color: var(--faint); font-weight: 400; }
+input[type="search"]:focus-visible {
+  outline: none; border-color: var(--accent);
+  box-shadow: 0 0 0 5px color-mix(in srgb, var(--accent) 22%, transparent);
+}
+
+.controls {
+  display: flex; align-items: center; gap: 14px;
+  min-height: 48px; padding: 10px 2px 12px; flex-wrap: wrap;
+}
+.meta {
+  color: var(--faint); margin: 0; flex: 1; min-width: 170px;
+  font: 500 var(--t-micro)/1.4 var(--mono); text-transform: uppercase; letter-spacing: .1em;
+}
+.filters { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+
+.filters select {
+  font-size: var(--t-small); font-weight: 550; color: var(--fg);
+  border-color: var(--control); border-radius: 999px; padding: 5px 10px;
+  background: var(--surface);
+  flex: 0 1 auto; min-width: 0; max-width: min(170px, 45vw);
+}
+
+.sort {
+  display: flex; padding: 3px; gap: 2px;
+  background: var(--sunken); border-radius: 999px;
+}
+.sort button {
+  font-size: var(--t-small); font-weight: 550; padding: 4px 12px; border: 0; border-radius: 999px;
+  background: transparent; color: var(--muted);
+  transition: background-color .12s ease, color .12s ease;
+}
+.sort button:hover { color: var(--fg); }
+.sort button.on { background: var(--fg); color: var(--bg); }
+
+/* --- a result ------------------------------------------------------------ */
+
+#results { padding-top: 10px; counter-reset: result; }
+
+/* Numbered like a ranked list, in the margin, so the order is legible at a
+   glance and the eye has a column to run down. */
+article {
+  position: relative;
+  counter-increment: result;
+  padding: 20px 20px 22px 60px;
+  /* A transparent bar on the left at all times, so marking the selected
+     result cannot shift the text sideways. */
+  border-left: 3px solid transparent;
+  border-bottom: 1px solid var(--line);
+  border-radius: 0 var(--radius-lg) var(--radius-lg) 0;
+  transition: background-color .12s ease;
+}
+article::before {
+  content: counter(result, decimal-leading-zero);
+  position: absolute; left: 16px; top: 24px;
+  font: 600 var(--t-small)/1 var(--mono); color: var(--faint);
+  letter-spacing: .02em;
+}
+article:last-child { border-bottom-color: transparent; }
+
+@media (hover: hover) {
+  article:hover { background: var(--sunken); }
+}
+
+/* Keyboard is the primary way through this list, so the selected result has
+   to be unmistakable, and not by colour alone: the bar carries it. */
+article.selected {
+  background: var(--accent-soft);
+  border-left-color: var(--accent);
+  border-bottom-color: transparent;
+}
+article.selected::before { color: var(--accent); }
+
+article h2 {
+  font-size: var(--t-title); font-weight: 750; line-height: 1.25; letter-spacing: -0.022em;
+  margin: 0 0 8px; padding-right: 76px; text-wrap: pretty;
+}
+article a { color: var(--fg); text-decoration: none; transition: color .12s ease; }
+article a:hover { color: var(--accent); }
+
+.source {
+  color: var(--faint); margin: 0 0 10px;
+  font: 500 var(--t-micro)/1.4 var(--mono); text-transform: uppercase; letter-spacing: .09em;
+}
+.source .dot { padding: 0 8px; color: var(--line-strong); }
+
+.snippet { margin: 0; font-size: var(--t-body); line-height: 1.65; color: var(--muted); }
+.snippet mark {
+  background: var(--mark); color: var(--mark-fg);
+  padding: 1px 3px; border-radius: 3px; font-weight: 600;
+}
+
+/* The pin is a promise, not a decoration: a pinned page is the one thing
+   eviction may never touch. So it stays out of the way until the row is in
+   play, and is unmistakable once it is on. */
+.pin {
+  position: absolute; top: 18px; right: 16px;
+  border: 1px solid var(--line-strong); background: var(--surface);
+  color: var(--fg); font-size: var(--t-small); font-weight: 600;
+  padding: 4px 12px; border-radius: 999px;
+  opacity: 0; transition: opacity .12s ease, background-color .12s ease, color .12s ease;
+}
+article:hover .pin,
+article.selected .pin,
+.pin:focus-visible,
+.pin[aria-pressed="true"] { opacity: 1; }
+.pin:hover { border-color: var(--fg); }
+.pin[aria-pressed="true"] {
+  color: var(--accent-fg); border-color: var(--accent);
+  background: var(--accent);
+}
+
+/* --- the states that are not a list of results --------------------------- */
+
+.empty {
+  color: var(--muted); font-size: var(--t-lead); line-height: 1.6;
+  padding: 44px 4px 8px; margin: 0; max-width: 58ch;
+}
+.empty strong {
+  display: block; color: var(--fg);
+  font-size: var(--t-display); font-weight: 800; line-height: 1.04; letter-spacing: -0.035em;
+  margin-bottom: 14px; max-width: 16ch;
+}
+.empty kbd { margin: 0 1px; }
+
+/* What you have read lately, under the tip on an empty search. */
+.recent-head {
+  display: flex; align-items: center; gap: 12px;
+  font: 600 var(--t-micro)/1.4 var(--mono); text-transform: uppercase; letter-spacing: .12em;
+  color: var(--fg); margin: 44px 0 6px;
+}
+.recent-head::after { content: ""; flex: 1; height: 2px; background: var(--fg); }
+.recent-item { padding-top: 16px; padding-bottom: 17px; }
+.recent-item::before { top: 20px; }
+.recent-item h2 { font-size: var(--t-lead); margin-bottom: 6px; }
+.recent-item .snippet:empty { display: none; }
+.recent-item .source { margin-bottom: 0; }
+
+.more {
+  display: block; margin: 28px auto 0; font-size: var(--t-meta); font-weight: 600;
+  color: var(--fg); background: var(--surface);
+  border: 1px solid var(--line-strong); border-radius: 999px; padding: 8px 20px;
+}
+.more:hover { border-color: var(--fg); }
+
+/* The keyboard hint floats as a pill rather than a full-width bar. */
+footer.wrap {
+  position: fixed; bottom: 16px; left: 50%; transform: translateX(-50%);
+  width: auto; max-width: calc(100% - 32px); padding: 7px 16px;
+  text-align: center; white-space: nowrap;
+  background: color-mix(in srgb, var(--surface) 85%, transparent);
+  -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px);
+  border: 1px solid var(--line); border-radius: 999px; box-shadow: var(--shadow);
+  color: var(--faint); font-size: var(--t-small);
+}
+
+/* A phone-width window, or a side panel. */
+@media (max-width: 480px) {
+  .wrap { padding: 0 14px; }
+  header { padding-top: 14px; }
+  input[type="search"] { font-size: 18px; padding: 13px 14px 13px 46px; }
+  .search-field::before { left: 16px; width: 18px; height: 18px; }
+  article { padding: 16px 12px 16px 44px; }
+  article::before { left: 10px; top: 20px; }
+  article h2 { padding-right: 0; font-size: var(--t-lead); }
+  .empty strong { font-size: 30px; }
+  .pin { position: static; opacity: 1; display: inline-block; margin: 10px 0 0; }
+  footer.wrap { display: none; }
+  body { padding-bottom: 20px; }
+}

@@ -1,0 +1,92 @@
+@import url("../shared/base.css");
+
+/* Settings. Five sections, each answering one question: what gets read, how
+ * search treats a word that finds nothing, how much is kept, what has been
+ * removed, and what happens to your data.
+ *
+ * It has grown a lot of notices -- a clock that looked wrong, a disk that
+ * filled up, storage Chrome would not promise to keep, an upgrade that moved
+ * the archive. Those are callouts rather than another line of grey text,
+ * because a warning that looks like explanation is not a warning.
+ */
+
+body { padding: 48px 24px 100px; }
+main { max-width: 680px; margin: 0 auto; }
+
+.page-head { margin-bottom: 32px; padding-bottom: 20px; border-bottom: 3px solid var(--fg); }
+.page-head .brand { margin-bottom: 28px; }
+h1 { margin: 0; }
+h2 { font-size: var(--t-head); font-weight: 800; margin: 0 0 12px; letter-spacing: -0.03em; }
+h3.sub {
+  font: 600 var(--t-micro)/1.4 var(--mono); text-transform: uppercase; letter-spacing: .12em;
+  color: var(--faint); margin: 24px 0 4px;
+}
+
+/* One card per question, so a long page scans as five things rather than
+   one scroll. */
+section {
+  padding: 26px 28px; margin-bottom: 18px;
+  background: var(--surface); border: 1px solid var(--line);
+  border-radius: 20px;
+}
+section > h3.sub:first-of-type { margin-top: 4px; }
+/* Row lists inside a card run edge to edge between its rules. */
+section .rows label:first-child { border-top: 0; }
+section .rows label:last-child { border-bottom: 0; }
+
+.modes label {
+  display: grid; grid-template-columns: 18px 1fr; gap: 2px 10px;
+  align-items: start; padding: 12px 2px;
+}
+.modes input { grid-row: span 2; margin-top: 4px; }
+/* The description belongs under the thing it describes, not pushed to the far
+   side of a 640px column where the eye has to travel back for it. */
+.modes .desc { grid-column: 2; margin-left: 0; text-align: left; }
+.modes label:has(input:checked) span:not(.desc) { font-weight: 600; }
+
+.field { display: flex; align-items: center; gap: 12px; margin: 14px 0; flex-wrap: wrap; }
+.field span { min-width: 130px; }
+.field.block { display: block; }
+.field.block span {
+  display: block; margin-bottom: 6px;
+  font-size: var(--t-meta); font-weight: 600;
+}
+
+.note.lead { margin: 4px 0 12px; }
+
+#usage { font-size: var(--t-meta); margin-top: 0; }
+
+.row { display: flex; gap: 10px; align-items: center; margin-top: 10px; flex-wrap: wrap; }
+
+/* The allowlist: a site here is one this extension can read at all, so
+   removing it has to look like the consequence it is. */
+.log li.site { display: flex; align-items: center; gap: 8px; font-size: var(--t-body); }
+.log .remove {
+  background: none; border: 0; color: var(--danger); font: inherit;
+  font-size: var(--t-small); padding: 2px 0 2px 10px; margin-left: auto;
+}
+.log .remove:hover { text-decoration: underline; text-underline-offset: 2px; }
+.log .remove:disabled { opacity: .5; cursor: default; text-decoration: none; }
+
+.progress { height: 4px; background: var(--line); border-radius: 3px; overflow: hidden; margin-top: 12px; }
+.progress span { display: block; height: 100%; background: var(--accent); transition: width .2s ease; }
+
+.saved {
+  position: fixed; bottom: 22px; left: 50%; transform: translateX(-50%);
+  background: var(--accent); color: var(--accent-fg);
+  padding: 9px 20px; border-radius: 999px; font-size: var(--t-meta); font-weight: 650;
+  box-shadow: var(--shadow);
+}
+
+@media (max-width: 480px) {
+  body { padding: 28px 12px 70px; }
+  section { padding: 16px 14px; }
+  .rows .desc, .presets .desc { display: none; }
+  .field span { min-width: 0; }
+}
+
+/* Lists inside a card sit on the card's own edge rather than drawing a rule
+   against it. */
+section .log li:first-child { border-top: 0; }
+section .log li:last-child { border-bottom: 0; }
+.row .note { margin: 0; }

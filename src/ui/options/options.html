@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Settings</title>
+    <link rel="stylesheet" href="options.css" />
+  </head>
+  <body>
+    <main>
+      <header class="page-head">
+        <a class="brand" href="../search/search.html"><img src="../../../icons/icon-32.png" alt="" />TextMemory</a>
+        <h1>Settings</h1>
+      </header>
+
+      <section>
+        <h2>What gets read</h2>
+        <div class="rows modes">
+          <label><input type="radio" name="mode" value="broad" />
+            <span>Everything except what I exclude</span>
+            <span class="desc">Needs access to all sites</span></label>
+          <label><input type="radio" name="mode" value="strict" />
+            <span>Only sites I add</span>
+            <span class="desc">Chrome enforces this, not the extension</span></label>
+        </div>
+        <p id="modeLine" class="note"></p>
+
+        <div id="allowBlock" hidden>
+          <h3 class="sub">Sites you have added</h3>
+          <ul id="allowlist" class="log"></ul>
+          <p class="note">Removing a site also removes the extension's access to it.</p>
+        </div>
+
+        <div id="presetBlock">
+          <h3 class="sub">Skip these kinds of site</h3>
+          <p class="note lead">Each category covers a lot of common sites, not all of them. Add your own below. Ticking one also deletes pages you already saved from its sites.</p>
+          <div id="newCategories" class="callout" hidden>
+            <p id="newCategoriesText" role="status"></p>
+            <div class="row">
+              <button id="newCategoriesRemove" class="secondary" type="button">Remove them</button>
+              <button id="newCategoriesKeep" class="secondary" type="button">Keep them</button>
+            </div>
+          </div>
+          <div id="presets" class="rows"></div>
+          <p id="presetNote" class="note" role="status" hidden></p>
+          <label class="field block">
+          <span>Also skip these, one per line</span>
+          <textarea id="rules" rows="5" spellcheck="false" placeholder="example.com&#10;*.internal.example&#10;example.com/private/*"></textarea>
+        </label>
+        <p class="note">Patterns match a host and its subdomains. <code>*.example.com</code> matches only subdomains, and a trailing <code>/path/*</code> narrows it further. A pasted address works too.</p>
+        <p id="rulesRead" class="note" role="status" hidden></p>
+        <div id="rulesMatch" class="row" hidden>
+          <p id="rulesMatchText" class="note" role="status"></p>
+          <button id="rulesRemove" class="secondary" type="button">Remove them</button>
+        </div>
+        </div>
+      </section>
+
+      <section>
+        <h2>Search</h2>
+        <h3 class="sub">Languages you read</h3>
+        <p class="note lead">If a word finds nothing, search also tries its other forms in these languages.</p>
+        <div id="stemLanguages"></div>
+      </section>
+
+      <section>
+        <h2>How much is kept</h2>
+        <div class="bar"><span id="fill"></span></div>
+        <p id="usage" class="note"></p>
+        <p id="clockNote" class="callout" hidden></p>
+        <p id="storageNote" class="callout warn" hidden></p>
+        <p id="migrationNote" class="callout good" hidden></p>
+        <label class="field"><span>Keep pages for</span>
+          <select id="months">
+            <option value="6">6 months</option>
+            <option value="12">12 months</option>
+            <option value="24">2 years</option>
+            <option value="1200">as long as it fits</option>
+            <option value="custom">a number of months I choose</option>
+          </select>
+        </label>
+        <label class="field" hidden><span>Months</span>
+          <input id="monthsCustom" type="number" min="1" step="1" inputmode="numeric" />
+        </label>
+        <label class="field"><span>Use at most</span>
+          <select id="size">
+            <option value="250">250MB</option>
+            <option value="500">500MB</option>
+            <option value="1024">1GB</option>
+            <option value="2048">2GB</option>
+            <option value="custom">a size I choose</option>
+          </select>
+        </label>
+        <label class="field" hidden><span>Gigabytes</span>
+          <input id="sizeCustom" type="number" min="0.05" step="0.5" inputmode="decimal" />
+        </label>
+        <p id="capacityNote" class="note"></p>
+        <p id="shrinkNote" class="callout warn" hidden></p>
+        <div class="row"><button id="sweep" class="secondary">Apply limits now</button></div>
+      </section>
+
+      <section>
+        <h2>What has been removed</h2>
+        <p class="note">Nothing is deleted without an entry here.</p>
+        <ul id="log" class="log"></ul>
+      </section>
+
+      <section>
+        <h2>Shortcut</h2>
+        <div class="row">
+          <p class="note">Open search with <kbd id="shortcutKeys">…</kbd></p>
+          <button id="shortcutChange" class="secondary" type="button">Change it</button>
+        </div>
+      </section>
+
+      <section>
+        <h2>Your data</h2>
+        <p class="note">Export saves every page as a plain JSON file you can open anywhere, so keep it somewhere private. Import brings pages back from an export, skips any you already have, and leaves out any your exclusions now cover. Delete everything removes every saved page; your settings stay until you change them or uninstall.</p>
+        <div class="row">
+          <button id="export" class="secondary">Export everything</button>
+          <button id="import" class="secondary">Import an export</button>
+          <button id="wipe" class="danger">Delete everything</button>
+        </div>
+        <input id="importFile" type="file" accept="application/json,.json" hidden />
+        <div id="progress" class="progress" hidden><span id="progressFill"></span></div>
+        <p id="dataNote" class="note"></p>
+      </section>
+
+      <p id="saved" class="saved" hidden>Saved</p>
+    </main>
+    <script type="module" src="options.js"></script>
+  </body>
+</html>
