@@ -5,11 +5,11 @@
 // touches the database -- it only turns bytes into text and hands the
 // answer back.
 
-import * as pdfjsLib from '../vendor/pdfjs/pdf.min.mjs';
+import * as pdfjsLib from '../vendor/pdfjs/pdf.mjs';
 import { MSG } from '../shared/messages.js';
 import { MAX_TEXT_BYTES } from '../shared/constants.js';
 
-pdfjsLib.GlobalWorkerOptions.workerSrc = chrome.runtime.getURL('src/vendor/pdfjs/pdf.worker.min.mjs');
+pdfjsLib.GlobalWorkerOptions.workerSrc = chrome.runtime.getURL('src/vendor/pdfjs/pdf.worker.mjs');
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (!message || message.type !== MSG.PARSE_PDF) return false;
