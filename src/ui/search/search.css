@@ -89,9 +89,14 @@ article {
   /* A transparent bar on the left at all times, so marking the selected
      result cannot shift the text sideways. */
   border-left: 3px solid transparent;
-  border-bottom: 1px solid var(--line);
   border-radius: 0 var(--radius-lg) var(--radius-lg) 0;
   transition: background-color .12s ease;
+}
+/* The divider is its own line rather than a border-bottom: on a rounded row
+   a bottom border bends up into the corners and ends in a curled tip. */
+article::after {
+  content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 1px;
+  background: var(--line);
 }
 article::before {
   content: counter(result, decimal-leading-zero);
@@ -99,7 +104,7 @@ article::before {
   font: 600 var(--t-small)/1 var(--mono); color: var(--faint);
   letter-spacing: .02em;
 }
-article:last-child { border-bottom-color: transparent; }
+article:last-child::after { background: transparent; }
 
 @media (hover: hover) {
   article:hover { background: var(--sunken); }
@@ -110,13 +115,16 @@ article:last-child { border-bottom-color: transparent; }
 article.selected {
   background: var(--accent-soft);
   border-left-color: var(--accent);
-  border-bottom-color: transparent;
 }
+article.selected::after { background: transparent; }
 article.selected::before { color: var(--accent); }
 
 article h2 {
   font-size: var(--t-title); font-weight: 750; line-height: 1.25; letter-spacing: -0.022em;
   margin: 0 0 8px; padding-right: 76px; text-wrap: pretty;
+  /* One long unbroken title (a URL, a hash) must wrap rather than widen the
+     whole page. */
+  overflow-wrap: anywhere;
 }
 article a { color: var(--fg); text-decoration: none; transition: color .12s ease; }
 article a:hover { color: var(--accent); }
@@ -124,10 +132,11 @@ article a:hover { color: var(--accent); }
 .source {
   color: var(--faint); margin: 0 0 10px;
   font: 500 var(--t-micro)/1.4 var(--mono); text-transform: uppercase; letter-spacing: .09em;
+  overflow-wrap: anywhere;
 }
 .source .dot { padding: 0 8px; color: var(--line-strong); }
 
-.snippet { margin: 0; font-size: var(--t-body); line-height: 1.65; color: var(--muted); }
+.snippet { margin: 0; font-size: var(--t-body); line-height: 1.65; color: var(--muted); overflow-wrap: anywhere; }
 .snippet mark {
   background: var(--mark); color: var(--mark-fg);
   padding: 1px 3px; border-radius: 3px; font-weight: 600;

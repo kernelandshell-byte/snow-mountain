@@ -60,10 +60,10 @@ function cardFor(row, index) {
     // A real address, so a middle click, a ctrl click, "copy link" and the
     // status bar all do what they do on any other link. A plain click is
     // taken over below, to land on the passage.
-    '<h2><a href="' + escapeHtml(row.url) + '" data-open="' + index + '">' + escapeHtml(row.title || row.url) + '</a></h2>' +
+    '<h2 dir="auto"><a href="' + escapeHtml(row.url) + '" data-open="' + index + '">' + escapeHtml(row.title || row.url) + '</a></h2>' +
     '<p class="source">' + escapeHtml(row.domain || '') +
     '<span class="dot">·</span>' + whenText(row.lastSeen) + '</p>' +
-    '<p class="snippet">' + highlight(row.snippet.text, row.snippet.ranges) + '</p>' +
+    '<p class="snippet" dir="auto">' + highlight(row.snippet.text, row.snippet.ranges) + '</p>' +
     '<button class="pin" data-pin="' + index + '" aria-pressed="' + (row.pinned ? 'true' : 'false') + '"' +
     ' title="Pinned pages are never removed to make room">' +
     (row.pinned ? 'Pinned' : 'Pin') + '</button>' +

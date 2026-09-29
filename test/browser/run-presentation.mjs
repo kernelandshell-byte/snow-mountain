@@ -192,6 +192,48 @@ for (const scheme of ['light', 'dark']) {
     await keys.close();
   }
 
+  // Content that does not behave: a title with no spaces in it, and one in a
+  // right to left script. A page's own words must never widen the results.
+  {
+    const hostile = await context.newPage();
+    await hostile.goto('chrome-extension://' + id + '/src/ui/options/options.html');
+    await hostile.evaluate(async () => {
+      const { MSG } = await import('/src/shared/messages.js');
+      const filler = ' A sentence that keeps the page long enough to be kept at all.'.repeat(8);
+      await chrome.runtime.sendMessage({ type: MSG.PAGE_CONTENT, payload: {
+        url: 'https://long.example/' + 'a'.repeat(300), capturedAt: Date.now(),
+        title: 'Unbrokentitle'.repeat(30), text: 'zebrastripe ' + filler } });
+      await chrome.runtime.sendMessage({ type: MSG.PAGE_CONTENT, payload: {
+        url: 'https://rtl.example/x', capturedAt: Date.now(),
+        title: 'מחשבות על חיפוש טקסט מלא zebrastripe', text: 'זהו טקסט בעברית zebrastripe ' + filler } });
+    });
+    await hostile.close();
+
+    for (const width of [1000, 380, 300]) {
+      const page = await context.newPage();
+      await page.setViewportSize({ width, height: 800 });
+      await page.goto('chrome-extension://' + id + '/src/ui/search/search.html');
+      await page.fill('#q', 'zebrastripe');
+      await page.waitForFunction(() => document.querySelectorAll('article').length === 2);
+      const layout = await page.evaluate(() => ({
+        scroll: document.documentElement.scrollWidth,
+        client: document.documentElement.clientWidth,
+        rtlAligned: getComputedStyle(document.querySelectorAll('article .snippet')[0]).direction,
+        dividerBends: [...document.querySelectorAll('article')].some(
+          (row) => parseFloat(getComputedStyle(row).borderBottomWidth) > 0),
+      }));
+      check(scheme + ', ' + width + 'px: a title with no spaces does not widen the page',
+        layout.scroll <= layout.client, JSON.stringify(layout));
+      check(scheme + ', ' + width + 'px: rows draw their divider without a bottom border',
+        !layout.dividerBends, JSON.stringify(layout));
+      const directions = await page.evaluate(() =>
+        [...document.querySelectorAll('article .snippet')].map((el) => getComputedStyle(el).direction));
+      check(scheme + ', ' + width + 'px: a Hebrew snippet reads right to left, an English one left to right',
+        directions.includes('rtl') && directions.includes('ltr'), JSON.stringify(directions));
+      await page.close();
+    }
+  }
+
   await context.close();
 }
 
