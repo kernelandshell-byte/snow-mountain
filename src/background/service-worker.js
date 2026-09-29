@@ -118,7 +118,9 @@ chrome.omnibox.onInputChanged.addListener(async (text, suggest) => {
 });
 
 chrome.omnibox.onInputEntered.addListener(async (text) => {
-  if (/^https?:\/\//.test(text)) {
+  // A chosen suggestion arrives as its address. Anything with a space in it is
+  // words the person typed, even if it starts with http.
+  if (/^https?:\/\/\S+$/.test(text)) {
     chrome.tabs.create({ url: text });
     return;
   }
