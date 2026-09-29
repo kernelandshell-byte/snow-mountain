@@ -157,6 +157,9 @@ async function renderPage() {
         .then(async (granted) => {
           if (!granted) {
             setStatus('Chrome did not grant access to ' + status.domain, true);
+            // A refused dialog is often a slip. Leave the button live so a
+            // second click can ask again, instead of a greyed-out dead end.
+            event.target.disabled = false;
             return;
           }
           await ask(MSG.ALLOW_SITE, { domain: status.domain });

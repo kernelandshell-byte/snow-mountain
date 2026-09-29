@@ -203,6 +203,8 @@ await page.click('text=Keep pages from this site');
 await page.waitForFunction(() => /did not grant/.test(document.getElementById('pageStatus').textContent), null, { timeout: 4000 });
 check('a refusal is reported rather than silently ignored',
   /did not grant access to other.example/.test(await page.textContent('#pageStatus')), await page.textContent('#pageStatus'));
+check('and the button is live again so the person can ask a second time',
+  await page.$eval('#pageActions button', (b) => !b.disabled), 'button still disabled');
 await page.close();
 
 // --- a page that is not a web page ----------------------------------------
