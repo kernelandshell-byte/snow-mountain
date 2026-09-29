@@ -97,6 +97,19 @@ await page.waitForTimeout(400);
 const relaxNote = await page.textContent('#meta');
 check('a relaxed query says what it actually searched', relaxNote.includes('searched'), relaxNote);
 
+// The "not every word matched" note is for a widened multi-word search that
+// found something; it read as nonsense under one word and under no results.
+await page.fill('#q', 'retention kangarooxyz');
+await page.waitForFunction(() => /not every word matched/.test(document.getElementById('meta').textContent), null, { timeout: 4000 })
+  .catch(() => {});
+check('a multi-word search that had to relax says not every word matched',
+  /not every word matched/.test(await page.textContent('#meta')), await page.textContent('#meta'));
+await page.fill('#q', 'zzzqqqxyz');
+await page.waitForFunction(() => /nothing matched/.test(document.getElementById('meta').textContent), null, { timeout: 4000 })
+  .catch(() => {});
+const noneNote = await page.textContent('#meta');
+check('a single word that matches nothing just says so', /nothing matched/.test(noneNote) && !/every word/.test(noneNote), noneNote);
+
 // Pinning through the interface.
 //
 // Waiting for an article to exist is not enough: the previous query's results

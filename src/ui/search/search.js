@@ -76,7 +76,10 @@ function renderMeta(result) {
   if (result.total) notes.push(result.total === 1 ? '1 page' : result.total + ' pages');
   else notes.push('nothing matched');
   if (result.tookMs !== undefined) notes.push(result.tookMs + 'ms');
-  if (result.mode === 'or') notes.push('not every word matched');
+  // The worker says 'or' whenever the strict pass found nothing, which for one
+  // word, or for no results at all, is not "not every word matched".
+  const searchedTerms = result.query && result.query.lookup ? result.query.lookup.length : 0;
+  if (result.mode === 'or' && result.total && searchedTerms > 1) notes.push('not every word matched');
   for (const [asked, used] of Object.entries(result.relaxed || {})) {
     notes.push('searched "' + used + '" for "' + asked + '"');
   }
