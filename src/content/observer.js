@@ -174,7 +174,11 @@
 
     const now = Date.now();
     if (document.visibilityState === 'visible' && document.hasFocus()) {
-      focusedMs += now - lastTick;
+      // At most a tick and a little slack, however long it has been since the
+      // last one. A background tab's timers are throttled to one a minute, and
+      // the first tick after it is shown would otherwise credit that whole
+      // minute as time spent looking at the page.
+      focusedMs += Math.min(now - lastTick, TICK_MS + 500);
     }
     lastTick = now;
     maxScroll = Math.max(maxScroll, scrollDepth());
