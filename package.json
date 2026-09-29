@@ -38,6 +38,7 @@
     "test:storage": "node test/browser/run-storage.mjs",
     "verify:stemmers": "node test/oracle/verify-stemmers.mjs",
     "test:review": "node test/browser/run-review.mjs",
+    "icons": "node tools/build-icons.mjs",
     "package": "sh tools/package.sh"
   }
 }

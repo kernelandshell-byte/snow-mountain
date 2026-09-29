@@ -258,7 +258,7 @@ kbd {
   font-weight: 850; font-size: var(--t-title); letter-spacing: -0.04em;
   color: var(--fg); text-decoration: none;
 }
-.brand img { width: 24px; height: 24px; border-radius: 7px; display: block; }
+.brand img { width: 24px; height: 24px; display: block; }
 
 /* A small square button holding only an icon, like the popup's settings. */
 .icon-button {
