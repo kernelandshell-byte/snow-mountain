@@ -62,3 +62,10 @@ test('text is cut by bytes, never inside a character', async () => {
   assert.equal(truncateUtf8('short', 100), 'short');
   assert.equal(truncateUtf8('😀😀', 5), '😀');
 });
+
+test('a size that rounds up to the next unit is shown in that unit', () => {
+  assert.equal(bytes(1048575), '1.0MB');
+  assert.equal(bytes(10485759), '10MB');
+  assert.equal(bytes(1073741823), '1.0GB');
+  assert.equal(bytes(1048063), '1023KB');
+});

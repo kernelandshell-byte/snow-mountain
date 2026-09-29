@@ -78,3 +78,15 @@ test('a date is local midnight, and a month is its first day', () => {
 test('site: takes a pasted address as the site it names', () => {
   assert.equal(parseQuery('x site:https://www.Example.com/some/page').site, 'example.com');
 });
+
+test('a date that does not exist is ignored, not rolled over into another one', () => {
+  assert.equal(parseWhen('2024-02-31'), null);
+  assert.equal(parseWhen('2020-13-05'), null);
+  assert.equal(parseWhen('2020-00'), null);
+  assert.equal(parseQuery('cats before:2020-13-45').before, null);
+  assert.equal(parseWhen('2024-02-29'), new Date(2024, 1, 29).getTime());
+});
+
+test('an absurd number of days stops at the start of 1970', () => {
+  assert.equal(parseWhen('99999999999'), 0);
+});

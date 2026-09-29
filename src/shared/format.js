@@ -5,9 +5,20 @@ export function bytes(value) {
   const n = Number(value) || 0;
   if (n < 1024) return n + 'B';
   // Below a megabyte, "0.0MB" reads as a bug rather than as a small number.
-  if (n < 1048576) return Math.round(n / 1024) + 'KB';
-  if (n < 10485760) return (n / 1048576).toFixed(1) + 'MB';
-  if (n < 1073741824) return Math.round(n / 1048576) + 'MB';
+  // Each tier hands over to the next when its own rounding would reach the
+  // next unit, so a size just under a megabyte reads "1.0MB", not "1024KB".
+  if (n < 1048576) {
+    const kb = Math.round(n / 1024);
+    if (kb < 1024) return kb + 'KB';
+  }
+  if (n < 10485760) {
+    const mb = n / 1048576;
+    if (mb < 9.95) return mb.toFixed(1) + 'MB';
+  }
+  if (n < 1073741824) {
+    const mb = Math.round(n / 1048576);
+    if (mb < 1024) return mb + 'MB';
+  }
   return (n / 1073741824).toFixed(1) + 'GB';
 }
 

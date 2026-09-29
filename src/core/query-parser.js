@@ -11,11 +11,17 @@ export function parseWhen(value, now = Date.now()) {
   const text = String(value || '');
   let m = text.match(/^(\d{4})$/);
   if (m && Number(m[1]) >= 1970) return new Date(Number(m[1]), 0, 1).getTime();
-  if (/^\d+$/.test(text)) return now - Number(text) * 86400000;
+  // Never before 1970: a number of days too large to be a real date would
+  // otherwise come out as an absurd negative timestamp.
+  if (/^\d+$/.test(text)) return Math.max(0, now - Number(text) * 86400000);
   m = text.match(/^(\d{4})-(\d{1,2})(?:-(\d{1,2}))?$/);
   if (m) {
-    const date = new Date(Number(m[1]), Number(m[2]) - 1, m[3] ? Number(m[3]) : 1);
-    return Number.isNaN(date.getTime()) ? null : date.getTime();
+    const [year, month, day] = [Number(m[1]), Number(m[2]), m[3] ? Number(m[3]) : 1];
+    const date = new Date(year, month - 1, day);
+    // Date rolls 2024-02-31 over to March 2nd and month 13 into next year.
+    // A date that does not exist is a typo, not a different date.
+    if (date.getFullYear() !== year || date.getMonth() !== month - 1 || date.getDate() !== day) return null;
+    return date.getTime();
   }
   const parsed = Date.parse(text);
   return Number.isNaN(parsed) ? null : parsed;
