@@ -322,7 +322,9 @@ const capBytes = () => {
 showLimit(months, monthsCustom, settings.retentionMonths);
 showLimit(size, sizeCustom, Math.round(settings.sizeCapBytes / MB));
 // A custom size was stored in bytes, so showLimit put megabytes in the field.
-if (size.value === 'custom') sizeCustom.value = String(+(settings.sizeCapBytes / GB).toFixed(3));
+// Three significant figures rather than three decimals: a cap under half a
+// megabyte is a real number of gigabytes, and rounded to 0.000 it read as zero.
+if (size.value === 'custom') sizeCustom.value = String(+(settings.sizeCapBytes / GB).toPrecision(3));
 
 // Said before it is saved, not after, because this is the one setting whose
 // consequence cannot be undone. Lowering the cap does not delete anything by

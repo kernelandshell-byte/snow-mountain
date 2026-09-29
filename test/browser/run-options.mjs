@@ -392,6 +392,20 @@ check('and comes back on the control when settings is reopened',
   (await reopened.inputValue('#size')) + ' / ' + (await reopened.inputValue('#sizeCustom')));
 await reopened.close();
 
+// A cap too small for three decimal places of a gigabyte still has to come
+// back as itself, not as "0".
+await page.evaluate(async () => {
+  const { MSG } = await import('/src/shared/messages.js');
+  await chrome.runtime.sendMessage({ type: MSG.SETTINGS_SET, payload: { sizeCapBytes: 90000 } });
+});
+const tiny = await context.newPage();
+await tiny.goto('chrome-extension://' + extensionId + '/src/ui/options/options.html');
+await tiny.waitForTimeout(600);
+const tinyShown = Number(await tiny.inputValue('#sizeCustom')) * 1024 * 1024 * 1024;
+check('a very small custom limit is shown back, not as zero',
+  Math.abs(tinyShown - 90000) / 90000 < 0.02, await tiny.inputValue('#sizeCustom'));
+await tiny.close();
+
 // The one direction where a typo cannot be undone.
 const used = await page.evaluate(async () => {
   const { MSG } = await import('/src/shared/messages.js');
