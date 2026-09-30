@@ -158,3 +158,13 @@ test('with no jump and no hold, nothing is held', () => {
   assert.deepEqual(clockHold({ now, lastSweepAt: now - 3600000 }), { problem: null, holdUntil: 0 });
   assert.deepEqual(clockHold({ now, lastSweepAt: 0 }), { problem: null, holdUntil: 0 });
 });
+
+test('twelve months is a year, not three hundred and sixty days', () => {
+  const plan = planEviction({
+    pages: [page(1, 366), page(2, 364), page(3, 362)],
+    now,
+    retentionMonths: 12,
+    sizeCapBytes: Infinity,
+  });
+  assert.deepEqual(plan.ids, [1], 'a page a few days short of a year is still inside twelve months');
+});

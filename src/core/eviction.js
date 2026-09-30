@@ -7,8 +7,10 @@
 // Nothing here deletes. It decides, and the caller writes an eviction log
 // entry, because nothing should be removed without saying so.
 
-const MONTH_MS = 30 * 24 * 60 * 60 * 1000;
 const DAY_MS = 24 * 60 * 60 * 1000;
+// The average month, so "12 months" is a year. Thirty days made it 360, five
+// days short of what the setting says.
+const MONTH_MS = (365.25 / 12) * DAY_MS;
 
 // A sweep that has to read the whole archive to decide it has nothing to do
 // is a background problem rather than a background job, so the caller hands

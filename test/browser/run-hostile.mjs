@@ -91,7 +91,9 @@ const seed = (page, count, tag, at) =>
 // ---------------------------------------------------------------------------
 phase('a clock that comes back from sleep set to next year');
 
-await seed(driver, 40, 'clock', Date.now() - 30 * DAY);
+// Clearly past a one month limit, not sitting on its edge: a month is thirty
+// and a bit days, so thirty days exactly is still inside it.
+await seed(driver, 40, 'clock', Date.now() - 45 * DAY);
 const beforeClock = await ask(driver, 'STATS');
 check('there is an archive to lose', beforeClock.docCount === 40, beforeClock.docCount);
 
