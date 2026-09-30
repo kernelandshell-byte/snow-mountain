@@ -258,3 +258,20 @@ test('a small match is filtered and sorted the way the indexes would do it', asy
   const expectedRecent = (await store.pageIdsByRecency()).filter((id) => all.has(id));
   assert.deepEqual(recent.results.map((r) => r.id), expectedRecent);
 });
+
+test('a typed date and the date dropdown both apply, rather than the typed one winning', async () => {
+  const store = createMemoryStore();
+  const now = Date.now();
+  for (const [name, age] of [['new', 2], ['mid', 40], ['old', 400]]) {
+    await store.putPage({
+      url: `https://${name}.example/p`, title: name + ' page about widgets',
+      text: 'widgets everywhere in this page '.repeat(5), lastSeen: now - age * DAY,
+    });
+  }
+  const names = (r) => r.results.map((x) => x.domain.split('.')[0]).sort();
+  const week = { after: now - 7 * DAY };
+  assert.deepEqual(names(await search('widgets after:2020', { store, filters: week })), ['new']);
+  assert.deepEqual(names(await search('widgets before:2020', { store, filters: { before: now - 100 * DAY } })), []);
+  assert.deepEqual(names(await search('widgets', { store, filters: { after: now - 100 * DAY, before: now - 10 * DAY } })), ['mid']);
+  assert.deepEqual(names(await search('widgets after:1', { store, filters: { after: now - 100 * DAY } })), []);
+});

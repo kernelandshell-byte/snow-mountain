@@ -228,8 +228,12 @@ export async function search(
   // interface, on the grounds that the more specific instruction is the one
   // the person just wrote.
   const site = q.site || filters.site || null;
-  const after = q.after || filters.after || null;
-  const before = q.before || filters.before || null;
+  // Typed dates and the dropdown are both constraints, so both apply. Letting
+  // the typed one win silently ignored a "Past week" that was still selected.
+  const laterOf = (a, b) => (a && b ? Math.max(a, b) : a || b || null);
+  const earlierOf = (a, b) => (a && b ? Math.min(a, b) : a || b || null);
+  const after = laterOf(q.after, filters.after);
+  const before = earlierOf(q.before, filters.before);
 
   //
   // Two ways to apply them, which have to agree. When no more pages matched
