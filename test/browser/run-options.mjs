@@ -495,6 +495,32 @@ const nlStillListed = await page.$$eval('#stemLanguages [data-lang]', (nodes) =>
 check('unticking a language that is not offered up front does not make it vanish',
   nlStillListed.includes('nl'), nlStillListed.join());
 
+// A sweep that removes pages for both reasons at once says so in words. It
+// used to print the raw word "both", and "1 pages" for a single page.
+await page.evaluate(async () => {
+  const { MSG } = await import('/src/shared/messages.js');
+  const filler = ' Words that make the page long enough to keep and to take up room in the archive.'.repeat(20);
+  await chrome.runtime.sendMessage({ type: MSG.SETTINGS_SET, payload: { retentionMonths: 1, sizeCapBytes: 60000 } });
+  // Old enough to expire, and fresh ones that are still over the cap afterwards.
+  for (let i = 0; i < 4; i++) {
+    await chrome.runtime.sendMessage({ type: MSG.PAGE_CONTENT, payload: {
+      url: 'https://sweep.example/old' + i, title: 'Old ' + i, text: 'oldword' + i + filler, capturedAt: Date.now() - 200 * 86400000 } });
+  }
+  for (let i = 0; i < 30; i++) {
+    await chrome.runtime.sendMessage({ type: MSG.PAGE_CONTENT, payload: {
+      url: 'https://sweep.example/new' + i, title: 'New ' + i, text: 'newword' + i + filler, capturedAt: Date.now() - i * 3600000 } });
+  }
+});
+const sweeper = await context.newPage();
+await sweeper.goto('chrome-extension://' + extensionId + '/src/ui/options/options.html');
+await sweeper.click('#sweep');
+await sweeper.waitForFunction(() => /older than your limit and over your size limit/.test(document.getElementById('log').textContent), null, { timeout: 15000 })
+  .catch(() => {});
+const sweepLog = await sweeper.textContent('#log');
+check('a sweep that removed pages for both reasons says both, in words',
+  /older than your limit and over your size limit/.test(sweepLog) && !/\bboth\b/.test(sweepLog), sweepLog);
+await sweeper.close();
+
 await context.close();
 
 let failed = 0;

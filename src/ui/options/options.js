@@ -487,13 +487,15 @@ async function refreshLog() {
     ? entries
         .map(
           (entry) =>
-            '<li>' + entry.count + ' pages, ' + mb(entry.bytesFreed || 0) +
+            '<li>' + pageCount(Number(entry.count) || 0) + ', ' + mb(entry.bytesFreed || 0) +
             ' <span class="when">' + ({
               age: 'older than your limit',
               size: 'over your size limit',
+              // One sweep can remove pages for both reasons, and says so.
+              both: 'older than your limit and over your size limit',
               manual: 'deleted by you',
               siteRule: 'excluded site',
-            }[entry.reason] || entry.reason) + ', ' +
+            }[entry.reason] || 'removed automatically') + ', ' +
             new Date(entry.at).toLocaleDateString() + '</span></li>'
         )
         .join('')
