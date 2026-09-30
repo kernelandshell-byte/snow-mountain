@@ -31,3 +31,34 @@ test('nonsense produces nothing rather than NaN', () => {
   assert.equal(whenText(undefined, NOW), '');
   assert.equal(whenText(NaN, NOW), '');
 });
+
+// "Yesterday" is the calendar day before the reader's today, wherever they
+// are, not anything between 24 and 48 hours ago.
+const inZone = (zone, run) => {
+  const before = process.env.TZ;
+  process.env.TZ = zone;
+  try { run(); } finally { if (before === undefined) delete process.env.TZ; else process.env.TZ = before; }
+};
+const at = (y, mo, d, h, mi) => new Date(y, mo - 1, d, h, mi).getTime();
+
+test('last night is yesterday the next morning, and today is today from midnight', () => {
+  for (const zone of ['America/Los_Angeles', 'Europe/Amsterdam', 'Pacific/Kiritimati', 'Asia/Kolkata']) {
+    inZone(zone, () => {
+      const now = at(2026, 9, 14, 8, 0);
+      assert.equal(whenText(at(2026, 9, 13, 23, 30), now), 'yesterday', zone);
+      assert.equal(whenText(at(2026, 9, 14, 0, 10), now), 'today', zone);
+      assert.equal(whenText(at(2026, 9, 13, 9, 0), now), 'yesterday', zone);
+      assert.equal(whenText(at(2026, 9, 12, 23, 59), now), '2 days ago', zone);
+    });
+  }
+});
+
+test('the day the clocks change still counts as one day', () => {
+  inZone('America/Los_Angeles', () => {
+    // Spring forward 2026-03-08 (23 hour day) and fall back 2026-11-01 (25).
+    assert.equal(whenText(at(2026, 3, 8, 12, 0), at(2026, 3, 9, 12, 0)), 'yesterday');
+    assert.equal(whenText(at(2026, 11, 1, 12, 0), at(2026, 11, 2, 12, 0)), 'yesterday');
+    assert.equal(whenText(at(2026, 3, 7, 23, 30), at(2026, 3, 9, 0, 30)), '2 days ago');
+    assert.equal(whenText(at(2026, 11, 1, 0, 30), at(2026, 11, 2, 23, 30)), 'yesterday');
+  });
+});
