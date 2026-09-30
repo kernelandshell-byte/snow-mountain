@@ -23,7 +23,7 @@ header {
   padding: 18px 0 0;
 }
 
-.topbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+.topbar { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
 .settings-link {
   color: var(--fg); font-size: var(--t-meta); font-weight: 600; text-decoration: none;
   padding: 6px 14px; border: 1px solid var(--line-strong); border-radius: 999px;
@@ -219,4 +219,16 @@ footer.wrap {
   .pin { position: static; opacity: 1; display: inline-block; margin: 10px 0 0; }
   footer.wrap { display: none; }
   body { padding-bottom: 20px; }
+}
+
+/* Windows High Contrast and other forced colour modes. Backgrounds are thrown
+ * away there, and so is "transparent" on a border, which becomes a visible
+ * bar on every row and leaves the selected one indistinguishable from the
+ * rest. State has to be carried by system colours and borders instead. */
+@media (forced-colors: active) {
+  article { border-left-color: Canvas; }
+  article.selected { border-left-color: Highlight; outline: 2px solid Highlight; outline-offset: -2px; }
+  .sort button { border: 1px solid Canvas; }
+  .sort button.on { border-color: Highlight; text-decoration: underline; }
+  .pin[aria-pressed="true"] { border-color: Highlight; text-decoration: underline; }
 }

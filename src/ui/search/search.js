@@ -268,6 +268,7 @@ document.querySelector('.sort').addEventListener('click', (event) => {
   state.sort = button.dataset.sort;
   for (const other of document.querySelectorAll('[data-sort]')) {
     other.classList.toggle('on', other === button);
+    other.setAttribute('aria-pressed', other === button ? 'true' : 'false');
   }
   run();
 });

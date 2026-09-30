@@ -9,6 +9,7 @@
   <body>
     <header>
       <div class="wrap">
+        <h1 class="visually-hidden">Search what you have read</h1>
         <div class="topbar">
           <span class="brand"><img src="../../../icons/logo.svg" alt="" />TextMemory</span>
           <a id="settings" class="settings-link" href="../options/options.html">Settings</a>
@@ -35,8 +36,8 @@
               <option value="365">Past year</option>
             </select>
             <div class="sort" role="group" aria-label="Sort">
-              <button data-sort="relevance" class="on">Best match</button>
-              <button data-sort="recent">Newest</button>
+              <button data-sort="relevance" class="on" aria-pressed="true">Best match</button>
+              <button data-sort="recent" aria-pressed="false">Newest</button>
             </div>
           </div>
         </div>

@@ -193,6 +193,8 @@ input, select, textarea {
   transition: border-color .12s ease, box-shadow .12s ease;
 }
 input:hover, select:hover, textarea:hover { border-color: var(--fg); }
+/* A select sizes itself to its widest option, which at 256px is wider than the window. */
+select { max-width: 100%; }
 textarea { width: 100%; font-family: var(--mono); font-size: var(--t-small); line-height: 1.55; }
 
 /* The storage meter, on both the popup and the settings page. */
@@ -289,4 +291,11 @@ kbd {
 .visually-hidden {
   position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
   overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
+}
+
+/* Forced colour modes drop backgrounds, and a meter is nothing but a
+ * background: give the track an edge and the fill a system colour. */
+@media (forced-colors: active) {
+  .bar { border: 1px solid CanvasText; }
+  .bar span { forced-color-adjust: none; background: Highlight; }
 }

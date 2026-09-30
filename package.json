@@ -18,6 +18,7 @@
     "test:options": "node test/browser/run-options.mjs",
     "test:popup": "node test/browser/run-popup.mjs",
     "test:dwell": "node test/browser/run-dwell-gap.mjs",
+    "test:a11y": "node test/browser/run-a11y.mjs",
     "test:highlight": "node test/browser/run-highlight.mjs",
     "test:capture": "node test/browser/run-capture.mjs",
     "test:pdf": "node test/browser/run-pdf-capture.mjs",

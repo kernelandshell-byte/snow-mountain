@@ -90,3 +90,8 @@ section .rows label:last-child { border-bottom: 0; }
 section .log li:first-child { border-top: 0; }
 section .log li:last-child { border-bottom: 0; }
 .row .note { margin: 0; }
+
+@media (forced-colors: active) {
+  .progress { border: 1px solid CanvasText; }
+  .progress span { forced-color-adjust: none; background: Highlight; }
+}
