@@ -41,7 +41,7 @@ A page is kept only once it has been in front of you for a few seconds and you'v
 YOU DECIDE WHAT'S READ
 • Pages asking for a password, card number or one-time code are never kept
 • Incognito windows are never kept
-• Webmail, messaging, AI chats, banking, health, adult sites, dating, government portals, work tools, local network addresses and search results pages are skipped by default. Switch categories on or off, add your own sites, or keep only sites you add one by one
+• Sensitive sites, such as email and banking, are skipped by default. Switch this on or off in settings, add your own sites, or keep only the sites you add one by one
 • Setup asks for access to sites at the moment it explains why. In "only sites I add" mode it asks for nothing up front
 • One click in the toolbar shows whether the page in front of you is kept, and why not. Forget a page, or never keep a site, in one more click
 
