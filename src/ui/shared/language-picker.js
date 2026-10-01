@@ -13,6 +13,10 @@ import {
   STEM_LANGUAGES, FEATURED_LANGUAGES, STEM_LANGUAGE_LABELS, STEM_LANGUAGE_NATIVE,
 } from '../../core/stemming.js';
 import { foldTerm } from '../../core/tokenizer.js';
+import { t, languageName } from '../../shared/i18n.js';
+
+// A language's name in the language of the interface, falling back to English.
+const nameOf = (lang) => languageName(lang, STEM_LANGUAGE_LABELS[lang]);
 
 // Written without spaces between words, which the tokenizer cannot split
 // yet. Named here so that looking for one gets an honest answer instead of
@@ -39,9 +43,9 @@ export function createLanguagePicker(root, { selected = [], onChange = () => {} 
   root.innerHTML =
     '<div class="picker-search">' +
     '<input type="search" autocomplete="off" spellcheck="false" ' +
-    'placeholder="Find a language" aria-label="Find a language" aria-controls="' + id + '" />' +
+    'placeholder="' + t('picker_find') + '" aria-label="' + t('picker_find') + '" aria-controls="' + id + '" />' +
     '</div>' +
-    '<div class="picker-list" id="' + id + '" role="group" aria-label="Languages"></div>' +
+    '<div class="picker-list" id="' + id + '" role="group" aria-label="' + t('picker_group') + '"></div>' +
     '<p class="picker-empty" role="status" hidden></p>' +
     '<p class="picker-summary" aria-live="polite"></p>';
 
@@ -52,7 +56,7 @@ export function createLanguagePicker(root, { selected = [], onChange = () => {} 
 
   const matches = (lang, query) =>
     !query ||
-    [lang, STEM_LANGUAGE_LABELS[lang], STEM_LANGUAGE_NATIVE[lang]].some((name) => fold(name).includes(query));
+    [lang, STEM_LANGUAGE_LABELS[lang], STEM_LANGUAGE_NATIVE[lang], nameOf(lang)].some((name) => fold(name).includes(query));
 
   function render() {
     const query = fold(filter.value);
@@ -71,9 +75,9 @@ export function createLanguagePicker(root, { selected = [], onChange = () => {} 
       box.checked = chosen.includes(lang);
       const name = document.createElement('span');
       name.className = 'picker-name';
-      name.textContent = STEM_LANGUAGE_LABELS[lang];
+      name.textContent = nameOf(lang);
       label.append(box, name);
-      if (STEM_LANGUAGE_NATIVE[lang] !== STEM_LANGUAGE_LABELS[lang]) {
+      if (STEM_LANGUAGE_NATIVE[lang] !== nameOf(lang)) {
         const native = document.createElement('span');
         native.className = 'picker-native';
         native.lang = lang;
@@ -86,13 +90,13 @@ export function createLanguagePicker(root, { selected = [], onChange = () => {} 
     empty.hidden = shown.length > 0;
     if (!shown.length) {
       empty.textContent = UNSEGMENTED.some((name) => fold(name).includes(query) || query.includes(fold(name)))
-        ? "Chinese, Japanese, Korean and Thai aren't supported yet. They're written without spaces between words, which search can't split up yet."
-        : "That language isn't supported yet. Pages in it are still saved and searchable word for word.";
+        ? t('picker_unsegmented')
+        : t('picker_unsupported');
     }
 
     summary.textContent = chosen.length
-      ? 'Using ' + chosen.map((lang) => STEM_LANGUAGE_LABELS[lang]).join(', ') + '.'
-      : "None ticked. Words will only match the way you type them.";
+      ? t('picker_using', chosen.map((lang) => nameOf(lang)).join(', '))
+      : t('picker_none');
   }
 
   list.addEventListener('change', (event) => {

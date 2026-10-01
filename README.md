@@ -31,6 +31,12 @@ matched.
   viewer cannot give, vendored pdf.js running in an offscreen document, and
   one narrowly scoped exception to "no network calls" for the one fetch
   needed to get a PDF's own bytes out of Chrome's viewer.
+- The whole interface is translated through `chrome.i18n` into English,
+  German, Spanish, French, Italian, Dutch and Portuguese (Brazil and
+  Portugal), the same languages search understands. Chrome picks the
+  language; anything else gets English. Strings live in
+  `_locales/<code>/messages.json`, and `npm run test:locales` opens every
+  page in every language.
 - A five screen setup flow that requests host access at the moment it is
   explained, asks for nothing at all in strict mode, and asks which languages
   you read, starting from your browser's own

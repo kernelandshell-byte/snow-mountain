@@ -1,12 +1,12 @@
 import { MSG } from '../../shared/messages.js';
-import { DISPLAY_NAME } from '../../shared/constants.js';
+import { t, rich, translatePage } from '../../shared/i18n.js';
 import { PRESET_LABELS } from '../../shared/presets.js';
 import { requestPersistence } from '../../shared/persistence.js';
 import { MB, GB, syncCustom, limitValue, pagesFor } from '../shared/limits.js';
 import { createLanguagePicker } from '../shared/language-picker.js';
 import { defaultStemLanguages } from '../../core/stemming.js';
 
-document.title = 'Set up ' + DISPLAY_NAME;
+translatePage();
 
 // The one moment everybody passes through, and the only context that is
 // allowed to ask. See shared/persistence.js.
@@ -67,11 +67,12 @@ byId('chooseMode').addEventListener('click', (event) => {
       return;
     }
     note.hidden = false;
-    note.textContent =
-      'Chrome did not grant access to all sites, so nothing would be captured. ' +
-      'Either try again, or choose the second option and add sites one at a time.';
+    note.textContent = t('setup_permission_denied');
   });
 });
+
+const escapeHtml = (text) =>
+  String(text).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 
 // Step three, built from the shipped bundles.
 const presets = byId('presets');
@@ -79,7 +80,7 @@ presets.innerHTML = Object.entries(PRESET_LABELS)
   .map(
     ([key, label]) =>
       '<label><input type="checkbox" data-preset="' + key + '" checked />' +
-      '<span>' + label.title + '</span><span class="desc">' + label.example + '</span></label>'
+      '<span>' + escapeHtml(label.title) + '</span><span class="desc">' + escapeHtml(label.example) + '</span></label>'
   )
   .join('');
 for (const key of Object.keys(PRESET_LABELS)) presetState[key] = true;
@@ -107,8 +108,8 @@ function describeCapacity() {
   syncCustom(monthsSelect, monthsCustom);
   const bytes = capBytes();
   byId('capacity').textContent = bytes === null
-    ? 'Type a number to see how much that holds.'
-    : 'Roughly ' + pagesFor(bytes) + ' pages of typical articles.';
+    ? t('limit_type_number')
+    : t('limit_capacity', pagesFor(bytes));
 }
 for (const control of [sizeSelect, sizeCustom, monthsSelect, monthsCustom]) {
   control.addEventListener('input', describeCapacity);
@@ -123,28 +124,18 @@ const languages = createLanguagePicker(byId('languages'), {
   selected: defaultStemLanguages(navigator.languages),
 });
 
-// The address bar keyword, from the manifest rather than retyped here.
-const manifest = chrome.runtime.getManifest();
-if (manifest.omnibox && manifest.omnibox.keyword) byId('keyword').textContent = manifest.omnibox.keyword;
-
-// The shortcut as Chrome actually has it: another extension may already own
+// The address bar keyword, from the manifest rather than retyped here, and the
+// shortcut as Chrome actually has it: another extension may already own
 // Ctrl+Shift+F, in which case Chrome leaves this one unset.
+const manifest = chrome.runtime.getManifest();
+const keyword = (manifest.omnibox && manifest.omnibox.keyword) || 'tm';
+const hint = byId('doneHint');
+rich(hint, 'setup_done_hint', keyword);
 chrome.commands.getAll().then((commands) => {
   const command = commands.find((entry) => entry.name === 'open-search');
-  const line = byId('shortcutLine');
-  if (!command || !command.shortcut) {
-    line.hidden = true;
-    byId('shortcutLead').hidden = false;
-    return;
-  }
-  line.textContent = 'Press ';
-  command.shortcut.split('+').forEach((key, index) => {
-    if (index) line.append(' ');
-    const kbd = document.createElement('kbd');
-    kbd.textContent = key;
-    line.append(kbd);
-  });
-  line.append(' to search, or t');
+  if (!command || !command.shortcut) return;
+  const keys = command.shortcut.split('+').map((key) => '<kbd>' + key.replace(/[<>&]/g, '') + '</kbd>').join(' ');
+  rich(hint, 'setup_done_hint_shortcut', keys, keyword);
 }).catch(() => {});
 
 byId('finish').addEventListener('click', async () => {
@@ -160,10 +151,7 @@ byId('finish').addEventListener('click', async () => {
     stemLanguages: languages.value,
   });
 
-  byId('doneNote').textContent =
-    mode === 'broad'
-      ? "Pages you read from now on are saved on this computer. Anything you read before today isn't included."
-      : 'Nothing is being saved yet. Open a site you want to keep and add it from the extension button.';
+  byId('doneNote').textContent = t(mode === 'broad' ? 'setup_done_broad' : 'setup_done_strict');
   show(5);
 });
 

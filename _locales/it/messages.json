@@ -1,0 +1,1232 @@
+{
+  "extName": {
+    "message": "TextMemory"
+  },
+  "extDescription": {
+    "message": "Cerca nel testo completo delle pagine che hai letto. Salvato sul tuo computer, mai inviato da nessuna parte."
+  },
+  "cmdOpenSearch": {
+    "message": "Cerca in ciò che hai letto"
+  },
+  "setup_s0_title": {
+    "message": "Una memoria per il tuo browser"
+  },
+  "setup_s0_intro": {
+    "message": "Salva il testo delle pagine che leggi, su questo computer, così puoi ritrovarle a partire da qualsiasi frammento che ricordi."
+  },
+  "setup_s0_point1": {
+    "message": "<strong>Resta su questo computer.</strong> Nessun account, nessun server, nessuna sincronizzazione. Nulla di ciò che leggi viene caricato altrove."
+  },
+  "setup_s0_point2": {
+    "message": "<strong>Solo ciò che leggi davvero.</strong> Una pagina conta quando è rimasta davanti a te per qualche secondo e l’hai fatta scorrere."
+  },
+  "setup_s0_point3": {
+    "message": "<strong>Alcune pagine vengono saltate.</strong> Quelle che chiedono una password o un numero di carta, più i siti comuni delle categorie che sceglierai tra un attimo. Puoi aggiungere anche i tuoi."
+  },
+  "common_continue": {
+    "message": "Continua"
+  },
+  "common_back": {
+    "message": "Indietro"
+  },
+  "setup_s1_title": {
+    "message": "Cosa deve osservare?"
+  },
+  "setup_s1_intro": {
+    "message": "Puoi cambiarlo più tardi nelle impostazioni."
+  },
+  "setup_s1_broad_label": {
+    "message": "Ovunque, tranne le tue esclusioni"
+  },
+  "setup_s1_broad_note": {
+    "message": "Richiede l’accesso a tutti i siti. I siti che escludi non vengono letti."
+  },
+  "setup_s1_strict_label": {
+    "message": "Solo i siti che aggiungo io"
+  },
+  "setup_s1_strict_note": {
+    "message": "Non richiede accesso in anticipo. Aggiungi i siti uno alla volta, e Chrome tiene l’estensione fuori da tutto il resto."
+  },
+  "setup_s2_title": {
+    "message": "Salta questi tipi di siti"
+  },
+  "setup_s2_intro": {
+    "message": "Ogni categoria copre molti siti comuni, ma non tutti quelli che esistono. Puoi aggiungere i tuoi siti in qualsiasi momento nelle impostazioni."
+  },
+  "setup_s3_title": {
+    "message": "Quanto deve conservare?"
+  },
+  "setup_s3_intro": {
+    "message": "Vale il limite raggiunto per primo. Le pagine più vecchie lasciano spazio a quelle nuove, ogni rimozione è elencata nelle impostazioni e le pagine fissate non vengono mai rimosse."
+  },
+  "common_keep_for": {
+    "message": "Conserva le pagine per"
+  },
+  "limit_months_6": {
+    "message": "6 mesi"
+  },
+  "limit_months_12": {
+    "message": "12 mesi"
+  },
+  "limit_years_2": {
+    "message": "2 anni"
+  },
+  "limit_unlimited": {
+    "message": "finché c’è spazio"
+  },
+  "limit_custom_months": {
+    "message": "un numero di mesi a mia scelta"
+  },
+  "limit_months_field": {
+    "message": "Mesi"
+  },
+  "common_use_at_most": {
+    "message": "Usa al massimo"
+  },
+  "limit_custom_size": {
+    "message": "una dimensione a mia scelta"
+  },
+  "limit_gb_field": {
+    "message": "Gigabyte"
+  },
+  "setup_s4_title": {
+    "message": "Quali lingue leggi?"
+  },
+  "setup_s4_intro": {
+    "message": "Se una parola che cerchi non trova nulla, la ricerca prova anche le sue altre forme in queste lingue. Così <em>correvamo</em> trova una pagina che dice <em>correre</em>."
+  },
+  "setup_s4_note": {
+    "message": "Selezionate in base alle lingue del tuo browser. Puoi cambiarle nelle impostazioni."
+  },
+  "setup_finish": {
+    "message": "Inizia a ricordare"
+  },
+  "setup_done_title": {
+    "message": "Fatto"
+  },
+  "common_close": {
+    "message": "Chiudi"
+  },
+  "setup_doc_title": {
+    "message": "Configura TextMemory"
+  },
+  "common_settings": {
+    "message": "Impostazioni"
+  },
+  "opt_read_title": {
+    "message": "Cosa viene letto"
+  },
+  "opt_broad_label": {
+    "message": "Tutto tranne ciò che escludo"
+  },
+  "opt_broad_desc": {
+    "message": "Richiede l’accesso a tutti i siti"
+  },
+  "opt_strict_label": {
+    "message": "Solo i siti che aggiungo"
+  },
+  "opt_strict_desc": {
+    "message": "Lo impone Chrome, non l’estensione"
+  },
+  "opt_sites_added": {
+    "message": "Siti che hai aggiunto"
+  },
+  "opt_sites_note": {
+    "message": "Rimuovere un sito rimuove anche l’accesso dell’estensione a quel sito."
+  },
+  "opt_skip_title": {
+    "message": "Salta questi tipi di siti"
+  },
+  "opt_skip_note": {
+    "message": "Ogni categoria copre molti siti comuni, non tutti. Aggiungi i tuoi qui sotto. Selezionarne una elimina anche le pagine già salvate dai suoi siti."
+  },
+  "opt_remove_them": {
+    "message": "Rimuovile"
+  },
+  "opt_keep_them": {
+    "message": "Tienile"
+  },
+  "opt_rules_label": {
+    "message": "Salta anche questi, uno per riga"
+  },
+  "opt_rules_note": {
+    "message": "I modelli corrispondono a un host e ai suoi sottodomini. <code>*.example.com</code> corrisponde solo ai sottodomini, e un <code>/path/*</code> finale restringe ulteriormente. Funziona anche un indirizzo incollato."
+  },
+  "opt_search_title": {
+    "message": "Ricerca"
+  },
+  "opt_langs_title": {
+    "message": "Lingue che leggi"
+  },
+  "opt_langs_note": {
+    "message": "Se una parola non trova nulla, la ricerca prova anche le sue altre forme in queste lingue."
+  },
+  "opt_kept_title": {
+    "message": "Quanto viene conservato"
+  },
+  "opt_apply": {
+    "message": "Applica i limiti ora"
+  },
+  "opt_removed_title": {
+    "message": "Cosa è stato rimosso"
+  },
+  "opt_removed_note": {
+    "message": "Nulla viene eliminato senza una voce qui."
+  },
+  "opt_shortcut_title": {
+    "message": "Scorciatoia"
+  },
+  "opt_shortcut_change": {
+    "message": "Cambia"
+  },
+  "opt_data_title": {
+    "message": "I tuoi dati"
+  },
+  "opt_data_note": {
+    "message": "L’esportazione salva ogni pagina in un semplice file JSON che puoi aprire ovunque, quindi conservalo in un posto privato. L’importazione riporta indietro le pagine da un’esportazione, salta quelle che hai già e lascia fuori quelle che ora le tue esclusioni coprono. «Elimina tutto» rimuove ogni pagina salvata; le tue impostazioni restano finché non le cambi o disinstalli l’estensione."
+  },
+  "opt_export": {
+    "message": "Esporta tutto"
+  },
+  "opt_import": {
+    "message": "Importa un’esportazione"
+  },
+  "opt_wipe": {
+    "message": "Elimina tutto"
+  },
+  "opt_saved": {
+    "message": "Salvato"
+  },
+  "popup_recent": {
+    "message": "Salvate di recente"
+  },
+  "popup_search_label": {
+    "message": "Cerca in ciò che hai letto"
+  },
+  "popup_search_placeholder": {
+    "message": "Cerca in ciò che hai letto"
+  },
+  "popup_checking": {
+    "message": "Controllo di questa pagina…"
+  },
+  "search_doc_title": {
+    "message": "Cerca in ciò che hai letto"
+  },
+  "search_input_label": {
+    "message": "Cerca in ciò che hai letto"
+  },
+  "search_placeholder": {
+    "message": "Una frase che ricordi"
+  },
+  "search_filter_site": {
+    "message": "Filtra per sito"
+  },
+  "search_filter_when": {
+    "message": "Filtra per quando l’hai letta"
+  },
+  "search_any_time": {
+    "message": "Qualsiasi momento"
+  },
+  "search_past_week": {
+    "message": "Ultima settimana"
+  },
+  "search_past_month": {
+    "message": "Ultimo mese"
+  },
+  "search_past_year": {
+    "message": "Ultimo anno"
+  },
+  "search_sort_label": {
+    "message": "Ordina"
+  },
+  "search_sort_best": {
+    "message": "Più pertinenti"
+  },
+  "search_sort_newest": {
+    "message": "Più recenti"
+  },
+  "search_hint": {
+    "message": "<kbd>↑</kbd> <kbd>↓</kbd> per spostarti, <kbd>invio</kbd> per aprire al passaggio, <kbd>esc</kbd> per cancellare"
+  },
+  "search_more": {
+    "message": "Mostra altro"
+  },
+  "preset_webmail_title": {
+    "message": "Webmail"
+  },
+  "preset_webmail_example": {
+    "message": "Gmail, Outlook, Proton"
+  },
+  "preset_messaging_title": {
+    "message": "Messaggistica"
+  },
+  "preset_messaging_example": {
+    "message": "WhatsApp, Slack, Messenger"
+  },
+  "preset_aiChats_title": {
+    "message": "Chat con IA"
+  },
+  "preset_aiChats_example": {
+    "message": "ChatGPT, Claude, Gemini"
+  },
+  "preset_accounts_title": {
+    "message": "Account e password"
+  },
+  "preset_accounts_example": {
+    "message": "gestori di password, impostazioni dell’account"
+  },
+  "preset_banking_title": {
+    "message": "Banche e pagamenti"
+  },
+  "preset_banking_example": {
+    "message": "PayPal, principali banche"
+  },
+  "preset_health_title": {
+    "message": "Salute e medicina"
+  },
+  "preset_health_example": {
+    "message": "portali per i pazienti, farmacie"
+  },
+  "preset_adult_title": {
+    "message": "Siti per adulti"
+  },
+  "preset_adult_example": {
+    "message": "i più conosciuti"
+  },
+  "preset_dating_title": {
+    "message": "Incontri"
+  },
+  "preset_dating_example": {
+    "message": "Tinder, Bumble, Hinge, Grindr"
+  },
+  "preset_government_title": {
+    "message": "Portali di enti pubblici e identità"
+  },
+  "preset_government_example": {
+    "message": ".gov, tasse, accesso con identità digitale"
+  },
+  "preset_intranet_title": {
+    "message": "Rete locale"
+  },
+  "preset_intranet_example": {
+    "message": "localhost, 192.168.x.x"
+  },
+  "preset_workTools_title": {
+    "message": "Strumenti di lavoro"
+  },
+  "preset_workTools_example": {
+    "message": "Google Docs, Jira, Notion"
+  },
+  "preset_searchResults_title": {
+    "message": "Pagine dei risultati di ricerca"
+  },
+  "preset_searchResults_example": {
+    "message": "Google, Bing, DuckDuckGo"
+  },
+  "pages_one": {
+    "message": "$count$ pagina",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "pages_other": {
+    "message": "$count$ pagine",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "when_today": {
+    "message": "oggi"
+  },
+  "when_yesterday": {
+    "message": "ieri"
+  },
+  "when_days_ago": {
+    "message": "$count$ giorni fa",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "when_last_month": {
+    "message": "il mese scorso"
+  },
+  "when_months_ago": {
+    "message": "$count$ mesi fa",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "when_last_year": {
+    "message": "l’anno scorso"
+  },
+  "when_years_ago": {
+    "message": "$count$ anni fa",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "badge_disk_full": {
+    "message": "TextMemory: il disco è pieno, quindi le pagine non vengono salvate"
+  },
+  "badge_pinned_over": {
+    "message": "TextMemory: ci sono più pagine fissate di quante il limite di dimensione consenta"
+  },
+  "badge_paused_until": {
+    "message": "TextMemory: in pausa fino alle $time$",
+    "placeholders": {
+      "time": {
+        "content": "$1"
+      }
+    }
+  },
+  "badge_off": {
+    "message": "off"
+  },
+  "picker_find": {
+    "message": "Cerca una lingua"
+  },
+  "picker_group": {
+    "message": "Lingue"
+  },
+  "picker_unsegmented": {
+    "message": "Cinese, giapponese, coreano e thailandese non sono ancora supportati. Si scrivono senza spazi tra le parole, e la ricerca non sa ancora separarle."
+  },
+  "picker_unsupported": {
+    "message": "Questa lingua non è ancora supportata. Le pagine in quella lingua vengono comunque salvate e si possono cercare parola per parola."
+  },
+  "picker_none": {
+    "message": "Nessuna selezionata. Le parole corrisponderanno solo come le scrivi."
+  },
+  "picker_using": {
+    "message": "Lingue usate: $languages$.",
+    "placeholders": {
+      "languages": {
+        "content": "$1"
+      }
+    }
+  },
+  "setup_permission_denied": {
+    "message": "Chrome non ha concesso l’accesso a tutti i siti, quindi non verrebbe acquisito nulla. Riprova, oppure scegli la seconda opzione e aggiungi i siti uno alla volta."
+  },
+  "limit_type_number": {
+    "message": "Scrivi un numero per vedere quanto contiene."
+  },
+  "limit_capacity": {
+    "message": "Circa $pages$ pagine di articoli tipici.",
+    "placeholders": {
+      "pages": {
+        "content": "$1"
+      }
+    }
+  },
+  "setup_done_broad": {
+    "message": "Le pagine che leggerai da ora in poi vengono salvate su questo computer. Ciò che hai letto prima di oggi non è incluso."
+  },
+  "setup_done_strict": {
+    "message": "Non viene ancora salvato nulla. Apri un sito che vuoi conservare e aggiungilo dal pulsante dell’estensione."
+  },
+  "setup_done_hint_shortcut": {
+    "message": "Premi $keys$ per cercare, oppure digita <kbd>$keyword$</kbd> e uno spazio nella barra degli indirizzi.",
+    "placeholders": {
+      "keys": {
+        "content": "$1"
+      },
+      "keyword": {
+        "content": "$2"
+      }
+    }
+  },
+  "setup_done_hint": {
+    "message": "Digita <kbd>$keyword$</kbd> e uno spazio nella barra degli indirizzi.",
+    "placeholders": {
+      "keyword": {
+        "content": "$1"
+      }
+    }
+  },
+  "reason_incognito": {
+    "message": "finestra in incognito"
+  },
+  "reason_setup": {
+    "message": "la configurazione non è terminata"
+  },
+  "reason_paused": {
+    "message": "in pausa"
+  },
+  "reason_unparseable": {
+    "message": "indirizzo non valido"
+  },
+  "reason_not_web": {
+    "message": "non è una pagina web"
+  },
+  "reason_password": {
+    "message": "un campo password o di pagamento nella pagina"
+  },
+  "reason_secret_url": {
+    "message": "l’indirizzo contiene una chiave di accesso"
+  },
+  "reason_allowlist": {
+    "message": "non è nella tua lista"
+  },
+  "reason_no_address": {
+    "message": "nessun indirizzo"
+  },
+  "reason_address_mismatch": {
+    "message": "l’indirizzo non corrisponde alla pagina che lo ha inviato"
+  },
+  "reason_still_reading": {
+    "message": "lettura ancora in corso"
+  },
+  "reason_unreadable": {
+    "message": "non è stato possibile leggere la pagina"
+  },
+  "reason_nothing": {
+    "message": "niente da indicizzare"
+  },
+  "reason_too_little": {
+    "message": "troppo poco testo per valere la pena di ritrovarlo più tardi"
+  },
+  "reason_disk_full": {
+    "message": "non c’è più spazio su questo disco"
+  },
+  "reason_pdf_unreadable": {
+    "message": "non è stato possibile leggere questo PDF"
+  },
+  "reason_pdf_large": {
+    "message": "questo PDF è troppo grande per essere conservato (oltre 20MB)"
+  },
+  "reason_tab_moved": {
+    "message": "questa scheda è passata a un’altra pagina"
+  },
+  "reason_tab_unreadable": {
+    "message": "non è stato possibile leggere questa scheda"
+  },
+  "reason_default": {
+    "message": "non è stato possibile leggerla"
+  },
+  "reason_excluded": {
+    "message": "esclusa nelle tue impostazioni"
+  },
+  "popup_open_settings": {
+    "message": "Apri le impostazioni"
+  },
+  "popup_finish_setup": {
+    "message": "Completa la configurazione"
+  },
+  "popup_shortcut_title": {
+    "message": "Apre la ricerca da qualsiasi punto"
+  },
+  "popup_archive_broken": {
+    "message": "Non è stato possibile aprire le tue pagine salvate. Non è stato eliminato nulla."
+  },
+  "popup_nothing_here": {
+    "message": "Niente da salvare qui"
+  },
+  "popup_check_failed": {
+    "message": "Non è stato possibile controllare questa pagina. Non è stato modificato nulla."
+  },
+  "popup_kept": {
+    "message": "Salvata, ultima lettura $when$",
+    "placeholders": {
+      "when": {
+        "content": "$1"
+      }
+    }
+  },
+  "popup_kept_visits": {
+    "message": "Salvata, ultima lettura $when$, $count$ visite",
+    "placeholders": {
+      "when": {
+        "content": "$1"
+      },
+      "count": {
+        "content": "$2"
+      }
+    }
+  },
+  "popup_forget": {
+    "message": "Dimentica questa pagina"
+  },
+  "popup_never_keep": {
+    "message": "Non salvare mai questo sito"
+  },
+  "popup_not_kept": {
+    "message": "Non salvata: $reason$",
+    "placeholders": {
+      "reason": {
+        "content": "$1"
+      }
+    }
+  },
+  "popup_change_excluded": {
+    "message": "Cambia ciò che è escluso"
+  },
+  "popup_not_watching": {
+    "message": "Questo sito non è osservato"
+  },
+  "popup_keep_site": {
+    "message": "Salva le pagine di questo sito"
+  },
+  "popup_access_refused": {
+    "message": "Chrome non ha concesso l’accesso a $domain$",
+    "placeholders": {
+      "domain": {
+        "content": "$1"
+      }
+    }
+  },
+  "popup_watching_not_kept": {
+    "message": "Da ora $domain$ è osservato. Questa pagina non è stata salvata: $reason$",
+    "placeholders": {
+      "domain": {
+        "content": "$1"
+      },
+      "reason": {
+        "content": "$2"
+      }
+    }
+  },
+  "popup_watching": {
+    "message": "Da ora $domain$ è osservato",
+    "placeholders": {
+      "domain": {
+        "content": "$1"
+      }
+    }
+  },
+  "popup_add_failed": {
+    "message": "Non è stato possibile aggiungere $domain$. Riapri questo pannello per riprovare.",
+    "placeholders": {
+      "domain": {
+        "content": "$1"
+      }
+    }
+  },
+  "popup_try_again": {
+    "message": "Riprova"
+  },
+  "popup_keep_failed": {
+    "message": "Non è stato possibile salvare questa pagina: $reason$",
+    "placeholders": {
+      "reason": {
+        "content": "$1"
+      }
+    }
+  },
+  "popup_keeping": {
+    "message": "Salvataggio di questa pagina…"
+  },
+  "popup_not_kept_yet": {
+    "message": "Non ancora salvata"
+  },
+  "popup_keep_now": {
+    "message": "Salva questa pagina ora"
+  },
+  "popup_never_confirm": {
+    "message": "Elimina anche $pages$. Fai di nuovo clic",
+    "placeholders": {
+      "pages": {
+        "content": "$1"
+      }
+    }
+  },
+  "popup_block_failed": {
+    "message": "Non è stato possibile bloccare $domain$. Non è stato modificato nulla.",
+    "placeholders": {
+      "domain": {
+        "content": "$1"
+      }
+    }
+  },
+  "popup_never_kept": {
+    "message": "$domain$ non verrà mai più salvato",
+    "placeholders": {
+      "domain": {
+        "content": "$1"
+      }
+    }
+  },
+  "popup_never_kept_deleted": {
+    "message": "$domain$ non verrà mai più salvato; eliminato: $pages$",
+    "placeholders": {
+      "domain": {
+        "content": "$1"
+      },
+      "pages": {
+        "content": "$2"
+      }
+    }
+  },
+  "popup_still_working": {
+    "message": "Questa pagina è ancora in elaborazione. Riapri questo pannello tra un momento per vedere se è stata salvata."
+  },
+  "popup_disk_full": {
+    "message": "Questo disco non ha più spazio, quindi le pagine non vengono salvate. Nelle impostazioni trovi cosa fare."
+  },
+  "popup_budget_kept": {
+    "message": "Salvato: $pages$",
+    "placeholders": {
+      "pages": {
+        "content": "$1"
+      }
+    }
+  },
+  "popup_budget_size": {
+    "message": "$used$ di $limit$",
+    "placeholders": {
+      "used": {
+        "content": "$1"
+      },
+      "limit": {
+        "content": "$2"
+      }
+    }
+  },
+  "popup_budget_pinned": {
+    "message": "ci sono più pagine fissate di quante ne entrino"
+  },
+  "budget_full": {
+    "message": "pieno, le pagine più vecchie vengono sostituite"
+  },
+  "budget_full_around": {
+    "message": "pieno verso $date$",
+    "placeholders": {
+      "date": {
+        "content": "$1"
+      }
+    }
+  },
+  "popup_nothing_kept": {
+    "message": "Ancora nulla di salvato."
+  },
+  "popup_resume": {
+    "message": "Riprendi il salvataggio"
+  },
+  "popup_pause": {
+    "message": "Metti in pausa per un’ora"
+  },
+  "search_pinned": {
+    "message": "Fissata"
+  },
+  "search_pin": {
+    "message": "Fissa"
+  },
+  "search_pin_title": {
+    "message": "Le pagine fissate non vengono mai rimosse per fare spazio"
+  },
+  "search_announce": {
+    "message": "$n$ di $total$: $title$, $domain$",
+    "placeholders": {
+      "n": {
+        "content": "$1"
+      },
+      "total": {
+        "content": "$2"
+      },
+      "title": {
+        "content": "$3"
+      },
+      "domain": {
+        "content": "$4"
+      }
+    }
+  },
+  "search_meta_none": {
+    "message": "nessun risultato"
+  },
+  "search_meta_not_every": {
+    "message": "non tutte le parole corrispondono"
+  },
+  "search_meta_searched": {
+    "message": "cercato «$used$» al posto di «$asked$»",
+    "placeholders": {
+      "used": {
+        "content": "$1"
+      },
+      "asked": {
+        "content": "$2"
+      }
+    }
+  },
+  "search_meta_expanded": {
+    "message": "«$asked$» ha trovato $words$",
+    "placeholders": {
+      "asked": {
+        "content": "$1"
+      },
+      "words": {
+        "content": "$2"
+      }
+    }
+  },
+  "search_meta_expanded_more": {
+    "message": "«$asked$» ha trovato $words$ e altre $count$",
+    "placeholders": {
+      "asked": {
+        "content": "$1"
+      },
+      "words": {
+        "content": "$2"
+      },
+      "count": {
+        "content": "$3"
+      }
+    }
+  },
+  "search_unavailable_title": {
+    "message": "La ricerca non è disponibile al momento."
+  },
+  "search_unavailable_body": {
+    "message": "Di solito si risolve ricaricando questa pagina."
+  },
+  "search_nothing_title": {
+    "message": "Nessun risultato."
+  },
+  "search_nothing_body": {
+    "message": "Prova con meno parole, o solo con quella di cui sei più sicuro. Si possono trovare solo le pagine lette dopo la configurazione."
+  },
+  "search_empty_title": {
+    "message": "Ancora nulla di salvato."
+  },
+  "search_empty_body": {
+    "message": "Le pagine compaiono qui dopo che hai passato qualche secondo a leggerle. Torna dopo un po’ di navigazione."
+  },
+  "search_saved_one": {
+    "message": "$count$ pagina salvata",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "search_saved_other": {
+    "message": "$count$ pagine salvate",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "search_tip_title": {
+    "message": "Scrivi una frase che ricordi."
+  },
+  "search_tip_body": {
+    "message": "Qualsiasi parola della pagina, in qualsiasi ordine. Aggiungi <code>site:example.com</code> per restringere, metti «virgolette» attorno a una frase esatta, oppure scrivi <code>-parola</code> per escludere le pagine con quella parola."
+  },
+  "search_recent": {
+    "message": "Lette di recente"
+  },
+  "search_all_sites": {
+    "message": "Tutti i siti"
+  },
+  "preset_webmail_lower": {
+    "message": "webmail"
+  },
+  "preset_messaging_lower": {
+    "message": "messaggistica"
+  },
+  "preset_aiChats_lower": {
+    "message": "chat con IA"
+  },
+  "preset_accounts_lower": {
+    "message": "account e password"
+  },
+  "preset_banking_lower": {
+    "message": "banche e pagamenti"
+  },
+  "preset_health_lower": {
+    "message": "salute e medicina"
+  },
+  "preset_adult_lower": {
+    "message": "siti per adulti"
+  },
+  "preset_dating_lower": {
+    "message": "incontri"
+  },
+  "preset_government_lower": {
+    "message": "portali di enti pubblici e identità"
+  },
+  "preset_intranet_lower": {
+    "message": "rete locale"
+  },
+  "preset_workTools_lower": {
+    "message": "strumenti di lavoro"
+  },
+  "preset_searchResults_lower": {
+    "message": "pagine dei risultati di ricerca"
+  },
+  "opt_mode_broad": {
+    "message": "Ogni sito viene letto, tranne ciò che escludi qui sotto."
+  },
+  "opt_mode_strict": {
+    "message": "Vengono letti solo i siti che hai aggiunto, e Chrome lo impone. Le esclusioni qui sotto si applicano comunque a loro."
+  },
+  "opt_allow_none": {
+    "message": "Nessuno per ora. Apri un sito che vuoi conservare e aggiungilo dal pulsante dell’estensione."
+  },
+  "opt_remove": {
+    "message": "rimuovi"
+  },
+  "opt_mode_denied": {
+    "message": "Chrome non ha concesso l’accesso a tutti i siti, quindi non è cambiato nulla. Vengono ancora letti solo i siti che aggiungi."
+  },
+  "opt_mode_not_removed": {
+    "message": "Chrome non ha rimosso l’accesso dell’estensione a tutti i siti, quindi non è cambiato nulla. Riprova, oppure rimuovilo dalla pagina dei dettagli dell’estensione in chrome://extensions."
+  },
+  "opt_preset_remove_failed": {
+    "message": "Non è stato possibile rimuovere le pagine già salvate da questi siti. Deseleziona e seleziona di nuovo la casella per riprovare."
+  },
+  "opt_preset_removed": {
+    "message": "Nella categoria «$category$» è stato rimosso ciò che era già salvato: $pages$.",
+    "placeholders": {
+      "pages": {
+        "content": "$1"
+      },
+      "category": {
+        "content": "$2"
+      }
+    }
+  },
+  "opt_removed_pages": {
+    "message": "Rimosso: $pages$.",
+    "placeholders": {
+      "pages": {
+        "content": "$1"
+      }
+    }
+  },
+  "opt_newcat_one": {
+    "message": "Novità di questa versione: da ora i siti di queste categorie vengono saltati: $names$. $pages$ che avevi salvato prima proviene da questi siti. Rimuoverla o tenerla?",
+    "placeholders": {
+      "names": {
+        "content": "$1"
+      },
+      "pages": {
+        "content": "$2"
+      }
+    }
+  },
+  "opt_newcat_other": {
+    "message": "Novità di questa versione: da ora i siti di queste categorie vengono saltati: $names$. $pages$ che avevi salvato prima provengono da questi siti. Rimuoverle o tenerle?",
+    "placeholders": {
+      "names": {
+        "content": "$1"
+      },
+      "pages": {
+        "content": "$2"
+      }
+    }
+  },
+  "opt_newcat_kept": {
+    "message": "Ciò che avevi salvato prima è stato tenuto. Da ora i siti di queste categorie vengono saltati: $names$.",
+    "placeholders": {
+      "names": {
+        "content": "$1"
+      }
+    }
+  },
+  "opt_newcat_removed": {
+    "message": "Rimosso: $pages$. Da ora i siti di queste categorie vengono saltati: $names$.",
+    "placeholders": {
+      "pages": {
+        "content": "$1"
+      },
+      "names": {
+        "content": "$2"
+      }
+    }
+  },
+  "opt_shortcut_not_set": {
+    "message": "non impostata"
+  },
+  "opt_shortcut_text": {
+    "message": "Apri la ricerca con <kbd>$keys$</kbd>",
+    "placeholders": {
+      "keys": {
+        "content": "$1"
+      }
+    }
+  },
+  "opt_rule_as": {
+    "message": "$line$ come $rule$",
+    "placeholders": {
+      "line": {
+        "content": "$1"
+      },
+      "rule": {
+        "content": "$2"
+      }
+    }
+  },
+  "opt_rules_reading": {
+    "message": "Interpretato come: $list$.",
+    "placeholders": {
+      "list": {
+        "content": "$1"
+      }
+    }
+  },
+  "opt_rules_unusable": {
+    "message": "Queste non sembrano un sito e non corrisponderanno a nulla: $list$.",
+    "placeholders": {
+      "list": {
+        "content": "$1"
+      }
+    }
+  },
+  "opt_rules_match_one": {
+    "message": "$pages$ che hai già salvato corrisponde a queste regole.",
+    "placeholders": {
+      "pages": {
+        "content": "$1"
+      }
+    }
+  },
+  "opt_rules_match_other": {
+    "message": "$pages$ che hai già salvato corrispondono a queste regole.",
+    "placeholders": {
+      "pages": {
+        "content": "$1"
+      }
+    }
+  },
+  "opt_rules_remove_failed": {
+    "message": "Non è stato possibile rimuovere quelle pagine. Riprova."
+  },
+  "opt_capacity": {
+    "message": "Spazio per circa $pages$ pagine di articoli tipici.",
+    "placeholders": {
+      "pages": {
+        "content": "$1"
+      }
+    }
+  },
+  "opt_shrink": {
+    "message": "Stai usando $used$, più di $limit$. La prossima pulizia rimuoverebbe circa $count$ delle tue pagine più vecchie. Le pagine fissate vengono mantenute.",
+    "placeholders": {
+      "used": {
+        "content": "$1"
+      },
+      "limit": {
+        "content": "$2"
+      },
+      "count": {
+        "content": "$3"
+      }
+    }
+  },
+  "opt_usage_unavailable": {
+    "message": "Non è stato possibile aprire le tue pagine salvate, quindi qui non si può mostrare nulla. Non è stato eliminato nulla."
+  },
+  "opt_log_unavailable": {
+    "message": "Non disponibile finché l’archivio non può essere aperto."
+  },
+  "opt_usage_head": {
+    "message": "$pages$, $used$ di $limit$",
+    "placeholders": {
+      "pages": {
+        "content": "$1"
+      },
+      "used": {
+        "content": "$2"
+      },
+      "limit": {
+        "content": "$3"
+      }
+    }
+  },
+  "opt_room_for": {
+    "message": "spazio per circa $pages$",
+    "placeholders": {
+      "pages": {
+        "content": "$1"
+      }
+    }
+  },
+  "opt_budget_pinned": {
+    "message": "ci sono più pagine fissate di quante il budget consenta"
+  },
+  "opt_migration": {
+    "message": "Le tue pagine salvate sono state convertite in un nuovo formato il $date$$steps$. Tutto è stato controllato e nulla è andato perso.",
+    "placeholders": {
+      "date": {
+        "content": "$1"
+      },
+      "steps": {
+        "content": "$2"
+      }
+    }
+  },
+  "opt_warn_disk_full": {
+    "message": "Il tuo disco si è riempito il $date$, quindi le nuove pagine non sono state salvate. Libera spazio o abbassa il limite di dimensione qui sopra.",
+    "placeholders": {
+      "date": {
+        "content": "$1"
+      }
+    }
+  },
+  "opt_warn_not_persistent": {
+    "message": "Chrome non ha contrassegnato questo spazio come persistente, quindi potrebbe cancellarlo se il disco si riempie. Esportare ogni tanto ti dà un backup."
+  },
+  "opt_warn_setup": {
+    "message": "La configurazione non è terminata, quindi non viene ancora salvato nulla. Apri il pulsante dell’estensione per completarla."
+  },
+  "opt_warn_ungranted": {
+    "message": "Questi siti sono nella tua lista ma Chrome non ha dato loro l’accesso, quindi non viene salvato nulla da essi: $sites$. Rimuovili e aggiungili di nuovo per risolvere.",
+    "placeholders": {
+      "sites": {
+        "content": "$1"
+      }
+    }
+  },
+  "opt_warn_refused": {
+    "message": "Chrome ha negato l’accesso a $sites$, quindi non viene salvato nulla da essi. Gli altri tuoi siti vanno bene.",
+    "placeholders": {
+      "sites": {
+        "content": "$1"
+      }
+    }
+  },
+  "opt_clock_note": {
+    "message": "L’ultima pulizia ha saltato il limite di età perché $problem$, quindi non viene rimosso nulla per anzianità finché l’orologio non è stabile da un giorno.",
+    "placeholders": {
+      "problem": {
+        "content": "$1"
+      }
+    }
+  },
+  "opt_clock_backwards": {
+    "message": "l’orologio è andato indietro dall’ultima pulizia"
+  },
+  "opt_clock_gap": {
+    "message": "è passato più tempo di quanto una pulizia oraria possa spiegare"
+  },
+  "opt_clock_recent": {
+    "message": "l’orologio ha fatto un salto di recente"
+  },
+  "opt_log_age": {
+    "message": "oltre il tuo limite di età"
+  },
+  "opt_log_size": {
+    "message": "oltre il tuo limite di dimensione"
+  },
+  "opt_log_both": {
+    "message": "oltre i tuoi limiti di età e di dimensione"
+  },
+  "opt_log_manual": {
+    "message": "eliminato da te"
+  },
+  "opt_log_site": {
+    "message": "sito escluso"
+  },
+  "opt_log_auto": {
+    "message": "rimozione automatica"
+  },
+  "opt_log_none": {
+    "message": "Non è stato rimosso nulla."
+  },
+  "opt_sweep_unavailable": {
+    "message": "Non è stato possibile applicare i limiti perché l’archivio non si è potuto aprire. Non è stato rimosso nulla."
+  },
+  "opt_sweep_nothing": {
+    "message": "Non c’era nulla da rimuovere."
+  },
+  "opt_export_failed": {
+    "message": "Non è stato possibile leggere le tue pagine salvate, quindi non è stato esportato nulla."
+  },
+  "opt_exporting": {
+    "message": "Esportazione in corso… $written$ di $total$",
+    "placeholders": {
+      "written": {
+        "content": "$1"
+      },
+      "total": {
+        "content": "$2"
+      }
+    }
+  },
+  "opt_exported": {
+    "message": "Esportato: $pages$.",
+    "placeholders": {
+      "pages": {
+        "content": "$1"
+      }
+    }
+  },
+  "opt_importing": {
+    "message": "Importazione in corso… lette: $pages$",
+    "placeholders": {
+      "pages": {
+        "content": "$1"
+      }
+    }
+  },
+  "opt_import_unreadable": {
+    "message": "Non è stato possibile leggere quel file."
+  },
+  "opt_import_not_export": {
+    "message": "Non sembra un’esportazione di questa estensione."
+  },
+  "opt_import_done": {
+    "message": "Importate: $count$",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "opt_import_skipped": {
+    "message": "già presenti: $count$",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "opt_import_excluded": {
+    "message": "lasciate fuori perché le tue esclusioni le coprono: $count$",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "opt_import_failed": {
+    "message": "illeggibili: $count$",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "opt_import_truncated": {
+    "message": "il file è terminato in anticipo, quindi ciò che veniva dopo non è stato importato"
+  },
+  "opt_wipe_confirm": {
+    "message": "Fai di nuovo clic per eliminare tutto"
+  },
+  "opt_wiped": {
+    "message": "Eliminato: $pages$. Le tue impostazioni, comprese le liste di siti, vengono mantenute.",
+    "placeholders": {
+      "pages": {
+        "content": "$1"
+      }
+    }
+  },
+  "opt_wipe_failed": {
+    "message": "Non è stato possibile eliminare le tue pagine salvate. Riprova."
+  },
+  "opt_doc_title": {
+    "message": "Impostazioni di TextMemory"
+  }
+}

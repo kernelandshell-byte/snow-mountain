@@ -13,10 +13,17 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..')
 const context = await chromium.launchPersistentContext('', {
   headless: false,
   viewport: { width: 900, height: 900 },
-  // What the language screen pre-checks from. A browser that reads German
-  // and English, so the default is visibly neither "English" nor "all".
-  locale: 'de-DE',
+  locale: 'en-US',
   args: ['--disable-extensions-except=' + root, '--load-extension=' + root, '--no-sandbox'],
+});
+
+// What the language screen pre-checks from: a browser that reads German and
+// English, so the default is visibly neither "English" nor "all". Only the
+// list of languages is changed. The interface itself stays in English, since
+// every sentence in this test is checked in English; the interface in other
+// languages is checked in run-locales.mjs.
+await context.addInitScript(() => {
+  Object.defineProperty(navigator, 'languages', { get: () => ['de-DE', 'de', 'en'] });
 });
 
 let [worker] = context.serviceWorkers();
@@ -134,7 +141,7 @@ check('and coming back keeps the choice', kept.includes('nl') && !kept.includes(
 await page.click('#finish');
 await page.waitForTimeout(400);
 check('setup ends on a confirmation', (await visibleStep(page)) === 5, await visibleStep(page));
-const keyword = await page.textContent('#keyword');
+const keyword = await page.textContent('#doneHint kbd:last-of-type');
 check('the address bar hint names the real keyword', keyword === 'tm', keyword);
 
 const saved = await page.evaluate(async () => {

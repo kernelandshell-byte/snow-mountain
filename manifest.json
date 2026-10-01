@@ -1,9 +1,10 @@
 {
   "manifest_version": 3,
-  "name": "TextMemory",
-  "short_name": "TextMemory",
+  "name": "__MSG_extName__",
+  "default_locale": "en",
+  "short_name": "__MSG_extName__",
   "version": "1.0.0",
-  "description": "Search the full text of pages you've read. Stored on your computer, never sent anywhere.",
+  "description": "__MSG_extDescription__",
   "minimum_chrome_version": "116",
   "background": {
     "service_worker": "src/background/service-worker.js",
@@ -46,7 +47,7 @@
         "default": "Ctrl+Shift+F",
         "mac": "Command+Shift+F"
       },
-      "description": "Search what you have read"
+      "description": "__MSG_cmdOpenSearch__"
     }
   }
 }

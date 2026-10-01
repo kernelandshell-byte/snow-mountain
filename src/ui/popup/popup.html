@@ -2,14 +2,14 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    <title>Recently kept</title>
+    <title data-i18n="popup_recent">Recently kept</title>
     <link rel="stylesheet" href="popup.css" />
   </head>
   <body>
     <header class="top">
       <h1 class="visually-hidden">TextMemory</h1>
       <span class="brand"><img src="../../../icons/logo.svg" alt="" />TextMemory</span>
-      <button id="options" class="icon-button" title="Settings" aria-label="Settings">
+      <button id="options" class="icon-button" title="Settings" data-i18n-title="common_settings" aria-label="Settings" data-i18n-aria-label="common_settings">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>
       </button>
     </header>
@@ -17,12 +17,12 @@
     <main>
     <form id="searchForm" class="search-field" hidden>
       <input id="popupQuery" type="search" autocomplete="off" spellcheck="false"
-        placeholder="Search what you've read" aria-label="Search what you've read" />
+        placeholder="Search what you've read" data-i18n-placeholder="popup_search_placeholder" aria-label="Search what you've read" data-i18n-aria-label="popup_search_label" />
     </form>
     <button id="open" class="primary" hidden></button>
 
     <section id="page" class="page">
-      <p id="pageStatus" class="status">Checking this page…</p>
+      <p id="pageStatus" class="status" data-i18n="popup_checking">Checking this page…</p>
       <p id="pageUrl" class="host"></p>
       <div id="pageActions" class="actions"></div>
     </section>
@@ -34,7 +34,7 @@
       <p id="budgetText" class="host"></p>
     </section>
 
-    <h2>Recently kept</h2>
+    <h2 data-i18n="popup_recent">Recently kept</h2>
     <ul id="recent" class="recent"></ul>
 
     <div class="row">

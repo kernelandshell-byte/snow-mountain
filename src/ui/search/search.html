@@ -3,16 +3,16 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Search what you have read</title>
+    <title data-i18n="search_doc_title">Search what you have read</title>
     <link rel="stylesheet" href="search.css" />
   </head>
   <body>
     <header>
       <div class="wrap">
-        <h1 class="visually-hidden">Search what you have read</h1>
+        <h1 class="visually-hidden" data-i18n="search_doc_title">Search what you have read</h1>
         <div class="topbar">
           <span class="brand"><img src="../../../icons/logo.svg" alt="" />TextMemory</span>
-          <a id="settings" class="settings-link" href="../options/options.html">Settings</a>
+          <a id="settings" class="settings-link" href="../options/options.html" data-i18n="common_settings">Settings</a>
         </div>
         <div class="search-field">
           <input
@@ -20,24 +20,24 @@
             type="search"
             autocomplete="off"
             spellcheck="false"
-            placeholder="A phrase you remember"
-            aria-label="Search what you've read"
+            placeholder="A phrase you remember" data-i18n-placeholder="search_placeholder"
+            aria-label="Search what you've read" data-i18n-aria-label="search_input_label"
             autofocus
           />
         </div>
         <div class="controls">
           <p id="meta" class="meta" role="status" aria-live="polite"></p>
           <div id="filters" class="filters" hidden>
-            <select id="site" aria-label="Filter by site"></select>
-            <select id="when" aria-label="Filter by when you read it">
-              <option value="">Any time</option>
-              <option value="7">Past week</option>
-              <option value="30">Past month</option>
-              <option value="365">Past year</option>
+            <select id="site" aria-label="Filter by site" data-i18n-aria-label="search_filter_site"></select>
+            <select id="when" aria-label="Filter by when you read it" data-i18n-aria-label="search_filter_when">
+              <option value="" data-i18n="search_any_time">Any time</option>
+              <option value="7" data-i18n="search_past_week">Past week</option>
+              <option value="30" data-i18n="search_past_month">Past month</option>
+              <option value="365" data-i18n="search_past_year">Past year</option>
             </select>
-            <div class="sort" role="group" aria-label="Sort">
-              <button data-sort="relevance" class="on" aria-pressed="true">Best match</button>
-              <button data-sort="recent" aria-pressed="false">Newest</button>
+            <div class="sort" role="group" aria-label="Sort" data-i18n-aria-label="search_sort_label">
+              <button data-sort="relevance" class="on" aria-pressed="true" data-i18n="search_sort_best">Best match</button>
+              <button data-sort="recent" aria-pressed="false" data-i18n="search_sort_newest">Newest</button>
             </div>
           </div>
         </div>
@@ -48,11 +48,11 @@
       <div id="results"></div>
       <p id="announce" class="visually-hidden" aria-live="polite"></p>
       <div id="sentinel"></div>
-      <button id="more" class="more" hidden>Show more</button>
+      <button id="more" class="more" hidden data-i18n="search_more">Show more</button>
     </main>
 
     <footer class="wrap">
-      <span><kbd>↑</kbd> <kbd>↓</kbd> to move, <kbd>enter</kbd> to open at the passage, <kbd>esc</kbd> to clear</span>
+      <span data-i18n="search_hint"><kbd>↑</kbd> <kbd>↓</kbd> to move, <kbd>enter</kbd> to open at the passage, <kbd>esc</kbd> to clear</span>
     </footer>
 
     <script type="module" src="search.js"></script>

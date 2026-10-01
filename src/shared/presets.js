@@ -18,6 +18,8 @@
 //   @private-network   IP addresses on a local network, and single-label
 //                      hosts like http://wiki/.
 
+import { t } from './i18n.js';
+
 export const PRESETS = {
   webmail: [
     'mail.google.com', 'outlook.live.com', 'outlook.office.com', 'outlook.office365.com',
@@ -196,20 +198,15 @@ export const PRESETS = {
 
 // Shown in setup and settings. Kept beside the lists so a bundle can never
 // be added without a human readable description of what it covers.
-export const PRESET_LABELS = {
-  webmail: { title: 'Webmail', example: 'Gmail, Outlook, Proton' },
-  messaging: { title: 'Messaging', example: 'WhatsApp, Slack, Messenger' },
-  aiChats: { title: 'AI chats', example: 'ChatGPT, Claude, Gemini' },
-  accounts: { title: 'Accounts and passwords', example: 'password managers, account settings' },
-  banking: { title: 'Banking and payments', example: 'PayPal, major banks' },
-  health: { title: 'Health and medical', example: 'patient portals, pharmacies' },
-  adult: { title: 'Adult sites', example: 'the best known ones' },
-  dating: { title: 'Dating', example: 'Tinder, Bumble, Hinge, Grindr' },
-  government: { title: 'Government and ID portals', example: '.gov, tax, ID login' },
-  intranet: { title: 'Local network', example: 'localhost, 192.168.x.x' },
-  workTools: { title: 'Work tools', example: 'Google Docs, Jira, Notion' },
-  searchResults: { title: 'Search results pages', example: 'Google, Bing, DuckDuckGo' },
-};
+// What each category is called and what it covers, in the language of the
+// interface. Read when displayed, not when this file loads, so the language
+// is the one the browser is using.
+export const PRESET_LABELS = Object.fromEntries(
+  Object.keys(PRESETS).map((key) => [key, {
+    get title() { return t('preset_' + key + '_title'); },
+    get example() { return t('preset_' + key + '_example'); },
+  }])
+);
 
 // Defensive about both arguments. Settings are normalised before they get
 // here, but this is the function that decides what is never read, and a

@@ -1,3 +1,5 @@
+import { t, formatNumber } from '../../shared/i18n.js';
+
 // How long ago, in words, shared by the search page and the popup so the two
 // cannot describe the same date differently.
 //
@@ -19,14 +21,14 @@ export function whenText(timestamp, now = Date.now()) {
   if (!Number.isFinite(days)) return '';
   // A page dated in the future is what a wrong clock leaves behind. "In 4
   // months" would be a strange thing to read on something you have read.
-  if (days < 0) return 'today';
-  if (days === 0) return 'today';
-  if (days === 1) return 'yesterday';
-  if (days < 30) return days + ' days ago';
+  if (days < 0) return t('when_today');
+  if (days === 0) return t('when_today');
+  if (days === 1) return t('when_yesterday');
+  if (days < 30) return t('when_days_ago', formatNumber(days));
 
   const months = Math.round(days / 30);
-  if (days < 365) return months === 1 ? 'last month' : months + ' months ago';
+  if (days < 365) return months === 1 ? t('when_last_month') : t('when_months_ago', formatNumber(months));
 
   const years = Math.round(days / 365);
-  return years === 1 ? 'last year' : years + ' years ago';
+  return years === 1 ? t('when_last_year') : t('when_years_ago', formatNumber(years));
 }

@@ -1,6 +1,10 @@
 import { MSG } from '../../shared/messages.js';
 import { whenText } from '../shared/when.js';
 import { phraseFrom } from '../../core/text-fragment.js';
+import { pageCount } from '../../shared/format.js';
+import { t, tn, safeHtml, translatePage } from '../../shared/i18n.js';
+
+translatePage();
 
 const PAGE_SIZE = 20;
 
@@ -30,6 +34,10 @@ let state = { site: '', days: '', sort: 'relevance', total: 0, hasMore: false };
 
 const escapeHtml = (text) =>
   String(text).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+
+// A heading and a line under it, for the states that are not a list of results.
+const emptyState = (titleKey, bodyKey) =>
+  '<p class="empty"><strong>' + safeHtml(t(titleKey)) + '</strong>' + safeHtml(t(bodyKey)) + '</p>';
 
 // Highlights arrive as character ranges into the snippet, so the text is
 // escaped in pieces and the marks inserted between them. Building the string
@@ -65,31 +73,32 @@ function cardFor(row, index) {
     '<span class="dot">·</span>' + whenText(row.lastSeen) + '</p>' +
     '<p class="snippet" dir="auto">' + highlight(row.snippet.text, row.snippet.ranges) + '</p>' +
     '<button class="pin" data-pin="' + index + '" aria-pressed="' + (row.pinned ? 'true' : 'false') + '"' +
-    ' title="Pinned pages are never removed to make room">' +
-    (row.pinned ? 'Pinned' : 'Pin') + '</button>' +
+    ' title="' + escapeHtml(t('search_pin_title')) + '">' +
+    escapeHtml(row.pinned ? t('search_pinned') : t('search_pin')) + '</button>' +
     '</article>'
   );
 }
 
 function renderMeta(result) {
   const notes = [];
-  if (result.total) notes.push(result.total === 1 ? '1 page' : result.total + ' pages');
-  else notes.push('nothing matched');
+  if (result.total) notes.push(pageCount(result.total));
+  else notes.push(t('search_meta_none'));
   if (result.tookMs !== undefined) notes.push(result.tookMs + 'ms');
   // The worker says 'or' whenever the strict pass found nothing, which for one
   // word, or for no results at all, is not "not every word matched".
   const searchedTerms = result.query && result.query.lookup ? result.query.lookup.length : 0;
-  if (result.mode === 'or' && result.total && searchedTerms > 1) notes.push('not every word matched');
+  if (result.mode === 'or' && result.total && searchedTerms > 1) notes.push(t('search_meta_not_every'));
   for (const [asked, used] of Object.entries(result.relaxed || {})) {
-    notes.push('searched "' + used + '" for "' + asked + '"');
+    notes.push(t('search_meta_searched', used, asked));
   }
   // A widened word has to be visible. Showing results for words the person
   // did not type, without saying which, is the search quietly answering a
   // different question.
   for (const [asked, words] of Object.entries(result.expanded || {})) {
     const shown = words.slice(0, 3).join(', ');
-    const more = words.length > 3 ? ' and ' + (words.length - 3) + ' more' : '';
-    notes.push('"' + asked + '" matched ' + shown + more);
+    notes.push(words.length > 3
+      ? t('search_meta_expanded_more', asked, shown, words.length - 3)
+      : t('search_meta_expanded', asked, shown));
   }
   meta.textContent = notes.join(' · ');
 }
@@ -97,7 +106,7 @@ function renderMeta(result) {
 function renderSites(domains) {
   const previous = siteSelect.value;
   siteSelect.innerHTML =
-    '<option value="">All sites</option>' +
+    '<option value="">' + escapeHtml(t('search_all_sites')) + '</option>' +
     domains
       .map((entry) => '<option value="' + escapeHtml(entry.domain) + '">' +
         escapeHtml(entry.domain) + ' (' + entry.count + ')</option>')
@@ -149,9 +158,7 @@ async function run({ append = false } = {}) {
     filters.hidden = true;
     moreButton.hidden = true;
     meta.textContent = '';
-    list.innerHTML =
-      '<p class="empty"><strong>Search is not available right now.</strong>' +
-      'Reloading this page usually fixes it.</p>';
+    list.innerHTML = emptyState('search_unavailable_title', 'search_unavailable_body');
     return;
   }
 
@@ -166,9 +173,7 @@ async function run({ append = false } = {}) {
     selected = 0;
     list.innerHTML = rows.length
       ? rows.map(cardFor).join('')
-      : '<p class="empty"><strong>Nothing matched.</strong>' +
-        "Try fewer words, or just the one you're surest of. Only pages read since setup " +
-        'can be found.</p>';
+      : emptyState('search_nothing_title', 'search_nothing_body');
   }
 
   renderMeta(result);
@@ -176,11 +181,6 @@ async function run({ append = false } = {}) {
   filters.hidden = rows.length === 0 && !state.site && !state.days;
   moreButton.hidden = !state.hasMore;
 }
-
-const TIP =
-  'Any words from the page, in any order. Add <code>site:example.com</code> to narrow it ' +
-  'down, put "quotation marks" around an exact phrase, or write <code>-word</code> to leave ' +
-  'pages with that word out.';
 
 // Before anything is typed: what you read lately, so the page is useful the
 // moment it opens, and a plain word on day one about why it is empty.
@@ -193,20 +193,18 @@ async function showRecent(mine) {
 
   const count = stats && !stats.error && typeof stats.docCount === 'number' ? stats.docCount : null;
   if (count === 0) {
-    list.innerHTML =
-      "<p class=\"empty\"><strong>Nothing saved yet.</strong>Pages show up here once you've " +
-      'spent a few seconds reading them. Come back after some browsing.</p>';
+    list.innerHTML = emptyState('search_empty_title', 'search_empty_body');
     return;
   }
 
-  meta.textContent = count ? (count === 1 ? '1 page saved' : count.toLocaleString() + ' pages saved') : '';
+  meta.textContent = count ? tn('search_saved', count) : '';
   rows = Array.isArray(recent)
     ? recent.map((page) => ({ ...page, recent: true, snippet: { text: '', ranges: [] } }))
     : [];
   selected = 0;
   list.innerHTML =
-    '<p class="empty"><strong>Type a phrase you remember.</strong>' + TIP + '</p>' +
-    (rows.length ? '<p class="recent-head">Recently read</p>' + rows.map(cardFor).join('') : '');
+    emptyState('search_tip_title', 'search_tip_body') +
+    (rows.length ? '<p class="recent-head">' + escapeHtml(t('search_recent')) + '</p>' + rows.map(cardFor).join('') : '');
 }
 
 function select(next) {
@@ -221,8 +219,7 @@ function select(next) {
   // A highlight is invisible to a screen reader, so the move is said aloud.
   const row = rows[selected];
   if (announcer && row) {
-    announcer.textContent = (selected + 1) + ' of ' + rows.length + ': ' + (row.title || row.url) +
-      ', ' + (row.domain || '');
+    announcer.textContent = t('search_announce', selected + 1, rows.length, row.title || row.url, row.domain || '');
   }
 }
 

@@ -9,6 +9,7 @@
 // well as whenever one of its inputs changes.
 
 import { DISPLAY_NAME } from '../shared/constants.js';
+import { t } from '../shared/i18n.js';
 import { loadSettings, loadSweepState, isPaused } from '../shared/settings.js';
 
 export const UNPAUSE_ALARM = 'unpause';
@@ -26,14 +27,14 @@ export async function refreshBadge() {
   let title = DISPLAY_NAME;
   if (local && local.storageFull) {
     text = '!';
-    title = DISPLAY_NAME + ': the disk is full, so pages are not being kept';
+    title = t('badge_disk_full');
   } else if (sweepState.capUnmeetable) {
     text = '!';
-    title = DISPLAY_NAME + ': more is pinned than the size limit allows';
+    title = t('badge_pinned_over');
   } else if (isPaused(settings)) {
-    text = 'off';
+    text = t('badge_off');
     color = QUIET;
-    title = DISPLAY_NAME + ': paused until ' + new Date(settings.pausedUntil).toLocaleTimeString();
+    title = t('badge_paused_until', new Date(settings.pausedUntil).toLocaleTimeString());
   }
   await chrome.action.setBadgeText({ text }).catch(() => {});
   if (text) await chrome.action.setBadgeBackgroundColor({ color }).catch(() => {});

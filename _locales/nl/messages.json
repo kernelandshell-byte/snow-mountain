@@ -1,0 +1,1232 @@
+{
+  "extName": {
+    "message": "TextMemory"
+  },
+  "extDescription": {
+    "message": "Doorzoek de volledige tekst van pagina’s die je hebt gelezen. Opgeslagen op je computer, nooit ergens naartoe gestuurd."
+  },
+  "cmdOpenSearch": {
+    "message": "Zoeken in wat je hebt gelezen"
+  },
+  "setup_s0_title": {
+    "message": "Een geheugen voor je browser"
+  },
+  "setup_s0_intro": {
+    "message": "Het slaat de tekst op van pagina’s die je leest, op deze computer, zodat je ze kunt terugvinden aan de hand van elk stukje dat je je herinnert."
+  },
+  "setup_s0_point1": {
+    "message": "<strong>Het blijft op deze computer.</strong> Geen account, geen server, geen synchronisatie. Niets wat je leest wordt ergens geüpload."
+  },
+  "setup_s0_point2": {
+    "message": "<strong>Alleen wat je echt leest.</strong> Een pagina telt zodra die een paar seconden voor je neus stond en je erdoorheen hebt gescrold."
+  },
+  "setup_s0_point3": {
+    "message": "<strong>Sommige pagina’s worden overgeslagen.</strong> Pagina’s die om een wachtwoord of kaartnummer vragen, plus veelgebruikte sites in de categorieën die je zo kiest. Je kunt ook je eigen toevoegen."
+  },
+  "common_continue": {
+    "message": "Doorgaan"
+  },
+  "common_back": {
+    "message": "Terug"
+  },
+  "setup_s1_title": {
+    "message": "Wat moet het in de gaten houden?"
+  },
+  "setup_s1_intro": {
+    "message": "Je kunt dit later wijzigen in de instellingen."
+  },
+  "setup_s1_broad_label": {
+    "message": "Overal, behalve je uitsluitingen"
+  },
+  "setup_s1_broad_note": {
+    "message": "Heeft toegang nodig tot alle sites. Sites die je uitsluit worden niet gelezen."
+  },
+  "setup_s1_strict_label": {
+    "message": "Alleen sites die ik zelf toevoeg"
+  },
+  "setup_s1_strict_note": {
+    "message": "Heeft vooraf geen toegang nodig. Je voegt sites een voor een toe, en Chrome houdt de extensie buiten al het andere."
+  },
+  "setup_s2_title": {
+    "message": "Deze soorten sites overslaan"
+  },
+  "setup_s2_intro": {
+    "message": "Elke categorie dekt veel veelgebruikte sites, maar niet alle sites die er zijn. Je kunt op elk moment je eigen sites toevoegen in de instellingen."
+  },
+  "setup_s3_title": {
+    "message": "Hoeveel moet het bewaren?"
+  },
+  "setup_s3_intro": {
+    "message": "De grens die het eerst wordt bereikt, geldt. De oudste pagina’s maken plaats voor nieuwe, elke verwijdering staat in de instellingen en vastgepinde pagina’s worden nooit verwijderd."
+  },
+  "common_keep_for": {
+    "message": "Pagina’s bewaren gedurende"
+  },
+  "limit_months_6": {
+    "message": "6 maanden"
+  },
+  "limit_months_12": {
+    "message": "12 maanden"
+  },
+  "limit_years_2": {
+    "message": "2 jaar"
+  },
+  "limit_unlimited": {
+    "message": "zolang het past"
+  },
+  "limit_custom_months": {
+    "message": "een aantal maanden naar keuze"
+  },
+  "limit_months_field": {
+    "message": "Maanden"
+  },
+  "common_use_at_most": {
+    "message": "Maximaal gebruiken"
+  },
+  "limit_custom_size": {
+    "message": "een grootte naar keuze"
+  },
+  "limit_gb_field": {
+    "message": "Gigabytes"
+  },
+  "setup_s4_title": {
+    "message": "Welke talen lees je?"
+  },
+  "setup_s4_intro": {
+    "message": "Als een woord dat je zoekt niets oplevert, probeert de zoekfunctie ook de andere vormen ervan in deze talen. Zo vindt <em>huizen</em> een pagina waarop <em>huis</em> staat."
+  },
+  "setup_s4_note": {
+    "message": "Aangevinkt op basis van de talen van je browser. Je kunt dit wijzigen in de instellingen."
+  },
+  "setup_finish": {
+    "message": "Beginnen met onthouden"
+  },
+  "setup_done_title": {
+    "message": "Klaar"
+  },
+  "common_close": {
+    "message": "Sluiten"
+  },
+  "setup_doc_title": {
+    "message": "TextMemory instellen"
+  },
+  "common_settings": {
+    "message": "Instellingen"
+  },
+  "opt_read_title": {
+    "message": "Wat er wordt gelezen"
+  },
+  "opt_broad_label": {
+    "message": "Alles behalve wat ik uitsluit"
+  },
+  "opt_broad_desc": {
+    "message": "Heeft toegang nodig tot alle sites"
+  },
+  "opt_strict_label": {
+    "message": "Alleen sites die ik toevoeg"
+  },
+  "opt_strict_desc": {
+    "message": "Chrome dwingt dit af, niet de extensie"
+  },
+  "opt_sites_added": {
+    "message": "Sites die je hebt toegevoegd"
+  },
+  "opt_sites_note": {
+    "message": "Als je een site verwijdert, verdwijnt ook de toegang van de extensie ertoe."
+  },
+  "opt_skip_title": {
+    "message": "Deze soorten sites overslaan"
+  },
+  "opt_skip_note": {
+    "message": "Elke categorie dekt veel veelgebruikte sites, niet alle. Voeg hieronder je eigen toe. Als je er een aanvinkt, worden ook pagina’s verwijderd die je al van die sites had opgeslagen."
+  },
+  "opt_remove_them": {
+    "message": "Verwijderen"
+  },
+  "opt_keep_them": {
+    "message": "Bewaren"
+  },
+  "opt_rules_label": {
+    "message": "Sla ook deze over, één per regel"
+  },
+  "opt_rules_note": {
+    "message": "Patronen komen overeen met een host en de subdomeinen ervan. <code>*.example.com</code> komt alleen overeen met subdomeinen, en een afsluitend <code>/path/*</code> beperkt het verder. Een geplakt adres werkt ook."
+  },
+  "opt_search_title": {
+    "message": "Zoeken"
+  },
+  "opt_langs_title": {
+    "message": "Talen die je leest"
+  },
+  "opt_langs_note": {
+    "message": "Als een woord niets oplevert, probeert de zoekfunctie ook de andere vormen ervan in deze talen."
+  },
+  "opt_kept_title": {
+    "message": "Hoeveel er wordt bewaard"
+  },
+  "opt_apply": {
+    "message": "Limieten nu toepassen"
+  },
+  "opt_removed_title": {
+    "message": "Wat is verwijderd"
+  },
+  "opt_removed_note": {
+    "message": "Er wordt niets verwijderd zonder dat hier een vermelding staat."
+  },
+  "opt_shortcut_title": {
+    "message": "Sneltoets"
+  },
+  "opt_shortcut_change": {
+    "message": "Wijzigen"
+  },
+  "opt_data_title": {
+    "message": "Je gegevens"
+  },
+  "opt_data_note": {
+    "message": "Exporteren slaat elke pagina op als een eenvoudig JSON-bestand dat je overal kunt openen, bewaar het dus op een privéplek. Importeren haalt pagina’s terug uit een export, slaat over wat je al hebt en laat weg wat je uitsluitingen nu dekken. “Alles verwijderen” verwijdert elke opgeslagen pagina; je instellingen blijven bestaan totdat je ze wijzigt of de extensie verwijdert."
+  },
+  "opt_export": {
+    "message": "Alles exporteren"
+  },
+  "opt_import": {
+    "message": "Een export importeren"
+  },
+  "opt_wipe": {
+    "message": "Alles verwijderen"
+  },
+  "opt_saved": {
+    "message": "Opgeslagen"
+  },
+  "popup_recent": {
+    "message": "Onlangs opgeslagen"
+  },
+  "popup_search_label": {
+    "message": "Zoek in wat je hebt gelezen"
+  },
+  "popup_search_placeholder": {
+    "message": "Zoek in wat je las"
+  },
+  "popup_checking": {
+    "message": "Deze pagina wordt gecontroleerd…"
+  },
+  "search_doc_title": {
+    "message": "Zoeken in wat je hebt gelezen"
+  },
+  "search_input_label": {
+    "message": "Zoek in wat je hebt gelezen"
+  },
+  "search_placeholder": {
+    "message": "Een zin die je je herinnert"
+  },
+  "search_filter_site": {
+    "message": "Filteren op site"
+  },
+  "search_filter_when": {
+    "message": "Filteren op wanneer je het las"
+  },
+  "search_any_time": {
+    "message": "Elk moment"
+  },
+  "search_past_week": {
+    "message": "Afgelopen week"
+  },
+  "search_past_month": {
+    "message": "Afgelopen maand"
+  },
+  "search_past_year": {
+    "message": "Afgelopen jaar"
+  },
+  "search_sort_label": {
+    "message": "Sorteren"
+  },
+  "search_sort_best": {
+    "message": "Beste overeenkomst"
+  },
+  "search_sort_newest": {
+    "message": "Nieuwste"
+  },
+  "search_hint": {
+    "message": "<kbd>↑</kbd> <kbd>↓</kbd> om te bewegen, <kbd>enter</kbd> om te openen bij de passage, <kbd>esc</kbd> om te wissen"
+  },
+  "search_more": {
+    "message": "Meer tonen"
+  },
+  "preset_webmail_title": {
+    "message": "Webmail"
+  },
+  "preset_webmail_example": {
+    "message": "Gmail, Outlook, Proton"
+  },
+  "preset_messaging_title": {
+    "message": "Berichtenapps"
+  },
+  "preset_messaging_example": {
+    "message": "WhatsApp, Slack, Messenger"
+  },
+  "preset_aiChats_title": {
+    "message": "AI-chats"
+  },
+  "preset_aiChats_example": {
+    "message": "ChatGPT, Claude, Gemini"
+  },
+  "preset_accounts_title": {
+    "message": "Accounts en wachtwoorden"
+  },
+  "preset_accounts_example": {
+    "message": "wachtwoordmanagers, accountinstellingen"
+  },
+  "preset_banking_title": {
+    "message": "Bankieren en betalingen"
+  },
+  "preset_banking_example": {
+    "message": "PayPal, grote banken"
+  },
+  "preset_health_title": {
+    "message": "Gezondheid en medisch"
+  },
+  "preset_health_example": {
+    "message": "patiëntenportalen, apotheken"
+  },
+  "preset_adult_title": {
+    "message": "Sites voor volwassenen"
+  },
+  "preset_adult_example": {
+    "message": "de bekendste"
+  },
+  "preset_dating_title": {
+    "message": "Daten"
+  },
+  "preset_dating_example": {
+    "message": "Tinder, Bumble, Hinge, Grindr"
+  },
+  "preset_government_title": {
+    "message": "Overheids- en identiteitsportalen"
+  },
+  "preset_government_example": {
+    "message": ".gov, belasting, inloggen met ID"
+  },
+  "preset_intranet_title": {
+    "message": "Lokaal netwerk"
+  },
+  "preset_intranet_example": {
+    "message": "localhost, 192.168.x.x"
+  },
+  "preset_workTools_title": {
+    "message": "Werktools"
+  },
+  "preset_workTools_example": {
+    "message": "Google Docs, Jira, Notion"
+  },
+  "preset_searchResults_title": {
+    "message": "Pagina’s met zoekresultaten"
+  },
+  "preset_searchResults_example": {
+    "message": "Google, Bing, DuckDuckGo"
+  },
+  "pages_one": {
+    "message": "$count$ pagina",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "pages_other": {
+    "message": "$count$ pagina’s",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "when_today": {
+    "message": "vandaag"
+  },
+  "when_yesterday": {
+    "message": "gisteren"
+  },
+  "when_days_ago": {
+    "message": "$count$ dagen geleden",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "when_last_month": {
+    "message": "vorige maand"
+  },
+  "when_months_ago": {
+    "message": "$count$ maanden geleden",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "when_last_year": {
+    "message": "vorig jaar"
+  },
+  "when_years_ago": {
+    "message": "$count$ jaar geleden",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "badge_disk_full": {
+    "message": "TextMemory: de schijf is vol, dus er worden geen pagina’s bewaard"
+  },
+  "badge_pinned_over": {
+    "message": "TextMemory: er zijn meer pagina’s vastgepind dan de groottelimiet toestaat"
+  },
+  "badge_paused_until": {
+    "message": "TextMemory: gepauzeerd tot $time$",
+    "placeholders": {
+      "time": {
+        "content": "$1"
+      }
+    }
+  },
+  "badge_off": {
+    "message": "uit"
+  },
+  "picker_find": {
+    "message": "Zoek een taal"
+  },
+  "picker_group": {
+    "message": "Talen"
+  },
+  "picker_unsegmented": {
+    "message": "Chinees, Japans, Koreaans en Thai worden nog niet ondersteund. Ze worden zonder spaties tussen de woorden geschreven, en de zoekfunctie kan die nog niet splitsen."
+  },
+  "picker_unsupported": {
+    "message": "Die taal wordt nog niet ondersteund. Pagina’s in die taal worden nog steeds opgeslagen en zijn woord voor woord doorzoekbaar."
+  },
+  "picker_none": {
+    "message": "Niets aangevinkt. Woorden komen alleen overeen zoals je ze typt."
+  },
+  "picker_using": {
+    "message": "Gebruikt: $languages$.",
+    "placeholders": {
+      "languages": {
+        "content": "$1"
+      }
+    }
+  },
+  "setup_permission_denied": {
+    "message": "Chrome heeft geen toegang tot alle sites gegeven, dus er zou niets worden vastgelegd. Probeer het opnieuw, of kies de tweede optie en voeg sites een voor een toe."
+  },
+  "limit_type_number": {
+    "message": "Typ een getal om te zien hoeveel dat bevat."
+  },
+  "limit_capacity": {
+    "message": "Ongeveer $pages$ pagina’s met typische artikelen.",
+    "placeholders": {
+      "pages": {
+        "content": "$1"
+      }
+    }
+  },
+  "setup_done_broad": {
+    "message": "Pagina’s die je vanaf nu leest, worden op deze computer opgeslagen. Wat je vóór vandaag hebt gelezen, is niet inbegrepen."
+  },
+  "setup_done_strict": {
+    "message": "Er wordt nog niets opgeslagen. Open een site die je wilt bewaren en voeg die toe via de knop van de extensie."
+  },
+  "setup_done_hint_shortcut": {
+    "message": "Druk op $keys$ om te zoeken, of typ <kbd>$keyword$</kbd> en een spatie in de adresbalk.",
+    "placeholders": {
+      "keys": {
+        "content": "$1"
+      },
+      "keyword": {
+        "content": "$2"
+      }
+    }
+  },
+  "setup_done_hint": {
+    "message": "Typ <kbd>$keyword$</kbd> en een spatie in de adresbalk.",
+    "placeholders": {
+      "keyword": {
+        "content": "$1"
+      }
+    }
+  },
+  "reason_incognito": {
+    "message": "incognitovenster"
+  },
+  "reason_setup": {
+    "message": "de installatie is niet voltooid"
+  },
+  "reason_paused": {
+    "message": "gepauzeerd"
+  },
+  "reason_unparseable": {
+    "message": "onleesbaar adres"
+  },
+  "reason_not_web": {
+    "message": "geen webpagina"
+  },
+  "reason_password": {
+    "message": "een wachtwoord- of betaalveld op de pagina"
+  },
+  "reason_secret_url": {
+    "message": "het adres bevat een inlog- of toegangssleutel"
+  },
+  "reason_allowlist": {
+    "message": "staat niet op je lijst"
+  },
+  "reason_no_address": {
+    "message": "geen adres"
+  },
+  "reason_address_mismatch": {
+    "message": "het adres komt niet overeen met de pagina die het heeft verstuurd"
+  },
+  "reason_still_reading": {
+    "message": "wordt nog gelezen"
+  },
+  "reason_unreadable": {
+    "message": "de pagina kon niet worden gelezen"
+  },
+  "reason_nothing": {
+    "message": "niets om te indexeren"
+  },
+  "reason_too_little": {
+    "message": "te weinig tekst om later terug te vinden"
+  },
+  "reason_disk_full": {
+    "message": "er is geen ruimte meer op deze schijf"
+  },
+  "reason_pdf_unreadable": {
+    "message": "deze pdf kon niet worden gelezen"
+  },
+  "reason_pdf_large": {
+    "message": "deze pdf is te groot om te bewaren (meer dan 20MB)"
+  },
+  "reason_tab_moved": {
+    "message": "dit tabblad is naar een andere pagina gegaan"
+  },
+  "reason_tab_unreadable": {
+    "message": "dit tabblad kon niet worden gelezen"
+  },
+  "reason_default": {
+    "message": "het kon niet worden gelezen"
+  },
+  "reason_excluded": {
+    "message": "uitgesloten in je instellingen"
+  },
+  "popup_open_settings": {
+    "message": "Instellingen openen"
+  },
+  "popup_finish_setup": {
+    "message": "Installatie voltooien"
+  },
+  "popup_shortcut_title": {
+    "message": "Opent het zoeken vanaf overal"
+  },
+  "popup_archive_broken": {
+    "message": "Je opgeslagen pagina’s konden niet worden geopend. Er is niets verwijderd."
+  },
+  "popup_nothing_here": {
+    "message": "Hier valt niets te bewaren"
+  },
+  "popup_check_failed": {
+    "message": "Deze pagina kon niet worden gecontroleerd. Er is niets gewijzigd."
+  },
+  "popup_kept": {
+    "message": "Bewaard, laatst gelezen $when$",
+    "placeholders": {
+      "when": {
+        "content": "$1"
+      }
+    }
+  },
+  "popup_kept_visits": {
+    "message": "Bewaard, laatst gelezen $when$, $count$ bezoeken",
+    "placeholders": {
+      "when": {
+        "content": "$1"
+      },
+      "count": {
+        "content": "$2"
+      }
+    }
+  },
+  "popup_forget": {
+    "message": "Deze pagina vergeten"
+  },
+  "popup_never_keep": {
+    "message": "Deze site nooit bewaren"
+  },
+  "popup_not_kept": {
+    "message": "Niet bewaard: $reason$",
+    "placeholders": {
+      "reason": {
+        "content": "$1"
+      }
+    }
+  },
+  "popup_change_excluded": {
+    "message": "Uitsluitingen wijzigen"
+  },
+  "popup_not_watching": {
+    "message": "Deze site wordt niet in de gaten gehouden"
+  },
+  "popup_keep_site": {
+    "message": "Pagina’s van deze site bewaren"
+  },
+  "popup_access_refused": {
+    "message": "Chrome heeft geen toegang tot $domain$ gegeven",
+    "placeholders": {
+      "domain": {
+        "content": "$1"
+      }
+    }
+  },
+  "popup_watching_not_kept": {
+    "message": "$domain$ wordt voortaan in de gaten gehouden. Deze pagina is niet bewaard: $reason$",
+    "placeholders": {
+      "domain": {
+        "content": "$1"
+      },
+      "reason": {
+        "content": "$2"
+      }
+    }
+  },
+  "popup_watching": {
+    "message": "$domain$ wordt voortaan in de gaten gehouden",
+    "placeholders": {
+      "domain": {
+        "content": "$1"
+      }
+    }
+  },
+  "popup_add_failed": {
+    "message": "$domain$ kon niet worden toegevoegd. Open dit opnieuw om het nog eens te proberen.",
+    "placeholders": {
+      "domain": {
+        "content": "$1"
+      }
+    }
+  },
+  "popup_try_again": {
+    "message": "Opnieuw proberen"
+  },
+  "popup_keep_failed": {
+    "message": "Deze pagina kon niet worden bewaard: $reason$",
+    "placeholders": {
+      "reason": {
+        "content": "$1"
+      }
+    }
+  },
+  "popup_keeping": {
+    "message": "Deze pagina wordt bewaard…"
+  },
+  "popup_not_kept_yet": {
+    "message": "Nog niet bewaard"
+  },
+  "popup_keep_now": {
+    "message": "Deze pagina nu bewaren"
+  },
+  "popup_never_confirm": {
+    "message": "Verwijdert ook $pages$. Klik nogmaals",
+    "placeholders": {
+      "pages": {
+        "content": "$1"
+      }
+    }
+  },
+  "popup_block_failed": {
+    "message": "$domain$ kon niet worden geblokkeerd. Er is niets gewijzigd.",
+    "placeholders": {
+      "domain": {
+        "content": "$1"
+      }
+    }
+  },
+  "popup_never_kept": {
+    "message": "$domain$ wordt nooit meer bewaard",
+    "placeholders": {
+      "domain": {
+        "content": "$1"
+      }
+    }
+  },
+  "popup_never_kept_deleted": {
+    "message": "$domain$ wordt nooit meer bewaard, $pages$ verwijderd",
+    "placeholders": {
+      "domain": {
+        "content": "$1"
+      },
+      "pages": {
+        "content": "$2"
+      }
+    }
+  },
+  "popup_still_working": {
+    "message": "Deze pagina wordt nog verwerkt. Open dit zo meteen opnieuw om te zien of het is gelukt."
+  },
+  "popup_disk_full": {
+    "message": "Deze schijf zit vol, dus er worden geen pagina’s bewaard. In de instellingen staat wat je kunt doen."
+  },
+  "popup_budget_kept": {
+    "message": "Bewaard: $pages$",
+    "placeholders": {
+      "pages": {
+        "content": "$1"
+      }
+    }
+  },
+  "popup_budget_size": {
+    "message": "$used$ van $limit$",
+    "placeholders": {
+      "used": {
+        "content": "$1"
+      },
+      "limit": {
+        "content": "$2"
+      }
+    }
+  },
+  "popup_budget_pinned": {
+    "message": "er zijn meer pagina’s vastgepind dan er passen"
+  },
+  "budget_full": {
+    "message": "vol, de oudste pagina’s worden vervangen"
+  },
+  "budget_full_around": {
+    "message": "vol rond $date$",
+    "placeholders": {
+      "date": {
+        "content": "$1"
+      }
+    }
+  },
+  "popup_nothing_kept": {
+    "message": "Nog niets bewaard."
+  },
+  "popup_resume": {
+    "message": "Opslaan hervatten"
+  },
+  "popup_pause": {
+    "message": "Een uur pauzeren"
+  },
+  "search_pinned": {
+    "message": "Vastgepind"
+  },
+  "search_pin": {
+    "message": "Vastpinnen"
+  },
+  "search_pin_title": {
+    "message": "Vastgepinde pagina’s worden nooit verwijderd om ruimte te maken"
+  },
+  "search_announce": {
+    "message": "$n$ van $total$: $title$, $domain$",
+    "placeholders": {
+      "n": {
+        "content": "$1"
+      },
+      "total": {
+        "content": "$2"
+      },
+      "title": {
+        "content": "$3"
+      },
+      "domain": {
+        "content": "$4"
+      }
+    }
+  },
+  "search_meta_none": {
+    "message": "niets gevonden"
+  },
+  "search_meta_not_every": {
+    "message": "niet alle woorden kwamen overeen"
+  },
+  "search_meta_searched": {
+    "message": "“$used$” gezocht in plaats van “$asked$”",
+    "placeholders": {
+      "used": {
+        "content": "$1"
+      },
+      "asked": {
+        "content": "$2"
+      }
+    }
+  },
+  "search_meta_expanded": {
+    "message": "“$asked$” kwam overeen met $words$",
+    "placeholders": {
+      "asked": {
+        "content": "$1"
+      },
+      "words": {
+        "content": "$2"
+      }
+    }
+  },
+  "search_meta_expanded_more": {
+    "message": "“$asked$” kwam overeen met $words$ en $count$ andere",
+    "placeholders": {
+      "asked": {
+        "content": "$1"
+      },
+      "words": {
+        "content": "$2"
+      },
+      "count": {
+        "content": "$3"
+      }
+    }
+  },
+  "search_unavailable_title": {
+    "message": "Zoeken is nu niet beschikbaar."
+  },
+  "search_unavailable_body": {
+    "message": "Deze pagina opnieuw laden lost het meestal op."
+  },
+  "search_nothing_title": {
+    "message": "Niets gevonden."
+  },
+  "search_nothing_body": {
+    "message": "Probeer minder woorden, of alleen het woord waar je het zekerst van bent. Alleen pagina’s die sinds de installatie zijn gelezen, kunnen worden gevonden."
+  },
+  "search_empty_title": {
+    "message": "Nog niets opgeslagen."
+  },
+  "search_empty_body": {
+    "message": "Pagina’s verschijnen hier zodra je er een paar seconden mee bezig bent geweest. Kom terug na wat surfen."
+  },
+  "search_saved_one": {
+    "message": "$count$ pagina opgeslagen",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "search_saved_other": {
+    "message": "$count$ pagina’s opgeslagen",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "search_tip_title": {
+    "message": "Typ een zin die je je herinnert."
+  },
+  "search_tip_body": {
+    "message": "Willekeurige woorden van de pagina, in willekeurige volgorde. Voeg <code>site:example.com</code> toe om te verfijnen, zet “aanhalingstekens” om een exacte zin, of schrijf <code>-woord</code> om pagina’s met dat woord uit te sluiten."
+  },
+  "search_recent": {
+    "message": "Onlangs gelezen"
+  },
+  "search_all_sites": {
+    "message": "Alle sites"
+  },
+  "preset_webmail_lower": {
+    "message": "webmail"
+  },
+  "preset_messaging_lower": {
+    "message": "berichtenapps"
+  },
+  "preset_aiChats_lower": {
+    "message": "AI-chats"
+  },
+  "preset_accounts_lower": {
+    "message": "accounts en wachtwoorden"
+  },
+  "preset_banking_lower": {
+    "message": "bankieren en betalingen"
+  },
+  "preset_health_lower": {
+    "message": "gezondheid en medisch"
+  },
+  "preset_adult_lower": {
+    "message": "sites voor volwassenen"
+  },
+  "preset_dating_lower": {
+    "message": "daten"
+  },
+  "preset_government_lower": {
+    "message": "overheids- en identiteitsportalen"
+  },
+  "preset_intranet_lower": {
+    "message": "lokaal netwerk"
+  },
+  "preset_workTools_lower": {
+    "message": "werktools"
+  },
+  "preset_searchResults_lower": {
+    "message": "pagina’s met zoekresultaten"
+  },
+  "opt_mode_broad": {
+    "message": "Elke site wordt gelezen, behalve wat je hieronder uitsluit."
+  },
+  "opt_mode_strict": {
+    "message": "Alleen sites die je hebt toegevoegd worden gelezen, en Chrome dwingt dat af. De uitsluitingen hieronder gelden nog steeds voor die sites."
+  },
+  "opt_allow_none": {
+    "message": "Nog geen. Open een site die je wilt bewaren en voeg die toe via de knop van de extensie."
+  },
+  "opt_remove": {
+    "message": "verwijderen"
+  },
+  "opt_mode_denied": {
+    "message": "Chrome heeft geen toegang tot alle sites gegeven, dus er is niets gewijzigd. Er worden nog steeds alleen sites gelezen die je toevoegt."
+  },
+  "opt_mode_not_removed": {
+    "message": "Chrome heeft de toegang van de extensie tot alle sites niet ingetrokken, dus er is niets gewijzigd. Probeer het opnieuw, of trek de toegang in via de detailpagina van de extensie op chrome://extensions."
+  },
+  "opt_preset_remove_failed": {
+    "message": "Pagina’s die al van deze sites waren opgeslagen, konden niet worden verwijderd. Vink het vakje uit en weer aan om het opnieuw te proberen."
+  },
+  "opt_preset_removed": {
+    "message": "In de categorie “$category$” is verwijderd wat al was opgeslagen: $pages$.",
+    "placeholders": {
+      "pages": {
+        "content": "$1"
+      },
+      "category": {
+        "content": "$2"
+      }
+    }
+  },
+  "opt_removed_pages": {
+    "message": "Verwijderd: $pages$.",
+    "placeholders": {
+      "pages": {
+        "content": "$1"
+      }
+    }
+  },
+  "opt_newcat_one": {
+    "message": "Nieuw in deze versie: sites uit deze categorieën worden voortaan overgeslagen: $names$. $pages$ die je eerder had opgeslagen, komt van deze sites. Verwijderen of bewaren?",
+    "placeholders": {
+      "names": {
+        "content": "$1"
+      },
+      "pages": {
+        "content": "$2"
+      }
+    }
+  },
+  "opt_newcat_other": {
+    "message": "Nieuw in deze versie: sites uit deze categorieën worden voortaan overgeslagen: $names$. $pages$ die je eerder had opgeslagen, komen van deze sites. Verwijderen of bewaren?",
+    "placeholders": {
+      "names": {
+        "content": "$1"
+      },
+      "pages": {
+        "content": "$2"
+      }
+    }
+  },
+  "opt_newcat_kept": {
+    "message": "Wat je eerder had opgeslagen, is bewaard. Sites uit deze categorieën worden voortaan overgeslagen: $names$.",
+    "placeholders": {
+      "names": {
+        "content": "$1"
+      }
+    }
+  },
+  "opt_newcat_removed": {
+    "message": "Verwijderd: $pages$. Sites uit deze categorieën worden voortaan overgeslagen: $names$.",
+    "placeholders": {
+      "pages": {
+        "content": "$1"
+      },
+      "names": {
+        "content": "$2"
+      }
+    }
+  },
+  "opt_shortcut_not_set": {
+    "message": "niet ingesteld"
+  },
+  "opt_shortcut_text": {
+    "message": "Zoeken openen met <kbd>$keys$</kbd>",
+    "placeholders": {
+      "keys": {
+        "content": "$1"
+      }
+    }
+  },
+  "opt_rule_as": {
+    "message": "$line$ als $rule$",
+    "placeholders": {
+      "line": {
+        "content": "$1"
+      },
+      "rule": {
+        "content": "$2"
+      }
+    }
+  },
+  "opt_rules_reading": {
+    "message": "Gelezen als: $list$.",
+    "placeholders": {
+      "list": {
+        "content": "$1"
+      }
+    }
+  },
+  "opt_rules_unusable": {
+    "message": "Deze lijken niet op een site en komen met niets overeen: $list$.",
+    "placeholders": {
+      "list": {
+        "content": "$1"
+      }
+    }
+  },
+  "opt_rules_match_one": {
+    "message": "$pages$ die je al had opgeslagen, komt overeen met deze regels.",
+    "placeholders": {
+      "pages": {
+        "content": "$1"
+      }
+    }
+  },
+  "opt_rules_match_other": {
+    "message": "$pages$ die je al had opgeslagen, komen overeen met deze regels.",
+    "placeholders": {
+      "pages": {
+        "content": "$1"
+      }
+    }
+  },
+  "opt_rules_remove_failed": {
+    "message": "Die pagina’s konden niet worden verwijderd. Probeer het opnieuw."
+  },
+  "opt_capacity": {
+    "message": "Ruimte voor ongeveer $pages$ pagina’s met typische artikelen.",
+    "placeholders": {
+      "pages": {
+        "content": "$1"
+      }
+    }
+  },
+  "opt_shrink": {
+    "message": "Je gebruikt $used$, dat is meer dan $limit$. De volgende opschoning zou ongeveer $count$ van je oudste pagina’s verwijderen. Vastgepinde pagina’s blijven behouden.",
+    "placeholders": {
+      "used": {
+        "content": "$1"
+      },
+      "limit": {
+        "content": "$2"
+      },
+      "count": {
+        "content": "$3"
+      }
+    }
+  },
+  "opt_usage_unavailable": {
+    "message": "Je opgeslagen pagina’s konden niet worden geopend, dus hier kan niets worden getoond. Er is niets verwijderd."
+  },
+  "opt_log_unavailable": {
+    "message": "Niet beschikbaar zolang het archief niet kan worden geopend."
+  },
+  "opt_usage_head": {
+    "message": "$pages$, $used$ van $limit$",
+    "placeholders": {
+      "pages": {
+        "content": "$1"
+      },
+      "used": {
+        "content": "$2"
+      },
+      "limit": {
+        "content": "$3"
+      }
+    }
+  },
+  "opt_room_for": {
+    "message": "ruimte voor ongeveer $pages$",
+    "placeholders": {
+      "pages": {
+        "content": "$1"
+      }
+    }
+  },
+  "opt_budget_pinned": {
+    "message": "er zijn meer pagina’s vastgepind dan het budget toestaat"
+  },
+  "opt_migration": {
+    "message": "Je opgeslagen pagina’s zijn op $date$$steps$ omgezet naar een nieuw formaat. Alles is gecontroleerd en er is niets verloren gegaan.",
+    "placeholders": {
+      "date": {
+        "content": "$1"
+      },
+      "steps": {
+        "content": "$2"
+      }
+    }
+  },
+  "opt_warn_disk_full": {
+    "message": "Je schijf zat vol op $date$, dus nieuwe pagina’s zijn niet opgeslagen. Maak ruimte vrij of verlaag hierboven de groottelimiet.",
+    "placeholders": {
+      "date": {
+        "content": "$1"
+      }
+    }
+  },
+  "opt_warn_not_persistent": {
+    "message": "Chrome heeft deze opslag niet als permanent gemarkeerd, dus het kan hem wissen als je schijf vol raakt. Af en toe exporteren geeft je een back-up."
+  },
+  "opt_warn_setup": {
+    "message": "De installatie is niet voltooid, dus er wordt nog niets opgeslagen. Open de knop van de extensie om die af te ronden."
+  },
+  "opt_warn_ungranted": {
+    "message": "Deze sites staan op je lijst, maar Chrome heeft er geen toegang toe gegeven, dus er wordt niets van opgeslagen: $sites$. Verwijder ze en voeg ze opnieuw toe om het te herstellen.",
+    "placeholders": {
+      "sites": {
+        "content": "$1"
+      }
+    }
+  },
+  "opt_warn_refused": {
+    "message": "Chrome heeft de toegang tot $sites$ geweigerd, dus er wordt niets van opgeslagen. Je andere sites zijn in orde.",
+    "placeholders": {
+      "sites": {
+        "content": "$1"
+      }
+    }
+  },
+  "opt_clock_note": {
+    "message": "De laatste opschoning heeft de leeftijdslimiet overgeslagen omdat $problem$, dus er wordt niets verwijderd wegens ouderdom totdat de klok een dag stabiel is geweest.",
+    "placeholders": {
+      "problem": {
+        "content": "$1"
+      }
+    }
+  },
+  "opt_clock_backwards": {
+    "message": "de klok sinds de laatste opschoning is teruggezet"
+  },
+  "opt_clock_gap": {
+    "message": "er meer tijd is verstreken dan een uurlijkse opschoning kan verklaren"
+  },
+  "opt_clock_recent": {
+    "message": "de klok onlangs een sprong maakte"
+  },
+  "opt_log_age": {
+    "message": "boven je leeftijdslimiet"
+  },
+  "opt_log_size": {
+    "message": "boven je groottelimiet"
+  },
+  "opt_log_both": {
+    "message": "boven je leeftijds- en groottelimiet"
+  },
+  "opt_log_manual": {
+    "message": "door jou verwijderd"
+  },
+  "opt_log_site": {
+    "message": "uitgesloten site"
+  },
+  "opt_log_auto": {
+    "message": "automatisch verwijderd"
+  },
+  "opt_log_none": {
+    "message": "Er is niets verwijderd."
+  },
+  "opt_sweep_unavailable": {
+    "message": "De limieten konden niet worden toegepast omdat het archief niet kon worden geopend. Er is niets verwijderd."
+  },
+  "opt_sweep_nothing": {
+    "message": "Er hoefde niets te worden verwijderd."
+  },
+  "opt_export_failed": {
+    "message": "Je opgeslagen pagina’s konden niet worden gelezen, dus er is niets geëxporteerd."
+  },
+  "opt_exporting": {
+    "message": "Exporteren… $written$ van $total$",
+    "placeholders": {
+      "written": {
+        "content": "$1"
+      },
+      "total": {
+        "content": "$2"
+      }
+    }
+  },
+  "opt_exported": {
+    "message": "Geëxporteerd: $pages$.",
+    "placeholders": {
+      "pages": {
+        "content": "$1"
+      }
+    }
+  },
+  "opt_importing": {
+    "message": "Importeren… gelezen: $pages$",
+    "placeholders": {
+      "pages": {
+        "content": "$1"
+      }
+    }
+  },
+  "opt_import_unreadable": {
+    "message": "Dat bestand kon niet worden gelezen."
+  },
+  "opt_import_not_export": {
+    "message": "Dat lijkt niet op een export van deze extensie."
+  },
+  "opt_import_done": {
+    "message": "Geïmporteerd: $count$",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "opt_import_skipped": {
+    "message": "al aanwezig: $count$",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "opt_import_excluded": {
+    "message": "weggelaten omdat je uitsluitingen ze dekken: $count$",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "opt_import_failed": {
+    "message": "onleesbaar: $count$",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "opt_import_truncated": {
+    "message": "het bestand eindigde voortijdig, dus wat daarna kwam is niet geïmporteerd"
+  },
+  "opt_wipe_confirm": {
+    "message": "Klik nogmaals om alles te verwijderen"
+  },
+  "opt_wiped": {
+    "message": "Verwijderd: $pages$. Je instellingen, inclusief je lijsten met sites, blijven behouden.",
+    "placeholders": {
+      "pages": {
+        "content": "$1"
+      }
+    }
+  },
+  "opt_wipe_failed": {
+    "message": "Je opgeslagen pagina’s konden niet worden verwijderd. Probeer het opnieuw."
+  },
+  "opt_doc_title": {
+    "message": "TextMemory-instellingen"
+  }
+}

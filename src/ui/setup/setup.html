@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Setup</title>
+    <title data-i18n="setup_doc_title">Set up TextMemory</title>
     <link rel="stylesheet" href="setup.css" />
   </head>
   <body>
@@ -14,102 +14,102 @@
       </ol>
 
       <section data-step="0">
-        <h1>A memory for your browser</h1>
-        <p>It saves the text of pages you read, on this computer, so you can find them again from any bit you remember.</p>
+        <h1 data-i18n="setup_s0_title">A memory for your browser</h1>
+        <p data-i18n="setup_s0_intro">It saves the text of pages you read, on this computer, so you can find them again from any bit you remember.</p>
         <ul class="plain">
-          <li><strong>It stays on this computer.</strong> No account, no server, no sync. Nothing you read is uploaded anywhere.</li>
-          <li><strong>Only what you actually read.</strong> A page counts once it's been in front of you for a few seconds and you've scrolled it.</li>
-          <li><strong>Some pages are skipped.</strong> Pages that ask for a password or card number, plus common sites in the categories you pick in a moment. You can add your own too.</li>
+          <li data-i18n="setup_s0_point1"><strong>It stays on this computer.</strong> No account, no server, no sync. Nothing you read is uploaded anywhere.</li>
+          <li data-i18n="setup_s0_point2"><strong>Only what you actually read.</strong> A page counts once it's been in front of you for a few seconds and you've scrolled it.</li>
+          <li data-i18n="setup_s0_point3"><strong>Some pages are skipped.</strong> Pages that ask for a password or card number, plus common sites in the categories you pick in a moment. You can add your own too.</li>
         </ul>
-        <button class="primary" data-next>Continue</button>
+        <button class="primary" data-next data-i18n="common_continue">Continue</button>
       </section>
 
       <section data-step="1" hidden>
-        <h1>What should it watch?</h1>
-        <p>You can change this later in settings.</p>
+        <h1 data-i18n="setup_s1_title">What should it watch?</h1>
+        <p data-i18n="setup_s1_intro">You can change this later in settings.</p>
         <div class="choice">
           <label>
             <input type="radio" name="mode" value="broad" checked />
-            <span class="label">Everywhere, minus your exclusions</span>
-            <span class="note">Needs access to all sites. Sites you exclude aren't read.</span>
+            <span class="label" data-i18n="setup_s1_broad_label">Everywhere, minus your exclusions</span>
+            <span class="note" data-i18n="setup_s1_broad_note">Needs access to all sites. Sites you exclude aren't read.</span>
           </label>
           <label>
             <input type="radio" name="mode" value="strict" />
-            <span class="label">Only sites I add myself</span>
-            <span class="note">Needs no access up front. You add sites one at a time, and Chrome keeps the extension out of everything else.</span>
+            <span class="label" data-i18n="setup_s1_strict_label">Only sites I add myself</span>
+            <span class="note" data-i18n="setup_s1_strict_note">Needs no access up front. You add sites one at a time, and Chrome keeps the extension out of everything else.</span>
           </label>
         </div>
         <p id="permissionNote" class="warn" hidden></p>
         <div class="row">
-          <button class="link" data-back>Back</button>
-          <button class="primary" id="chooseMode">Continue</button>
+          <button class="link" data-back data-i18n="common_back">Back</button>
+          <button class="primary" id="chooseMode" data-i18n="common_continue">Continue</button>
         </div>
       </section>
 
       <section data-step="2" hidden>
-        <h1>Skip these kinds of sites</h1>
-        <p>Each category covers a lot of common sites, but not every one out there. You can add your own sites any time in settings.</p>
+        <h1 data-i18n="setup_s2_title">Skip these kinds of sites</h1>
+        <p data-i18n="setup_s2_intro">Each category covers a lot of common sites, but not every one out there. You can add your own sites any time in settings.</p>
         <div id="presets" class="presets"></div>
         <div class="row">
-          <button class="link" data-back>Back</button>
-          <button class="primary" data-next>Continue</button>
+          <button class="link" data-back data-i18n="common_back">Back</button>
+          <button class="primary" data-next data-i18n="common_continue">Continue</button>
         </div>
       </section>
 
       <section data-step="3" hidden>
-        <h1>How much should it keep?</h1>
-        <p>Whichever limit is reached first applies. The oldest pages make room for new ones, every removal is listed in settings, and pinned pages are never removed.</p>
+        <h1 data-i18n="setup_s3_title">How much should it keep?</h1>
+        <p data-i18n="setup_s3_intro">Whichever limit is reached first applies. The oldest pages make room for new ones, every removal is listed in settings, and pinned pages are never removed.</p>
         <label class="field">
-          <span>Keep pages for</span>
+          <span data-i18n="common_keep_for">Keep pages for</span>
           <select id="months">
-            <option value="6">6 months</option>
-            <option value="12" selected>12 months</option>
-            <option value="24">2 years</option>
-            <option value="1200">as long as it fits</option>
-            <option value="custom">a number of months I choose</option>
+            <option value="6" data-i18n="limit_months_6">6 months</option>
+            <option value="12" selected data-i18n="limit_months_12">12 months</option>
+            <option value="24" data-i18n="limit_years_2">2 years</option>
+            <option value="1200" data-i18n="limit_unlimited">as long as it fits</option>
+            <option value="custom" data-i18n="limit_custom_months">a number of months I choose</option>
           </select>
         </label>
         <label class="field" hidden>
-          <span>Months</span>
+          <span data-i18n="limit_months_field">Months</span>
           <input id="monthsCustom" type="number" min="1" step="1" inputmode="numeric" />
         </label>
         <label class="field">
-          <span>Use at most</span>
+          <span data-i18n="common_use_at_most">Use at most</span>
           <select id="size">
             <option value="250">250MB</option>
             <option value="500" selected>500MB</option>
             <option value="1024">1GB</option>
             <option value="2048">2GB</option>
-            <option value="custom">a size I choose</option>
+            <option value="custom" data-i18n="limit_custom_size">a size I choose</option>
           </select>
         </label>
         <label class="field" hidden>
-          <span>Gigabytes</span>
+          <span data-i18n="limit_gb_field">Gigabytes</span>
           <input id="sizeCustom" type="number" min="0.05" step="0.5" inputmode="decimal" />
         </label>
         <p id="capacity" class="note"></p>
         <div class="row">
-          <button class="link" data-back>Back</button>
-          <button class="primary" data-next>Continue</button>
+          <button class="link" data-back data-i18n="common_back">Back</button>
+          <button class="primary" data-next data-i18n="common_continue">Continue</button>
         </div>
       </section>
 
       <section data-step="4" hidden>
-        <h1>What languages do you read?</h1>
-        <p>If a word you search for finds nothing, search also tries its other forms in these languages. So <em>running</em> finds a page that says <em>run</em>.</p>
+        <h1 data-i18n="setup_s4_title">What languages do you read?</h1>
+        <p data-i18n="setup_s4_intro">If a word you search for finds nothing, search also tries its other forms in these languages. So <em>running</em> finds a page that says <em>run</em>.</p>
         <div id="languages"></div>
-        <p class="note">Ticked based on your browser's languages. You can change this in settings.</p>
+        <p class="note" data-i18n="setup_s4_note">Ticked based on your browser's languages. You can change this in settings.</p>
         <div class="row">
-          <button class="link" data-back>Back</button>
-          <button class="primary" id="finish">Start remembering</button>
+          <button class="link" data-back data-i18n="common_back">Back</button>
+          <button class="primary" id="finish" data-i18n="setup_finish">Start remembering</button>
         </div>
       </section>
 
       <section data-step="5" hidden>
-        <h1>Done</h1>
+        <h1 data-i18n="setup_done_title">Done</h1>
         <p id="doneNote"></p>
-        <p class="note"><span id="shortcutLine">Press <kbd>Ctrl</kbd> <kbd>Shift</kbd> <kbd>F</kbd> to search, or t</span><span id="shortcutLead" hidden>T</span>ype <kbd id="keyword">tm</kbd> then space in the address bar.</p>
-        <button class="primary" id="close">Close</button>
+        <p class="note" id="doneHint">Press <kbd>Ctrl</kbd> <kbd>Shift</kbd> <kbd>F</kbd> to search, or type <kbd>tm</kbd> then space in the address bar.</p>
+        <button class="primary" id="close" data-i18n="common_close">Close</button>
       </section>
     </main>
     <script type="module" src="setup.js"></script>

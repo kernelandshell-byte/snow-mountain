@@ -1,0 +1,1467 @@
+{
+  "extName": {
+    "message": "TextMemory",
+    "description": "The extension name. A product name, kept as is in every language."
+  },
+  "extDescription": {
+    "message": "Search the full text of pages you've read. Stored on your computer, never sent anywhere.",
+    "description": "Shown in the Chrome Web Store and on the extensions page. 132 characters at most."
+  },
+  "cmdOpenSearch": {
+    "message": "Search what you have read",
+    "description": "Description of the keyboard shortcut that opens the search page, shown at chrome://extensions/shortcuts."
+  },
+  "setup_s0_title": {
+    "message": "A memory for your browser"
+  },
+  "setup_s0_intro": {
+    "message": "It saves the text of pages you read, on this computer, so you can find them again from any bit you remember."
+  },
+  "setup_s0_point1": {
+    "message": "<strong>It stays on this computer.</strong> No account, no server, no sync. Nothing you read is uploaded anywhere."
+  },
+  "setup_s0_point2": {
+    "message": "<strong>Only what you actually read.</strong> A page counts once it's been in front of you for a few seconds and you've scrolled it."
+  },
+  "setup_s0_point3": {
+    "message": "<strong>Some pages are skipped.</strong> Pages that ask for a password or card number, plus common sites in the categories you pick in a moment. You can add your own too."
+  },
+  "common_continue": {
+    "message": "Continue",
+    "description": "A button that moves to the next step."
+  },
+  "common_back": {
+    "message": "Back",
+    "description": "A button that goes back one step."
+  },
+  "setup_s1_title": {
+    "message": "What should it watch?"
+  },
+  "setup_s1_intro": {
+    "message": "You can change this later in settings."
+  },
+  "setup_s1_broad_label": {
+    "message": "Everywhere, minus your exclusions",
+    "description": "One of two ways to choose which sites TextMemory reads: all sites except the ones the person excludes."
+  },
+  "setup_s1_broad_note": {
+    "message": "Needs access to all sites. Sites you exclude aren't read."
+  },
+  "setup_s1_strict_label": {
+    "message": "Only sites I add myself",
+    "description": "The other way to choose which sites TextMemory reads: only sites the person adds one by one."
+  },
+  "setup_s1_strict_note": {
+    "message": "Needs no access up front. You add sites one at a time, and Chrome keeps the extension out of everything else."
+  },
+  "setup_s2_title": {
+    "message": "Skip these kinds of sites"
+  },
+  "setup_s2_intro": {
+    "message": "Each category covers a lot of common sites, but not every one out there. You can add your own sites any time in settings."
+  },
+  "setup_s3_title": {
+    "message": "How much should it keep?"
+  },
+  "setup_s3_intro": {
+    "message": "Whichever limit is reached first applies. The oldest pages make room for new ones, every removal is listed in settings, and pinned pages are never removed."
+  },
+  "common_keep_for": {
+    "message": "Keep pages for",
+    "description": "Label of the control that sets how long saved pages are kept."
+  },
+  "limit_months_6": {
+    "message": "6 months"
+  },
+  "limit_months_12": {
+    "message": "12 months"
+  },
+  "limit_years_2": {
+    "message": "2 years"
+  },
+  "limit_unlimited": {
+    "message": "as long as it fits",
+    "description": "Option: keep pages for as long as the size limit allows, with no age limit."
+  },
+  "limit_custom_months": {
+    "message": "a number of months I choose",
+    "description": "Option that lets the person type their own number of months."
+  },
+  "limit_months_field": {
+    "message": "Months",
+    "description": "Label of a field where the person types a number of months."
+  },
+  "common_use_at_most": {
+    "message": "Use at most",
+    "description": "Label of the control that sets the most disk space the archive may use."
+  },
+  "limit_custom_size": {
+    "message": "a size I choose",
+    "description": "Option that lets the person type their own size limit."
+  },
+  "limit_gb_field": {
+    "message": "Gigabytes",
+    "description": "Label of a field where the person types a size in gigabytes."
+  },
+  "setup_s4_title": {
+    "message": "What languages do you read?"
+  },
+  "setup_s4_intro": {
+    "message": "If a word you search for finds nothing, search also tries its other forms in these languages. So <em>running</em> finds a page that says <em>run</em>.",
+    "description": "Explains the languages setting. The two <em> words are an example of a word and its other form: in each language use an example that fits it (a verb form and its base form)."
+  },
+  "setup_s4_note": {
+    "message": "Ticked based on your browser's languages. You can change this in settings."
+  },
+  "setup_finish": {
+    "message": "Start remembering",
+    "description": "The final button of setup."
+  },
+  "setup_done_title": {
+    "message": "Done"
+  },
+  "common_close": {
+    "message": "Close"
+  },
+  "setup_doc_title": {
+    "message": "Set up TextMemory",
+    "description": "Title of the browser tab for the setup page."
+  },
+  "common_settings": {
+    "message": "Settings",
+    "description": "The settings page: its title, the toolbar button tooltip and the link to it."
+  },
+  "opt_read_title": {
+    "message": "What gets read"
+  },
+  "opt_broad_label": {
+    "message": "Everything except what I exclude"
+  },
+  "opt_broad_desc": {
+    "message": "Needs access to all sites"
+  },
+  "opt_strict_label": {
+    "message": "Only sites I add"
+  },
+  "opt_strict_desc": {
+    "message": "Chrome enforces this, not the extension"
+  },
+  "opt_sites_added": {
+    "message": "Sites you have added"
+  },
+  "opt_sites_note": {
+    "message": "Removing a site also removes the extension's access to it."
+  },
+  "opt_skip_title": {
+    "message": "Skip these kinds of site"
+  },
+  "opt_skip_note": {
+    "message": "Each category covers a lot of common sites, not all of them. Add your own below. Ticking one also deletes pages you already saved from its sites."
+  },
+  "opt_remove_them": {
+    "message": "Remove them",
+    "description": "A button that deletes the saved pages a new exclusion rule covers."
+  },
+  "opt_keep_them": {
+    "message": "Keep them",
+    "description": "A button that keeps saved pages that a new exclusion category would cover."
+  },
+  "opt_rules_label": {
+    "message": "Also skip these, one per line"
+  },
+  "opt_rules_note": {
+    "message": "Patterns match a host and its subdomains. <code>*.example.com</code> matches only subdomains, and a trailing <code>/path/*</code> narrows it further. A pasted address works too.",
+    "description": "Keep the <code> parts exactly as they are: they are patterns, not words."
+  },
+  "opt_search_title": {
+    "message": "Search"
+  },
+  "opt_langs_title": {
+    "message": "Languages you read"
+  },
+  "opt_langs_note": {
+    "message": "If a word finds nothing, search also tries its other forms in these languages."
+  },
+  "opt_kept_title": {
+    "message": "How much is kept"
+  },
+  "opt_apply": {
+    "message": "Apply limits now"
+  },
+  "opt_removed_title": {
+    "message": "What has been removed"
+  },
+  "opt_removed_note": {
+    "message": "Nothing is deleted without an entry here."
+  },
+  "opt_shortcut_title": {
+    "message": "Shortcut"
+  },
+  "opt_shortcut_change": {
+    "message": "Change it"
+  },
+  "opt_data_title": {
+    "message": "Your data"
+  },
+  "opt_data_note": {
+    "message": "Export saves every page as a plain JSON file you can open anywhere, so keep it somewhere private. Import brings pages back from an export, skips any you already have, and leaves out any your exclusions now cover. Delete everything removes every saved page; your settings stay until you change them or uninstall."
+  },
+  "opt_export": {
+    "message": "Export everything"
+  },
+  "opt_import": {
+    "message": "Import an export"
+  },
+  "opt_wipe": {
+    "message": "Delete everything"
+  },
+  "opt_saved": {
+    "message": "Saved",
+    "description": "A brief confirmation shown after a setting is saved."
+  },
+  "popup_recent": {
+    "message": "Recently kept",
+    "description": "Title of the list of pages kept lately, and of the popup tab."
+  },
+  "popup_search_label": {
+    "message": "Search what you've read",
+    "description": "Label of the search box in the toolbar popup."
+  },
+  "popup_search_placeholder": {
+    "message": "Search what you've read",
+    "description": "Shorter form of the popup search label, for the input placeholder where space is tight."
+  },
+  "popup_checking": {
+    "message": "Checking this page…"
+  },
+  "search_doc_title": {
+    "message": "Search what you have read",
+    "description": "Title of the search page."
+  },
+  "search_input_label": {
+    "message": "Search what you've read",
+    "description": "Label of the main search box, read by screen readers."
+  },
+  "search_placeholder": {
+    "message": "A phrase you remember",
+    "description": "Placeholder text in the search box."
+  },
+  "search_filter_site": {
+    "message": "Filter by site",
+    "description": "Label of a drop-down that narrows results to one website."
+  },
+  "search_filter_when": {
+    "message": "Filter by when you read it",
+    "description": "Label of a drop-down that narrows results by how long ago the page was read."
+  },
+  "search_any_time": {
+    "message": "Any time"
+  },
+  "search_past_week": {
+    "message": "Past week"
+  },
+  "search_past_month": {
+    "message": "Past month"
+  },
+  "search_past_year": {
+    "message": "Past year"
+  },
+  "search_sort_label": {
+    "message": "Sort",
+    "description": "Label of the group of buttons that choose how results are ordered."
+  },
+  "search_sort_best": {
+    "message": "Best match"
+  },
+  "search_sort_newest": {
+    "message": "Newest"
+  },
+  "search_hint": {
+    "message": "<kbd>↑</kbd> <kbd>↓</kbd> to move, <kbd>enter</kbd> to open at the passage, <kbd>esc</kbd> to clear",
+    "description": "Keyboard hint at the bottom of the search page. The <kbd> parts are key caps."
+  },
+  "search_more": {
+    "message": "Show more"
+  },
+  "preset_webmail_title": {
+    "message": "Webmail",
+    "description": "Name of a category of websites that TextMemory does not read by default."
+  },
+  "preset_webmail_example": {
+    "message": "Gmail, Outlook, Proton",
+    "description": "Examples of what the category covers. Keep product and company names as they are; translate the descriptive words."
+  },
+  "preset_messaging_title": {
+    "message": "Messaging",
+    "description": "Name of a category of websites that TextMemory does not read by default."
+  },
+  "preset_messaging_example": {
+    "message": "WhatsApp, Slack, Messenger",
+    "description": "Examples of what the category covers. Keep product and company names as they are; translate the descriptive words."
+  },
+  "preset_aiChats_title": {
+    "message": "AI chats",
+    "description": "Name of a category of websites that TextMemory does not read by default."
+  },
+  "preset_aiChats_example": {
+    "message": "ChatGPT, Claude, Gemini",
+    "description": "Examples of what the category covers. Keep product and company names as they are; translate the descriptive words."
+  },
+  "preset_accounts_title": {
+    "message": "Accounts and passwords",
+    "description": "Name of a category of websites that TextMemory does not read by default."
+  },
+  "preset_accounts_example": {
+    "message": "password managers, account settings",
+    "description": "Examples of what the category covers. Keep product and company names as they are; translate the descriptive words."
+  },
+  "preset_banking_title": {
+    "message": "Banking and payments",
+    "description": "Name of a category of websites that TextMemory does not read by default."
+  },
+  "preset_banking_example": {
+    "message": "PayPal, major banks",
+    "description": "Examples of what the category covers. Keep product and company names as they are; translate the descriptive words."
+  },
+  "preset_health_title": {
+    "message": "Health and medical",
+    "description": "Name of a category of websites that TextMemory does not read by default."
+  },
+  "preset_health_example": {
+    "message": "patient portals, pharmacies",
+    "description": "Examples of what the category covers. Keep product and company names as they are; translate the descriptive words."
+  },
+  "preset_adult_title": {
+    "message": "Adult sites",
+    "description": "Name of a category of websites that TextMemory does not read by default."
+  },
+  "preset_adult_example": {
+    "message": "the best known ones",
+    "description": "Examples of what the category covers. Keep product and company names as they are; translate the descriptive words."
+  },
+  "preset_dating_title": {
+    "message": "Dating",
+    "description": "Name of a category of websites that TextMemory does not read by default."
+  },
+  "preset_dating_example": {
+    "message": "Tinder, Bumble, Hinge, Grindr",
+    "description": "Examples of what the category covers. Keep product and company names as they are; translate the descriptive words."
+  },
+  "preset_government_title": {
+    "message": "Government and ID portals",
+    "description": "Name of a category of websites that TextMemory does not read by default."
+  },
+  "preset_government_example": {
+    "message": ".gov, tax, ID login",
+    "description": "Examples of what the category covers. Keep product and company names as they are; translate the descriptive words."
+  },
+  "preset_intranet_title": {
+    "message": "Local network",
+    "description": "Name of a category of websites that TextMemory does not read by default."
+  },
+  "preset_intranet_example": {
+    "message": "localhost, 192.168.x.x",
+    "description": "Examples of what the category covers. Keep product and company names as they are; translate the descriptive words."
+  },
+  "preset_workTools_title": {
+    "message": "Work tools",
+    "description": "Name of a category of websites that TextMemory does not read by default."
+  },
+  "preset_workTools_example": {
+    "message": "Google Docs, Jira, Notion",
+    "description": "Examples of what the category covers. Keep product and company names as they are; translate the descriptive words."
+  },
+  "preset_searchResults_title": {
+    "message": "Search results pages",
+    "description": "Name of a category of websites that TextMemory does not read by default."
+  },
+  "preset_searchResults_example": {
+    "message": "Google, Bing, DuckDuckGo",
+    "description": "Examples of what the category covers. Keep product and company names as they are; translate the descriptive words."
+  },
+  "pages_one": {
+    "message": "$count$ page",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    },
+    "description": "A number of saved pages, singular. $count$ is the number."
+  },
+  "pages_other": {
+    "message": "$count$ pages",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    },
+    "description": "A number of saved pages, plural. $count$ is the number, formatted for the language."
+  },
+  "when_today": {
+    "message": "today",
+    "description": "How long ago a page was read: earlier today. Lower case, used inside a sentence."
+  },
+  "when_yesterday": {
+    "message": "yesterday",
+    "description": "How long ago a page was read: the day before today. Lower case."
+  },
+  "when_days_ago": {
+    "message": "$count$ days ago",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    },
+    "description": "How long ago a page was read, for 2 to 29 days. $count$ is the number."
+  },
+  "when_last_month": {
+    "message": "last month",
+    "description": "How long ago a page was read: about one month. Lower case."
+  },
+  "when_months_ago": {
+    "message": "$count$ months ago",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    },
+    "description": "How long ago a page was read, for 2 to 11 months. $count$ is the number."
+  },
+  "when_last_year": {
+    "message": "last year",
+    "description": "How long ago a page was read: about one year. Lower case."
+  },
+  "when_years_ago": {
+    "message": "$count$ years ago",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    },
+    "description": "How long ago a page was read, for 2 or more years. $count$ is the number."
+  },
+  "badge_disk_full": {
+    "message": "TextMemory: the disk is full, so pages are not being kept",
+    "description": "Tooltip of the toolbar button when the disk is full."
+  },
+  "badge_pinned_over": {
+    "message": "TextMemory: more is pinned than the size limit allows",
+    "description": "Tooltip of the toolbar button when pinned pages exceed the size limit."
+  },
+  "badge_paused_until": {
+    "message": "TextMemory: paused until $time$",
+    "placeholders": {
+      "time": {
+        "content": "$1"
+      }
+    },
+    "description": "Tooltip of the toolbar button while saving is paused. $time$ is a clock time such as 14:30."
+  },
+  "badge_off": {
+    "message": "off",
+    "description": "Very short text on the toolbar button while saving is paused. Four characters at most."
+  },
+  "picker_find": {
+    "message": "Find a language",
+    "description": "Placeholder and label of the box that filters the list of languages."
+  },
+  "picker_group": {
+    "message": "Languages",
+    "description": "Label of the group of language checkboxes."
+  },
+  "picker_unsegmented": {
+    "message": "Chinese, Japanese, Korean and Thai aren't supported yet. They're written without spaces between words, which search can't split up yet.",
+    "description": "Shown when someone searches the language list for a language written without spaces between words."
+  },
+  "picker_unsupported": {
+    "message": "That language isn't supported yet. Pages in it are still saved and searchable word for word.",
+    "description": "Shown when nothing in the language list matches what was typed."
+  },
+  "picker_none": {
+    "message": "None ticked. Words will only match the way you type them.",
+    "description": "Summary under the language list when no language is ticked."
+  },
+  "picker_using": {
+    "message": "Using $languages$.",
+    "placeholders": {
+      "languages": {
+        "content": "$1"
+      }
+    },
+    "description": "Summary under the language list. $languages$ is the list of ticked languages, separated by commas."
+  },
+  "setup_permission_denied": {
+    "message": "Chrome did not grant access to all sites, so nothing would be captured. Either try again, or choose the second option and add sites one at a time.",
+    "description": "Shown when the person declines the browser prompt for access to all sites. \"The second option\" is the one that says only sites I add myself."
+  },
+  "limit_type_number": {
+    "message": "Type a number to see how much that holds.",
+    "description": "Shown under the size controls when the custom field is empty or not a number."
+  },
+  "limit_capacity": {
+    "message": "Roughly $pages$ pages of typical articles.",
+    "placeholders": {
+      "pages": {
+        "content": "$1"
+      }
+    },
+    "description": "Shown under the size controls. $pages$ is an approximate number of pages."
+  },
+  "setup_done_broad": {
+    "message": "Pages you read from now on are saved on this computer. Anything you read before today isn't included.",
+    "description": "Last step of setup, when TextMemory watches all sites."
+  },
+  "setup_done_strict": {
+    "message": "Nothing is being saved yet. Open a site you want to keep and add it from the extension button.",
+    "description": "Last step of setup, when the person chose to add sites one by one."
+  },
+  "setup_done_hint_shortcut": {
+    "message": "Press $keys$ to search, or type <kbd>$keyword$</kbd> then space in the address bar.",
+    "placeholders": {
+      "keys": {
+        "content": "$1"
+      },
+      "keyword": {
+        "content": "$2"
+      }
+    },
+    "description": "Last step of setup. $keys$ is the keyboard shortcut as key caps, already formatted. $keyword$ is a short word typed in the browser address bar. Keep the <kbd> tags."
+  },
+  "setup_done_hint": {
+    "message": "Type <kbd>$keyword$</kbd> then space in the address bar.",
+    "placeholders": {
+      "keyword": {
+        "content": "$1"
+      }
+    },
+    "description": "Last step of setup when no keyboard shortcut is set. $keyword$ is a short word typed in the browser address bar. Keep the <kbd> tags."
+  },
+  "reason_incognito": {
+    "message": "incognito",
+    "description": "Why a page was not kept. Shown after \"Not kept:\" or \"Could not keep this page:\", so it reads as the end of a sentence, in lower case."
+  },
+  "reason_setup": {
+    "message": "setup is not finished",
+    "description": "Why a page was not kept. Shown after \"Not kept:\" or \"Could not keep this page:\", so it reads as the end of a sentence, in lower case."
+  },
+  "reason_paused": {
+    "message": "paused",
+    "description": "Why a page was not kept. Shown after \"Not kept:\" or \"Could not keep this page:\", so it reads as the end of a sentence, in lower case."
+  },
+  "reason_unparseable": {
+    "message": "unparseable url",
+    "description": "Why a page was not kept. Shown after \"Not kept:\" or \"Could not keep this page:\", so it reads as the end of a sentence, in lower case."
+  },
+  "reason_not_web": {
+    "message": "not a web page",
+    "description": "Why a page was not kept. Shown after \"Not kept:\" or \"Could not keep this page:\", so it reads as the end of a sentence, in lower case."
+  },
+  "reason_password": {
+    "message": "a password or payment field on the page",
+    "description": "Why a page was not kept. Shown after \"Not kept:\" or \"Could not keep this page:\", so it reads as the end of a sentence, in lower case."
+  },
+  "reason_secret_url": {
+    "message": "the address contains a sign-in or access key",
+    "description": "Why a page was not kept. Shown after \"Not kept:\" or \"Could not keep this page:\", so it reads as the end of a sentence, in lower case."
+  },
+  "reason_allowlist": {
+    "message": "not on your allowlist",
+    "description": "Why a page was not kept. Shown after \"Not kept:\" or \"Could not keep this page:\", so it reads as the end of a sentence, in lower case."
+  },
+  "reason_no_address": {
+    "message": "no address",
+    "description": "Why a page was not kept. Shown after \"Not kept:\" or \"Could not keep this page:\", so it reads as the end of a sentence, in lower case."
+  },
+  "reason_address_mismatch": {
+    "message": "the address does not match the page that sent it",
+    "description": "Why a page was not kept. Shown after \"Not kept:\" or \"Could not keep this page:\", so it reads as the end of a sentence, in lower case."
+  },
+  "reason_still_reading": {
+    "message": "still reading",
+    "description": "Why a page was not kept. Shown after \"Not kept:\" or \"Could not keep this page:\", so it reads as the end of a sentence, in lower case."
+  },
+  "reason_unreadable": {
+    "message": "the page could not be read",
+    "description": "Why a page was not kept. Shown after \"Not kept:\" or \"Could not keep this page:\", so it reads as the end of a sentence, in lower case."
+  },
+  "reason_nothing": {
+    "message": "nothing to index",
+    "description": "Why a page was not kept. Shown after \"Not kept:\" or \"Could not keep this page:\", so it reads as the end of a sentence, in lower case."
+  },
+  "reason_too_little": {
+    "message": "too little text to be worth finding later",
+    "description": "Why a page was not kept. Shown after \"Not kept:\" or \"Could not keep this page:\", so it reads as the end of a sentence, in lower case."
+  },
+  "reason_disk_full": {
+    "message": "there is no room left on this disk",
+    "description": "Why a page was not kept. Shown after \"Not kept:\" or \"Could not keep this page:\", so it reads as the end of a sentence, in lower case."
+  },
+  "reason_pdf_unreadable": {
+    "message": "could not read this pdf",
+    "description": "Why a page was not kept. Shown after \"Not kept:\" or \"Could not keep this page:\", so it reads as the end of a sentence, in lower case."
+  },
+  "reason_pdf_large": {
+    "message": "this pdf is too large to keep (over 20MB)",
+    "description": "Why a page was not kept. Shown after \"Not kept:\" or \"Could not keep this page:\", so it reads as the end of a sentence, in lower case."
+  },
+  "reason_tab_moved": {
+    "message": "this tab has moved on to another page",
+    "description": "Why a page was not kept. Shown after \"Not kept:\" or \"Could not keep this page:\", so it reads as the end of a sentence, in lower case."
+  },
+  "reason_tab_unreadable": {
+    "message": "could not read this tab",
+    "description": "Why a page was not kept. Shown after \"Not kept:\" or \"Could not keep this page:\", so it reads as the end of a sentence, in lower case."
+  },
+  "reason_default": {
+    "message": "it could not be read",
+    "description": "Why a page was not kept. Shown after \"Not kept:\" or \"Could not keep this page:\", so it reads as the end of a sentence, in lower case."
+  },
+  "reason_excluded": {
+    "message": "excluded in your settings",
+    "description": "Why a page was not kept: its site is on the exclusion list. Shown after \"Not kept:\", in lower case."
+  },
+  "popup_open_settings": {
+    "message": "Open settings",
+    "description": "Button in the toolbar popup when the saved pages cannot be opened."
+  },
+  "popup_finish_setup": {
+    "message": "Finish setting up",
+    "description": "Button in the toolbar popup when setup has not been completed."
+  },
+  "popup_shortcut_title": {
+    "message": "Opens search from anywhere",
+    "description": "Tooltip on the keyboard shortcut shown at the bottom of the popup."
+  },
+  "popup_archive_broken": {
+    "message": "Your saved pages couldn't be opened. Nothing has been deleted.",
+    "description": "Shown when the stored pages cannot be read. Reassures that nothing was lost."
+  },
+  "popup_nothing_here": {
+    "message": "Nothing to keep here",
+    "description": "Status when the current tab is not a normal web page (a settings page, a new tab)."
+  },
+  "popup_check_failed": {
+    "message": "Couldn't check this page. Nothing has been changed.",
+    "description": "Status when the extension could not find out whether the page is kept."
+  },
+  "popup_kept": {
+    "message": "Kept, last read $when$",
+    "placeholders": {
+      "when": {
+        "content": "$1"
+      }
+    },
+    "description": "Status for a saved page. $when$ is a phrase such as \"yesterday\" or \"3 days ago\"."
+  },
+  "popup_kept_visits": {
+    "message": "Kept, last read $when$, $count$ visits",
+    "placeholders": {
+      "when": {
+        "content": "$1"
+      },
+      "count": {
+        "content": "$2"
+      }
+    },
+    "description": "Status for a saved page visited more than once. $when$ is a phrase such as \"yesterday\". $count$ is the number of visits (2 or more)."
+  },
+  "popup_forget": {
+    "message": "Forget this page",
+    "description": "Button that deletes the current page from the saved pages."
+  },
+  "popup_never_keep": {
+    "message": "Never keep this site",
+    "description": "Button that stops saving a whole website and deletes what was saved from it."
+  },
+  "popup_not_kept": {
+    "message": "Not kept: $reason$",
+    "placeholders": {
+      "reason": {
+        "content": "$1"
+      }
+    },
+    "description": "Status for a page that is not saved. $reason$ is the explanation, in lower case."
+  },
+  "popup_change_excluded": {
+    "message": "Change what is excluded",
+    "description": "Button that opens the settings page to the exclusions."
+  },
+  "popup_not_watching": {
+    "message": "Not watching this site",
+    "description": "Status in \"only sites I add\" mode for a site that has not been added."
+  },
+  "popup_keep_site": {
+    "message": "Keep pages from this site",
+    "description": "Button that adds the current website to the list of sites to read."
+  },
+  "popup_access_refused": {
+    "message": "Chrome did not grant access to $domain$",
+    "placeholders": {
+      "domain": {
+        "content": "$1"
+      }
+    },
+    "description": "Status after the person declined the browser permission prompt. $domain$ is a website name."
+  },
+  "popup_watching_not_kept": {
+    "message": "Watching $domain$ from now on. This page was not kept: $reason$",
+    "placeholders": {
+      "domain": {
+        "content": "$1"
+      },
+      "reason": {
+        "content": "$2"
+      }
+    },
+    "description": "Status after adding a site when this particular page could not be saved. $domain$ is a website name. $reason$ is the explanation."
+  },
+  "popup_watching": {
+    "message": "Watching $domain$ from now on",
+    "placeholders": {
+      "domain": {
+        "content": "$1"
+      }
+    },
+    "description": "Status after a site was added. $domain$ is a website name."
+  },
+  "popup_add_failed": {
+    "message": "Couldn't add $domain$. Open this again to try once more.",
+    "placeholders": {
+      "domain": {
+        "content": "$1"
+      }
+    },
+    "description": "Status when adding a site failed. $domain$ is a website name."
+  },
+  "popup_try_again": {
+    "message": "Try again",
+    "description": "Button that retries saving the current page."
+  },
+  "popup_keep_failed": {
+    "message": "Could not keep this page: $reason$",
+    "placeholders": {
+      "reason": {
+        "content": "$1"
+      }
+    },
+    "description": "Status when saving the current page failed. $reason$ is the explanation."
+  },
+  "popup_keeping": {
+    "message": "Keeping this page…",
+    "description": "Status while the current page is being saved."
+  },
+  "popup_not_kept_yet": {
+    "message": "Not kept yet",
+    "description": "Status for a page that has not been saved yet but can be."
+  },
+  "popup_keep_now": {
+    "message": "Keep this page now",
+    "description": "Button that saves the current page immediately."
+  },
+  "popup_never_confirm": {
+    "message": "Also deletes $pages$. Click again",
+    "placeholders": {
+      "pages": {
+        "content": "$1"
+      }
+    },
+    "description": "Confirmation shown on the \"Never keep this site\" button. $pages$ is a count such as \"7 pages\". The person must click again to confirm."
+  },
+  "popup_block_failed": {
+    "message": "Couldn't block $domain$. Nothing was changed.",
+    "placeholders": {
+      "domain": {
+        "content": "$1"
+      }
+    },
+    "description": "Status when blocking a site failed. $domain$ is a website name."
+  },
+  "popup_never_kept": {
+    "message": "Never keeping $domain$",
+    "placeholders": {
+      "domain": {
+        "content": "$1"
+      }
+    },
+    "description": "Status after a site was blocked. $domain$ is a website name."
+  },
+  "popup_never_kept_deleted": {
+    "message": "Never keeping $domain$, $pages$ deleted",
+    "placeholders": {
+      "domain": {
+        "content": "$1"
+      },
+      "pages": {
+        "content": "$2"
+      }
+    },
+    "description": "Status after a site was blocked and its saved pages were deleted. $pages$ is a count such as \"7 pages\"."
+  },
+  "popup_still_working": {
+    "message": "Still working on this page. Open this again in a moment to see whether it was kept.",
+    "description": "Status when saving a page is taking longer than expected."
+  },
+  "popup_disk_full": {
+    "message": "This disk ran out of room, so pages are not being kept. Settings has what to do about it.",
+    "description": "Warning in the popup when the computer has no disk space left."
+  },
+  "popup_budget_kept": {
+    "message": "$pages$ kept",
+    "placeholders": {
+      "pages": {
+        "content": "$1"
+      }
+    },
+    "description": "Start of the storage line. $pages$ is a count such as \"24 pages\"."
+  },
+  "popup_budget_size": {
+    "message": "$used$ of $limit$",
+    "placeholders": {
+      "used": {
+        "content": "$1"
+      },
+      "limit": {
+        "content": "$2"
+      }
+    },
+    "description": "Storage line. $used$ and $limit$ are sizes such as \"129KB\" and \"500MB\"."
+  },
+  "popup_budget_pinned": {
+    "message": "more is pinned than fits",
+    "description": "Storage line when pinned pages alone exceed the size limit."
+  },
+  "budget_full": {
+    "message": "full, oldest pages being replaced",
+    "description": "Storage line when the size limit is reached and old pages are being removed to make room."
+  },
+  "budget_full_around": {
+    "message": "full around $date$",
+    "placeholders": {
+      "date": {
+        "content": "$1"
+      }
+    },
+    "description": "Storage line forecasting when the size limit will be reached. $date$ is a month and year such as \"Sep 2026\"."
+  },
+  "popup_nothing_kept": {
+    "message": "Nothing kept yet.",
+    "description": "Shown in the list of recently saved pages when there are none."
+  },
+  "popup_resume": {
+    "message": "Resume capturing",
+    "description": "Button that ends a pause in saving pages."
+  },
+  "popup_pause": {
+    "message": "Pause for an hour",
+    "description": "Button that stops saving pages for one hour."
+  },
+  "search_pinned": {
+    "message": "Pinned",
+    "description": "Label of a button on a result that is pinned. Pinned pages are never removed."
+  },
+  "search_pin": {
+    "message": "Pin",
+    "description": "Button on a search result that protects the page from ever being removed."
+  },
+  "search_pin_title": {
+    "message": "Pinned pages are never removed to make room",
+    "description": "Tooltip on the Pin button."
+  },
+  "search_announce": {
+    "message": "$n$ of $total$: $title$, $domain$",
+    "placeholders": {
+      "n": {
+        "content": "$1"
+      },
+      "total": {
+        "content": "$2"
+      },
+      "title": {
+        "content": "$3"
+      },
+      "domain": {
+        "content": "$4"
+      }
+    },
+    "description": "Read aloud by a screen reader when the highlighted search result changes. $n$ is its position, $total$ the number of results, $title$ the page title, $domain$ the website."
+  },
+  "search_meta_none": {
+    "message": "nothing matched",
+    "description": "Short status above the results when there are none. Lower case."
+  },
+  "search_meta_not_every": {
+    "message": "not every word matched",
+    "description": "Short status above the results: the search was widened because no page had all the words. Lower case."
+  },
+  "search_meta_searched": {
+    "message": "searched \"$used$\" for \"$asked$\"",
+    "placeholders": {
+      "used": {
+        "content": "$1"
+      },
+      "asked": {
+        "content": "$2"
+      }
+    },
+    "description": "Short status above the results: a word was replaced by a similar one. $asked$ is what was typed, $used$ what was searched. Lower case."
+  },
+  "search_meta_expanded": {
+    "message": "\"$asked$\" matched $words$",
+    "placeholders": {
+      "asked": {
+        "content": "$1"
+      },
+      "words": {
+        "content": "$2"
+      }
+    },
+    "description": "Short status above the results: a typed word matched other forms of it. $asked$ is what was typed, $words$ a list of the words found. Lower case."
+  },
+  "search_meta_expanded_more": {
+    "message": "\"$asked$\" matched $words$ and $count$ more",
+    "placeholders": {
+      "asked": {
+        "content": "$1"
+      },
+      "words": {
+        "content": "$2"
+      },
+      "count": {
+        "content": "$3"
+      }
+    },
+    "description": "Same, when the list is longer than three. $count$ is how many more. Lower case."
+  },
+  "search_unavailable_title": {
+    "message": "Search is not available right now.",
+    "description": "Heading shown when the search cannot run."
+  },
+  "search_unavailable_body": {
+    "message": "Reloading this page usually fixes it.",
+    "description": "Advice under the previous heading."
+  },
+  "search_nothing_title": {
+    "message": "Nothing matched.",
+    "description": "Heading shown when a search finds nothing."
+  },
+  "search_nothing_body": {
+    "message": "Try fewer words, or just the one you're surest of. Only pages read since setup can be found.",
+    "description": "Advice under the previous heading."
+  },
+  "search_empty_title": {
+    "message": "Nothing saved yet.",
+    "description": "Heading shown on day one, before any page has been saved."
+  },
+  "search_empty_body": {
+    "message": "Pages show up here once you've spent a few seconds reading them. Come back after some browsing.",
+    "description": "Explanation under the previous heading."
+  },
+  "search_saved_one": {
+    "message": "$count$ page saved",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    },
+    "description": "Status above the search box when one page is saved. $count$ is the number."
+  },
+  "search_saved_other": {
+    "message": "$count$ pages saved",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    },
+    "description": "Status above the search box. $count$ is the number of saved pages."
+  },
+  "search_tip_title": {
+    "message": "Type a phrase you remember.",
+    "description": "Heading of the empty search page."
+  },
+  "search_tip_body": {
+    "message": "Any words from the page, in any order. Add <code>site:example.com</code> to narrow it down, put \"quotation marks\" around an exact phrase, or write <code>-word</code> to leave pages with that word out.",
+    "description": "Explains the search syntax. Keep the <code> parts exactly as they are (site: and the minus sign are the real syntax); translate the words around them."
+  },
+  "search_recent": {
+    "message": "Recently read",
+    "description": "Heading of the list of pages read lately, on the empty search page."
+  },
+  "search_all_sites": {
+    "message": "All sites",
+    "description": "First entry of the drop-down that narrows results to one website."
+  },
+  "preset_webmail_lower": {
+    "message": "webmail",
+    "description": "The category name written in the middle of a sentence (\"Removed 3 pages already saved from ...\"). Use the form that fits mid-sentence: lower case in languages that do not capitalise nouns. Keep product names as they are."
+  },
+  "preset_messaging_lower": {
+    "message": "messaging",
+    "description": "The category name written in the middle of a sentence (\"Removed 3 pages already saved from ...\"). Use the form that fits mid-sentence: lower case in languages that do not capitalise nouns. Keep product names as they are."
+  },
+  "preset_aiChats_lower": {
+    "message": "ai chats",
+    "description": "The category name written in the middle of a sentence (\"Removed 3 pages already saved from ...\"). Use the form that fits mid-sentence: lower case in languages that do not capitalise nouns. Keep product names as they are."
+  },
+  "preset_accounts_lower": {
+    "message": "accounts and passwords",
+    "description": "The category name written in the middle of a sentence (\"Removed 3 pages already saved from ...\"). Use the form that fits mid-sentence: lower case in languages that do not capitalise nouns. Keep product names as they are."
+  },
+  "preset_banking_lower": {
+    "message": "banking and payments",
+    "description": "The category name written in the middle of a sentence (\"Removed 3 pages already saved from ...\"). Use the form that fits mid-sentence: lower case in languages that do not capitalise nouns. Keep product names as they are."
+  },
+  "preset_health_lower": {
+    "message": "health and medical",
+    "description": "The category name written in the middle of a sentence (\"Removed 3 pages already saved from ...\"). Use the form that fits mid-sentence: lower case in languages that do not capitalise nouns. Keep product names as they are."
+  },
+  "preset_adult_lower": {
+    "message": "adult sites",
+    "description": "The category name written in the middle of a sentence (\"Removed 3 pages already saved from ...\"). Use the form that fits mid-sentence: lower case in languages that do not capitalise nouns. Keep product names as they are."
+  },
+  "preset_dating_lower": {
+    "message": "dating",
+    "description": "The category name written in the middle of a sentence (\"Removed 3 pages already saved from ...\"). Use the form that fits mid-sentence: lower case in languages that do not capitalise nouns. Keep product names as they are."
+  },
+  "preset_government_lower": {
+    "message": "government and id portals",
+    "description": "The category name written in the middle of a sentence (\"Removed 3 pages already saved from ...\"). Use the form that fits mid-sentence: lower case in languages that do not capitalise nouns. Keep product names as they are."
+  },
+  "preset_intranet_lower": {
+    "message": "local network",
+    "description": "The category name written in the middle of a sentence (\"Removed 3 pages already saved from ...\"). Use the form that fits mid-sentence: lower case in languages that do not capitalise nouns. Keep product names as they are."
+  },
+  "preset_workTools_lower": {
+    "message": "work tools",
+    "description": "The category name written in the middle of a sentence (\"Removed 3 pages already saved from ...\"). Use the form that fits mid-sentence: lower case in languages that do not capitalise nouns. Keep product names as they are."
+  },
+  "preset_searchResults_lower": {
+    "message": "search results pages",
+    "description": "The category name written in the middle of a sentence (\"Removed 3 pages already saved from ...\"). Use the form that fits mid-sentence: lower case in languages that do not capitalise nouns. Keep product names as they are."
+  },
+  "opt_mode_broad": {
+    "message": "Every site is read except what you exclude below.",
+    "description": "Under the mode choice in settings, when all sites are read."
+  },
+  "opt_mode_strict": {
+    "message": "Only sites you've added are read, and Chrome enforces that. The exclusions below still apply to them.",
+    "description": "Under the mode choice in settings, when only added sites are read."
+  },
+  "opt_allow_none": {
+    "message": "None yet. Open a site you want to keep and add it from the extension button.",
+    "description": "Shown in the list of added sites when it is empty."
+  },
+  "opt_remove": {
+    "message": "remove",
+    "description": "Small button that removes a site from the list. Lower case."
+  },
+  "opt_mode_denied": {
+    "message": "Chrome did not grant access to all sites, so nothing changed. Still only reading sites you add.",
+    "description": "Shown when the person declines the browser prompt while switching to reading all sites."
+  },
+  "opt_mode_not_removed": {
+    "message": "Chrome didn't remove the extension's access to all sites, so nothing changed. Try again, or remove it from the extension's details page in chrome://extensions.",
+    "description": "Shown when switching to \"only sites I add\" fails to give back the wide permission. Keep chrome://extensions as it is."
+  },
+  "opt_preset_remove_failed": {
+    "message": "Pages already saved from these sites could not be removed. Untick and tick it again to retry.",
+    "description": "Shown when ticking an exclusion category could not delete the pages already saved from those sites."
+  },
+  "opt_preset_removed": {
+    "message": "Removed $pages$ already saved from $category$.",
+    "placeholders": {
+      "pages": {
+        "content": "$1"
+      },
+      "category": {
+        "content": "$2"
+      }
+    },
+    "description": "Shown after ticking an exclusion category. $pages$ is a count such as \"3 pages\". $category$ is the category name written mid-sentence."
+  },
+  "opt_removed_pages": {
+    "message": "Removed $pages$.",
+    "placeholders": {
+      "pages": {
+        "content": "$1"
+      }
+    },
+    "description": "Confirmation that saved pages were deleted. $pages$ is a count such as \"3 pages\"."
+  },
+  "opt_newcat_one": {
+    "message": "New in this version: $names$ are skipped from now on. $pages$ you saved before is from these sites. Remove it, or keep it?",
+    "placeholders": {
+      "names": {
+        "content": "$1"
+      },
+      "pages": {
+        "content": "$2"
+      }
+    },
+    "description": "Question after an update added exclusion categories, when exactly one saved page is affected. $names$ is the list of new categories. $pages$ is \"1 page\"."
+  },
+  "opt_newcat_other": {
+    "message": "New in this version: $names$ are skipped from now on. $pages$ you saved before are from these sites. Remove them, or keep them?",
+    "placeholders": {
+      "names": {
+        "content": "$1"
+      },
+      "pages": {
+        "content": "$2"
+      }
+    },
+    "description": "Same question when several saved pages are affected. $pages$ is a count such as \"5 pages\"."
+  },
+  "opt_newcat_kept": {
+    "message": "Kept what you saved before. $names$ are skipped from now on.",
+    "placeholders": {
+      "names": {
+        "content": "$1"
+      }
+    },
+    "description": "Confirmation after choosing to keep the pages. $names$ is the list of new categories."
+  },
+  "opt_newcat_removed": {
+    "message": "Removed $pages$. $names$ are skipped from now on.",
+    "placeholders": {
+      "pages": {
+        "content": "$1"
+      },
+      "names": {
+        "content": "$2"
+      }
+    },
+    "description": "Confirmation after choosing to remove the pages. $pages$ is a count. $names$ is the list of new categories."
+  },
+  "opt_shortcut_not_set": {
+    "message": "not set",
+    "description": "Shown instead of a keyboard shortcut when none is assigned. Lower case."
+  },
+  "opt_shortcut_text": {
+    "message": "Open search with <kbd>$keys$</kbd>",
+    "placeholders": {
+      "keys": {
+        "content": "$1"
+      }
+    },
+    "description": "Settings, shortcut section. $keys$ is the shortcut, for example Ctrl+Shift+F. Keep the <kbd> tags."
+  },
+  "opt_rule_as": {
+    "message": "$line$ as $rule$",
+    "placeholders": {
+      "line": {
+        "content": "$1"
+      },
+      "rule": {
+        "content": "$2"
+      }
+    },
+    "description": "One entry in the list of how an exclusion rule was understood. $line$ is what was typed, $rule$ how it is read."
+  },
+  "opt_rules_reading": {
+    "message": "Reading $list$.",
+    "placeholders": {
+      "list": {
+        "content": "$1"
+      }
+    },
+    "description": "Under the exclusion rules box. $list$ is a comma separated list of how rules were understood."
+  },
+  "opt_rules_unusable": {
+    "message": "These don't look like a site and won't match anything: $list$.",
+    "placeholders": {
+      "list": {
+        "content": "$1"
+      }
+    },
+    "description": "Under the exclusion rules box. $list$ is a comma separated list of the lines that are not usable."
+  },
+  "opt_rules_match_one": {
+    "message": "$pages$ you already saved matches these rules.",
+    "placeholders": {
+      "pages": {
+        "content": "$1"
+      }
+    },
+    "description": "Shown when exactly one saved page matches the exclusion rules. $pages$ is \"1 page\"."
+  },
+  "opt_rules_match_other": {
+    "message": "$pages$ you already saved match these rules.",
+    "placeholders": {
+      "pages": {
+        "content": "$1"
+      }
+    },
+    "description": "Shown when several saved pages match the exclusion rules. $pages$ is a count such as \"4 pages\"."
+  },
+  "opt_rules_remove_failed": {
+    "message": "Those pages could not be removed. Try again.",
+    "description": "Shown when deleting the pages that match the rules failed."
+  },
+  "opt_capacity": {
+    "message": "Room for roughly $pages$ pages of typical articles.",
+    "placeholders": {
+      "pages": {
+        "content": "$1"
+      }
+    },
+    "description": "Under the size controls. $pages$ is an approximate number."
+  },
+  "opt_shrink": {
+    "message": "You're using $used$, which is more than $limit$. The next cleanup would remove roughly $count$ of your oldest pages. Pinned pages are kept.",
+    "placeholders": {
+      "used": {
+        "content": "$1"
+      },
+      "limit": {
+        "content": "$2"
+      },
+      "count": {
+        "content": "$3"
+      }
+    },
+    "description": "Warning when the new size limit is lower than what is used. $used$ and $limit$ are sizes such as \"129KB\". $count$ is a number of pages."
+  },
+  "opt_usage_unavailable": {
+    "message": "Your saved pages couldn't be opened, so nothing can be shown here. Nothing has been deleted.",
+    "description": "Shown instead of the storage meter when the saved pages cannot be read."
+  },
+  "opt_log_unavailable": {
+    "message": "Not available while the archive cannot be opened.",
+    "description": "Shown instead of the removal log when the saved pages cannot be read."
+  },
+  "opt_usage_head": {
+    "message": "$pages$, $used$ of $limit$",
+    "placeholders": {
+      "pages": {
+        "content": "$1"
+      },
+      "used": {
+        "content": "$2"
+      },
+      "limit": {
+        "content": "$3"
+      }
+    },
+    "description": "Storage line. $pages$ is a count such as \"24 pages\". $used$ and $limit$ are sizes such as \"129KB\"."
+  },
+  "opt_room_for": {
+    "message": "room for roughly $pages$",
+    "placeholders": {
+      "pages": {
+        "content": "$1"
+      }
+    },
+    "description": "Storage line. $pages$ is an approximate number of pages."
+  },
+  "opt_budget_pinned": {
+    "message": "more is pinned than the budget allows",
+    "description": "Storage line when pinned pages alone exceed the limit."
+  },
+  "opt_migration": {
+    "message": "Your saved pages were moved to a new format on $date$$steps$. Everything was checked and nothing was lost.",
+    "placeholders": {
+      "date": {
+        "content": "$1"
+      },
+      "steps": {
+        "content": "$2"
+      }
+    },
+    "description": "Shown once after an update that changed how pages are stored. $date$ is a date. $steps$ is empty or a short technical note in brackets, already formatted."
+  },
+  "opt_warn_disk_full": {
+    "message": "Your disk ran out of space on $date$, so new pages weren't saved. Free up some space or lower the size limit above.",
+    "placeholders": {
+      "date": {
+        "content": "$1"
+      }
+    },
+    "description": "Warning in settings. $date$ is a date."
+  },
+  "opt_warn_not_persistent": {
+    "message": "Chrome hasn't marked this storage as persistent, so it could clear it if your disk fills up. Exporting now and then gives you a backup.",
+    "description": "Warning in settings."
+  },
+  "opt_warn_setup": {
+    "message": "Setup isn't finished, so nothing is being saved yet. Open the extension's button to finish it.",
+    "description": "Warning in settings."
+  },
+  "opt_warn_ungranted": {
+    "message": "These sites are on your list but Chrome hasn't given access to them, so nothing is being saved from them: $sites$. Remove them and add them again to fix it.",
+    "placeholders": {
+      "sites": {
+        "content": "$1"
+      }
+    },
+    "description": "Warning in settings. $sites$ is a comma separated list of website names."
+  },
+  "opt_warn_refused": {
+    "message": "Chrome refused access to $sites$, so nothing is being saved from them. Your other sites are fine.",
+    "placeholders": {
+      "sites": {
+        "content": "$1"
+      }
+    },
+    "description": "Warning in settings. $sites$ is a comma separated list of website names."
+  },
+  "opt_clock_note": {
+    "message": "The last cleanup skipped the age limit because $problem$, so nothing is removed for being too old until the clock has been steady for a day.",
+    "placeholders": {
+      "problem": {
+        "content": "$1"
+      }
+    },
+    "description": "Note in settings. $problem$ is one of the three explanations that follow, in lower case."
+  },
+  "opt_clock_backwards": {
+    "message": "the clock has moved backwards since the last sweep",
+    "description": "Explanation inserted into the previous note. Lower case."
+  },
+  "opt_clock_gap": {
+    "message": "more time has passed than an hourly sweep can account for",
+    "description": "Explanation inserted into the previous note. Lower case."
+  },
+  "opt_clock_recent": {
+    "message": "the clock jumped recently",
+    "description": "Explanation inserted into the previous note. Lower case."
+  },
+  "opt_log_age": {
+    "message": "older than your limit",
+    "description": "Reason in the removal log: pages were removed for being older than the age limit."
+  },
+  "opt_log_size": {
+    "message": "over your size limit",
+    "description": "Reason in the removal log: pages were removed to get under the size limit."
+  },
+  "opt_log_both": {
+    "message": "older than your limit and over your size limit",
+    "description": "Reason in the removal log: both of the above."
+  },
+  "opt_log_manual": {
+    "message": "deleted by you",
+    "description": "Reason in the removal log: the person deleted them."
+  },
+  "opt_log_site": {
+    "message": "excluded site",
+    "description": "Reason in the removal log: the pages came from a site that became excluded."
+  },
+  "opt_log_auto": {
+    "message": "removed automatically",
+    "description": "Reason in the removal log when the reason is not one of the above."
+  },
+  "opt_log_none": {
+    "message": "Nothing has been removed.",
+    "description": "Shown in the removal log when it is empty."
+  },
+  "opt_sweep_unavailable": {
+    "message": "Limits couldn't be applied, because the archive couldn't be opened. Nothing was removed.",
+    "description": "Shown after pressing Apply limits now when the saved pages cannot be read."
+  },
+  "opt_sweep_nothing": {
+    "message": "Nothing needed removing.",
+    "description": "Shown after pressing Apply limits now when everything is within the limits."
+  },
+  "opt_export_failed": {
+    "message": "Your saved pages couldn't be read, so nothing was exported.",
+    "description": "Shown when exporting fails."
+  },
+  "opt_exporting": {
+    "message": "Exporting… $written$ of $total$",
+    "placeholders": {
+      "written": {
+        "content": "$1"
+      },
+      "total": {
+        "content": "$2"
+      }
+    },
+    "description": "Progress while exporting. $written$ and $total$ are numbers of pages."
+  },
+  "opt_exported": {
+    "message": "Exported $pages$.",
+    "placeholders": {
+      "pages": {
+        "content": "$1"
+      }
+    },
+    "description": "Shown when exporting finished. $pages$ is a count such as \"40 pages\"."
+  },
+  "opt_importing": {
+    "message": "Importing… $pages$ read",
+    "placeholders": {
+      "pages": {
+        "content": "$1"
+      }
+    },
+    "description": "Progress while importing. $pages$ is a count such as \"40 pages\"."
+  },
+  "opt_import_unreadable": {
+    "message": "That file couldn't be read.",
+    "description": "Shown when an import file cannot be read."
+  },
+  "opt_import_not_export": {
+    "message": "That does not look like an export from this extension.",
+    "description": "Shown when the chosen file is not a TextMemory export."
+  },
+  "opt_import_done": {
+    "message": "$count$ imported",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    },
+    "description": "Part of the import summary. $count$ is a number of pages."
+  },
+  "opt_import_skipped": {
+    "message": "$count$ already here",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    },
+    "description": "Part of the import summary. $count$ is a number of pages."
+  },
+  "opt_import_excluded": {
+    "message": "$count$ left out because your exclusions cover them",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    },
+    "description": "Part of the import summary. $count$ is a number of pages."
+  },
+  "opt_import_failed": {
+    "message": "$count$ could not be read",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    },
+    "description": "Part of the import summary. $count$ is a number of pages."
+  },
+  "opt_import_truncated": {
+    "message": "the file ended early, so anything after that was not imported",
+    "description": "Part of the import summary. Lower case, no final full stop."
+  },
+  "opt_wipe_confirm": {
+    "message": "Click again to delete everything",
+    "description": "The delete button after the first click: it asks for a second click."
+  },
+  "opt_wiped": {
+    "message": "Deleted $pages$. Your settings, including your lists of sites, are kept.",
+    "placeholders": {
+      "pages": {
+        "content": "$1"
+      }
+    },
+    "description": "Shown after deleting everything. $pages$ is a count such as \"40 pages\"."
+  },
+  "opt_wipe_failed": {
+    "message": "Your saved pages couldn't be deleted. Try again.",
+    "description": "Shown when deleting everything failed."
+  },
+  "opt_doc_title": {
+    "message": "TextMemory settings",
+    "description": "Title of the browser tab for the settings page."
+  }
+}

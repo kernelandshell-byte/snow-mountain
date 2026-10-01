@@ -1,7 +1,8 @@
 import { MSG } from '../../shared/messages.js';
 import { PRESET_LABELS } from '../../shared/presets.js';
+import { t, plural, formatNumber, listAnd, rich, safeHtml, translatePage } from '../../shared/i18n.js';
 import {
-  BYTES_PER_PAGE_ESTIMATE, DISPLAY_NAME, SLUG, EXPORT_FORMATS_ACCEPTED,
+  BYTES_PER_PAGE_ESTIMATE, SLUG, EXPORT_FORMATS_ACCEPTED,
 } from '../../shared/constants.js';
 import { bytes as mb, pageCount } from '../../shared/format.js';
 import { requestPersistence } from '../../shared/persistence.js';
@@ -13,9 +14,7 @@ import { normaliseRule } from '../../core/capture-policy.js';
 const ask = (type, payload) => chrome.runtime.sendMessage({ type, payload });
 const byId = (id) => document.getElementById(id);
 
-// Read from the one constant rather than written into the markup, so the name
-// really does live in a single place.
-document.title = DISPLAY_NAME + ' settings';
+translatePage();
 
 // Asking here as well as during setup, because persistence can be refused the
 // first time and granted later, and because somebody opening settings is
@@ -53,8 +52,8 @@ function renderMode() {
   }
   byId('modeLine').textContent =
     settings.mode === 'broad'
-      ? 'Every site is read except what you exclude below.'
-      : "Only sites you've added are read, and Chrome enforces that. The exclusions below still apply to them.";
+      ? t('opt_mode_broad')
+      : t('opt_mode_strict');
   byId('allowBlock').hidden = settings.mode !== 'strict';
   if (settings.mode === 'strict') renderAllowlist();
 }
@@ -65,7 +64,7 @@ function renderAllowlist() {
   if (!settings.allowlist.length) {
     const empty = document.createElement('li');
     empty.className = 'when';
-    empty.textContent = 'None yet. Open a site you want to keep and add it from the extension button.';
+    empty.textContent = t('opt_allow_none');
     list.appendChild(empty);
     return;
   }
@@ -76,7 +75,7 @@ function renderAllowlist() {
     name.textContent = domain;
     const remove = document.createElement('button');
     remove.className = 'remove';
-    remove.textContent = 'remove';
+    remove.textContent = t('opt_remove');
     remove.addEventListener('click', async () => {
       remove.disabled = true;
       // Taking the permission back first. The site comes off the list either
@@ -102,8 +101,7 @@ document.querySelector('.modes').addEventListener('change', (event) => {
       if (!granted) {
         // renderMode first, because it rewrites this line from the setting.
         renderMode();
-        byId('modeLine').textContent =
-          'Chrome did not grant access to all sites, so nothing changed. Still only reading sites you add.';
+        byId('modeLine').textContent = t('opt_mode_denied');
         return;
       }
       await save({ mode: 'broad' });
@@ -121,9 +119,7 @@ document.querySelector('.modes').addEventListener('change', (event) => {
     renderMode();
   }).catch(() => {
     renderMode();
-    byId('modeLine').textContent =
-      "Chrome didn't remove the extension's access to all sites, so nothing changed. Try again, " +
-      'or remove it from the extension\'s details page in chrome://extensions.';
+    byId('modeLine').textContent = t('opt_mode_not_removed');
   });
 });
 
@@ -134,7 +130,7 @@ byId('presets').innerHTML = Object.entries(PRESET_LABELS)
     ([key, label]) =>
       '<label><input type="checkbox" data-preset="' + key + '"' +
       (settings.presets[key] ? ' checked' : '') + ' />' +
-      '<span>' + label.title + '</span><span class="desc">' + label.example + '</span></label>'
+      '<span>' + safeHtml(label.title) + '</span><span class="desc">' + safeHtml(label.example) + '</span></label>'
   )
   .join('');
 
@@ -151,13 +147,12 @@ byId('presets').addEventListener('change', async (event) => {
   if (!event.target.checked) return;
   const result = await ask(MSG.REMOVE_EXCLUDED, { scope: 'preset', name: key }).catch(() => null);
   if (!result || result.error) {
-    note.textContent = 'Pages already saved from these sites could not be removed. Untick and tick it again to retry.';
+    note.textContent = t('opt_preset_remove_failed');
     note.hidden = false;
     return;
   }
   if (!result.removed) return;
-  note.textContent = 'Removed ' + pageCount(result.removed) + ' already saved from ' +
-    PRESET_LABELS[key].title.toLowerCase() + '.';
+  note.textContent = t('opt_preset_removed', pageCount(result.removed), t('preset_' + key + '_lower'));
   note.hidden = false;
   await refreshUsage();
   await refreshLog();
@@ -181,17 +176,14 @@ async function offerNewCategories() {
     const result = await ask(MSG.REMOVE_EXCLUDED, { scope: 'preset', name, dryRun: true }).catch(() => null);
     matched += (result && result.matched) || 0;
   }
-  const names = keys.map((key) => PRESET_LABELS[key].title).join(' and ');
+  const names = listAnd(keys.map((key) => PRESET_LABELS[key].title));
   if (!matched) {
     // Nothing from before to ask about: settle it quietly.
     for (const name of keys) await ask(MSG.REMOVE_EXCLUDED, { scope: 'preset', name, keepExisting: true });
     box.hidden = true;
     return;
   }
-  byId('newCategoriesText').textContent =
-    'New in this version: ' + names + ' are skipped from now on. ' + pageCount(matched) +
-    ' you saved before ' + (matched === 1 ? 'is' : 'are') + ' from these sites. Remove ' +
-    (matched === 1 ? 'it' : 'them') + ', or keep ' + (matched === 1 ? 'it' : 'them') + '?';
+  byId('newCategoriesText').textContent = t('opt_newcat_' + plural(matched), names, pageCount(matched));
   box.hidden = false;
   const settle = (keepExisting) => async () => {
     byId('newCategoriesRemove').disabled = true;
@@ -203,9 +195,7 @@ async function offerNewCategories() {
     }
     box.hidden = true;
     const note = byId('presetNote');
-    note.textContent = keepExisting
-      ? 'Kept what you saved before. ' + names + ' are skipped from now on.'
-      : 'Removed ' + pageCount(removed) + '. ' + names + ' are skipped from now on.';
+    note.textContent = keepExisting ? t('opt_newcat_kept', names) : t('opt_newcat_removed', pageCount(removed), names);
     note.hidden = false;
     await refreshUsage();
     await refreshLog();
@@ -227,7 +217,7 @@ rules.value = (settings.customRules || []).join('\n');
 // to change it: Ctrl+Shift+F is also find-in-files in some web editors.
 chrome.commands.getAll().then((commands) => {
   const command = commands.find((entry) => entry.name === 'open-search');
-  byId('shortcutKeys').textContent = command && command.shortcut ? command.shortcut : 'not set';
+  rich(byId('shortcutText'), 'opt_shortcut_text', command && command.shortcut ? command.shortcut.replace(/[<>&]/g, '') : t('opt_shortcut_not_set'));
 }).catch(() => {});
 byId('shortcutChange').addEventListener('click', () => {
   chrome.tabs.create({ url: 'chrome://extensions/shortcuts' });
@@ -260,12 +250,12 @@ function describeRules(lines) {
     if (!rule || /\s/.test(rule) || (!host.includes('.') && !host.endsWith('*') && rule !== '@private-network' && !/^[a-z0-9-]+$/.test(host))) {
       unusable.push(line);
     } else if (rule !== line.toLowerCase()) {
-      readAs.push(line + ' as ' + rule);
+      readAs.push(t('opt_rule_as', line, rule));
     }
   }
   const parts = [];
-  if (readAs.length) parts.push('Reading ' + readAs.join(', ') + '.');
-  if (unusable.length) parts.push("These don't look like a site and won't match anything: " + unusable.join(', ') + '.');
+  if (readAs.length) parts.push(t('opt_rules_reading', readAs.join(', ')));
+  if (unusable.length) parts.push(t('opt_rules_unusable', unusable.join(', ')));
   note.hidden = parts.length === 0;
   note.textContent = parts.join(' ');
 }
@@ -279,9 +269,7 @@ async function checkRuleMatches() {
   byId('rulesMatch').hidden = !matched;
   byId('rulesRemove').hidden = false;
   if (matched) {
-    byId('rulesMatchText').textContent =
-      pageCount(matched) + (matched === 1 ? ' you already saved matches' : ' you already saved match') +
-      ' these rules.';
+    byId('rulesMatchText').textContent = t('opt_rules_match_' + plural(matched), pageCount(matched));
   }
 }
 
@@ -291,10 +279,10 @@ byId('rulesRemove').addEventListener('click', async () => {
   const result = await ask(MSG.REMOVE_EXCLUDED, { scope: 'custom' }).catch(() => null);
   button.disabled = false;
   if (!result || result.error) {
-    byId('rulesMatchText').textContent = 'Those pages could not be removed. Try again.';
+    byId('rulesMatchText').textContent = t('opt_rules_remove_failed');
     return;
   }
-  byId('rulesMatchText').textContent = 'Removed ' + pageCount(result.removed) + '.';
+  byId('rulesMatchText').textContent = t('opt_removed_pages', pageCount(result.removed));
   button.hidden = true;
   await refreshUsage();
   await refreshLog();
@@ -335,19 +323,16 @@ function describeLimits() {
   const note = byId('capacityNote');
   const shrink = byId('shrinkNote');
   if (bytes === null) {
-    note.textContent = 'Type a number to see how much that holds.';
+    note.textContent = t('limit_type_number');
     shrink.hidden = true;
     return;
   }
-  note.textContent = 'Room for roughly ' + pagesFor(bytes) + ' pages of typical articles.';
+  note.textContent = t('opt_capacity', pagesFor(bytes));
   const over = usedBytes !== null && usedBytes > bytes;
   shrink.hidden = !over;
   if (over) {
     const losing = Math.max(1, Math.round((usedBytes - bytes) / BYTES_PER_PAGE_ESTIMATE));
-    shrink.textContent =
-      "You're using " + mb(usedBytes) + ', which is more than ' + describeSize(bytes) +
-      '. The next cleanup would remove roughly ' + losing.toLocaleString() +
-      ' of your oldest pages. Pinned pages are kept.';
+    shrink.textContent = t('opt_shrink', mb(usedBytes), describeSize(bytes), formatNumber(losing));
   }
 }
 
@@ -380,10 +365,8 @@ describeLimits();
 // is sitting on disk untouched.
 function reportUnavailable(stats) {
   byId('fill').style.width = '0%';
-  byId('usage').textContent =
-    "Your saved pages couldn't be opened, so nothing can be shown here. " +
-    'Nothing has been deleted.' + (stats && stats.detail ? ' (' + stats.detail + ')' : '');
-  byId('log').innerHTML = '<li class="when">Not available while the archive cannot be opened.</li>';
+  byId('usage').textContent = t('opt_usage_unavailable') + (stats && stats.detail ? ' (' + stats.detail + ')' : '');
+  byId('log').innerHTML = '<li class="when">' + safeHtml(t('opt_log_unavailable')) + '</li>';
   for (const id of ['sweep', 'export', 'wipe', 'import']) {
     const button = byId(id);
     if (button) button.disabled = true;
@@ -402,15 +385,15 @@ async function refreshUsage() {
   describeLimits();
   const capacity = Math.round(stats.budget.sizeCapBytes / BYTES_PER_PAGE_ESTIMATE / 1000) * 1000;
   const parts = [
-    pageCount(stats.docCount) + ', ' + mb(stats.usedBytes) + ' of ' + mb(stats.budget.sizeCapBytes),
-    'room for roughly ' + capacity.toLocaleString(),
+    t('opt_usage_head', pageCount(stats.docCount), mb(stats.usedBytes), mb(stats.budget.sizeCapBytes)),
+    t('opt_room_for', formatNumber(capacity)),
   ];
   if (stats.capUnmeetable) {
-    parts.push('more is pinned than the budget allows');
+    parts.push(t('opt_budget_pinned'));
   } else if (stats.atCap) {
-    parts.push('full, oldest pages being replaced');
+    parts.push(t('budget_full'));
   } else if (stats.exhaustsAt) {
-    parts.push('full around ' + new Date(stats.exhaustsAt).toLocaleDateString(undefined, { month: 'long', year: 'numeric' }));
+    parts.push(t('budget_full_around', new Date(stats.exhaustsAt).toLocaleDateString(undefined, { month: 'long', year: 'numeric' })));
   }
   byId('usage').textContent = parts.join(' · ');
 
@@ -421,45 +404,30 @@ async function refreshUsage() {
   if (migrationNote && stats.lastMigration) {
     const steps = (stats.lastMigration.steps || []).join(', ');
     migrationNote.hidden = false;
-    migrationNote.textContent =
-      'Your saved pages were moved to a new format on ' + new Date(stats.lastMigration.at).toLocaleDateString() +
-      (steps ? ' (' + steps + ')' : '') + '. Everything was checked and nothing was lost.';
+    migrationNote.textContent = t('opt_migration', new Date(stats.lastMigration.at).toLocaleDateString(), steps ? ' (' + steps + ')' : '');
     ask(MSG.ACKNOWLEDGE, { what: 'lastMigration' });
   }
 
   const warnings = [];
   if (stats.storageFull) {
-    warnings.push(
-      'Your disk ran out of space on ' + new Date(stats.storageFull).toLocaleDateString() +
-      ", so new pages weren't saved. Free up some space or lower the size limit above."
-    );
+    warnings.push(t('opt_warn_disk_full', new Date(stats.storageFull).toLocaleDateString()));
   }
   if (stats.persisted === false) {
-    warnings.push(
-      "Chrome hasn't marked this storage as persistent, so it could clear it if your disk fills up. " +
-      'Exporting now and then gives you a backup.'
-    );
+    warnings.push(t('opt_warn_not_persistent'));
   }
   // Capture failing is the one failure that leaves no trace to notice later:
   // the pages simply are not there, and an empty result looks like a page you
   // never read rather than one that was never kept.
   const watch = stats.captureWatch;
   if (stats.setupComplete === false) {
-    warnings.push("Setup isn't finished, so nothing is being saved yet. Open the extension's button to finish it.");
+    warnings.push(t('opt_warn_setup'));
   }
   if (watch && watch.mode === 'strict') {
     if (watch.ungranted && watch.ungranted.length) {
-      warnings.push(
-        "These sites are on your list but Chrome hasn't given access to them, so nothing is " +
-        'being saved from them: ' + watch.ungranted.join(', ') + '. Remove them and add them again ' +
-        'to fix it.'
-      );
+      warnings.push(t('opt_warn_ungranted', watch.ungranted.join(', ')));
     }
     if (watch.refused && watch.refused.length) {
-      warnings.push(
-        'Chrome refused access to ' + watch.refused.join(', ') + ", so nothing is being saved from " +
-        'them. Your other sites are fine.'
-      );
+      warnings.push(t('opt_warn_refused', watch.refused.join(', ')));
     }
   }
 
@@ -473,12 +441,18 @@ async function refreshUsage() {
   if (clock) {
     // Saying nothing would leave an unexplained gap in the storage log.
     clock.hidden = !stats.clockProblem;
-    clock.textContent = stats.clockProblem
-      ? 'The last cleanup skipped the age limit because ' + stats.clockProblem +
-        ', so nothing is removed for being too old until the clock has been steady for a day.'
-      : '';
+    clock.textContent = stats.clockProblem ? t('opt_clock_note', clockReason(stats.clockProblem)) : '';
   }
 }
+
+// The sweep reports why it left the age limit alone as a short English
+// sentence; these are the three it can say.
+const CLOCK_REASONS = {
+  'the clock has moved backwards since the last sweep': 'opt_clock_backwards',
+  'more time has passed than an hourly sweep can account for': 'opt_clock_gap',
+  'the clock jumped recently': 'opt_clock_recent',
+};
+const clockReason = (problem) => (CLOCK_REASONS[problem] ? t(CLOCK_REASONS[problem]) : problem);
 
 async function refreshLog() {
   const entries = (await ask(MSG.LOG, { limit: 15 }).catch(() => [])) || [];
@@ -488,25 +462,25 @@ async function refreshLog() {
         .map(
           (entry) =>
             '<li>' + pageCount(Number(entry.count) || 0) + ', ' + mb(entry.bytesFreed || 0) +
-            ' <span class="when">' + ({
-              age: 'older than your limit',
-              size: 'over your size limit',
+            ' <span class="when">' + safeHtml(({
+              age: t('opt_log_age'),
+              size: t('opt_log_size'),
               // One sweep can remove pages for both reasons, and says so.
-              both: 'older than your limit and over your size limit',
-              manual: 'deleted by you',
-              siteRule: 'excluded site',
-            }[entry.reason] || 'removed automatically') + ', ' +
+              both: t('opt_log_both'),
+              manual: t('opt_log_manual'),
+              siteRule: t('opt_log_site'),
+            }[entry.reason]) || t('opt_log_auto')) + ', ' +
             new Date(entry.at).toLocaleDateString() + '</span></li>'
         )
         .join('')
-    : '<li class="when">Nothing has been removed.</li>';
+    : '<li class="when">' + safeHtml(t('opt_log_none')) + '</li>';
 }
 
 byId('sweep').addEventListener('click', async () => {
   const result = await ask(MSG.MAINTENANCE).catch(() => null);
   byId('dataNote').textContent = !result || result.error || result.unavailable
-    ? "Limits couldn't be applied, because the archive couldn't be opened. Nothing was removed."
-    : result.evicted ? 'Removed ' + result.evicted + ' pages.' : 'Nothing needed removing.';
+    ? t('opt_sweep_unavailable')
+    : result.evicted ? t('opt_removed_pages', pageCount(result.evicted)) : t('opt_sweep_nothing');
   await refreshUsage();
   await refreshLog();
 });
@@ -536,7 +510,7 @@ byId('export').addEventListener('click', async () => {
     const slice = await ask(MSG.EXPORT, { afterId, limit: EXPORT_BATCH }).catch(() => null);
     if (!slice || slice.error) {
       progress.hidden = true;
-      note.textContent = "Your saved pages couldn't be read, so nothing was exported.";
+      note.textContent = t('opt_export_failed');
       return;
     }
     if (!header) {
@@ -557,7 +531,7 @@ byId('export').addEventListener('click', async () => {
     chunks = [];
     if (header.total) {
       fill.style.width = Math.min(100, Math.round((written / header.total) * 100)) + '%';
-      note.textContent = 'Exporting… ' + written + ' of ' + header.total;
+      note.textContent = t('opt_exporting', formatNumber(written), formatNumber(header.total));
     }
     if (slice.done || slice.lastId === null) break;
     afterId = slice.lastId;
@@ -574,7 +548,7 @@ byId('export').addEventListener('click', async () => {
 
   progress.hidden = true;
   fill.style.width = '0%';
-  note.textContent = 'Exported ' + written + ' pages.';
+  note.textContent = t('opt_exported', pageCount(written));
 });
 
 // Imported in batches so a large archive shows progress rather than
@@ -632,11 +606,11 @@ byId('importFile').addEventListener('change', async (event) => {
       else batch.push(item.value);
       if (batch.length >= IMPORT_BATCH) await send();
       fill.style.width = Math.min(100, Math.round((item.read / Math.max(1, file.size)) * 100)) + '%';
-      note.textContent = 'Importing… ' + (seen === 1 ? '1 page' : seen.toLocaleString() + ' pages') + ' read';
+      note.textContent = t('opt_importing', pageCount(seen));
     }
     await send();
   } catch {
-    note.textContent = "That file couldn't be read.";
+    note.textContent = t('opt_import_unreadable');
     progress.hidden = true;
     event.target.value = '';
     return;
@@ -646,14 +620,14 @@ byId('importFile').addEventListener('change', async (event) => {
   fill.style.width = '0%';
   event.target.value = '';
   if (!EXPORT_FORMATS_ACCEPTED.includes(format)) {
-    note.textContent = 'That does not look like an export from this extension.';
+    note.textContent = t('opt_import_not_export');
     return;
   }
-  const parts = [totals.imported + ' imported'];
-  if (totals.skipped) parts.push(totals.skipped + ' already here');
-  if (totals.excluded) parts.push(totals.excluded + ' left out because your exclusions cover them');
-  if (totals.failed) parts.push(totals.failed + ' could not be read');
-  if (truncated) parts.push('the file ended early, so anything after that was not imported');
+  const parts = [t('opt_import_done', formatNumber(totals.imported))];
+  if (totals.skipped) parts.push(t('opt_import_skipped', formatNumber(totals.skipped)));
+  if (totals.excluded) parts.push(t('opt_import_excluded', formatNumber(totals.excluded)));
+  if (totals.failed) parts.push(t('opt_import_failed', formatNumber(totals.failed)));
+  if (truncated) parts.push(t('opt_import_truncated'));
   note.textContent = parts.join(', ') + '.';
   await refreshUsage();
 });
@@ -664,10 +638,10 @@ byId('wipe').addEventListener('click', async () => {
   const button = byId('wipe');
   if (button.dataset.armed !== 'yes') {
     button.dataset.armed = 'yes';
-    button.textContent = 'Click again to delete everything';
+    button.textContent = t('opt_wipe_confirm');
     setTimeout(() => {
       button.dataset.armed = '';
-      button.textContent = 'Delete everything';
+      button.textContent = t('opt_wipe');
     }, 4000);
     return;
   }
@@ -675,10 +649,10 @@ byId('wipe').addEventListener('click', async () => {
   const result = await ask(MSG.WIPE).catch(() => null);
   button.disabled = false;
   button.dataset.armed = '';
-  button.textContent = 'Delete everything';
+  button.textContent = t('opt_wipe');
   byId('dataNote').textContent = result && !result.error
-    ? 'Deleted ' + result.deleted + ' pages. Your settings, including your lists of sites, are kept.'
-    : "Your saved pages couldn't be deleted. Try again.";
+    ? t('opt_wiped', pageCount(result.deleted))
+    : t('opt_wipe_failed');
   await refreshUsage();
   await refreshLog();
 });

@@ -1,3 +1,5 @@
+import { tn } from './i18n.js';
+
 // Shared so the popup and the settings page cannot drift into describing the
 // same number differently.
 
@@ -23,7 +25,7 @@ export function bytes(value) {
 }
 
 export function pageCount(n) {
-  return n === 1 ? '1 page' : n.toLocaleString() + ' pages';
+  return tn('pages', n);
 }
 
 // Cuts text to at most `maxBytes` of UTF-8, never in the middle of a
