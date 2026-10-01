@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "TextMemory",
   "short_name": "TextMemory",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Search the full text of pages you've read. Stored on your computer, never sent anywhere.",
   "minimum_chrome_version": "116",
   "background": {
