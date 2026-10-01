@@ -29,7 +29,7 @@ It stays on your computer. There is no account, no server, no sync and no analyt
 WHAT IT DOES
 • Full-text search of everything you've read, not just titles and addresses
 • Jump to passage: open a result and the page scrolls straight to the sentence that matched
-• Forgiving search: typos, plurals and endings are handled, in English, Spanish, Portuguese, German, French and Italian. Search says what it actually searched for
+• Forgiving search: typos, plurals and endings are handled, in English, Spanish, Portuguese, German, French, Italian and Dutch. Search says what it actually searched for
 • Search syntax when you want it: "exact phrases", -excluded words, site:example.com, before: and after:
 • PDFs too: the text of PDFs you read in Chrome is searchable
 • Keyboard first: Ctrl+Shift+F (Command+Shift+F on a Mac), or type tm and a space in the address bar
