@@ -41,6 +41,7 @@
     "verify:stemmers": "node test/oracle/verify-stemmers.mjs",
     "test:review": "node test/browser/run-review.mjs",
     "icons": "node tools/build-icons.mjs",
+    "store": "node tools/build-store-assets.mjs",
     "package": "sh tools/package.sh"
   }
 }

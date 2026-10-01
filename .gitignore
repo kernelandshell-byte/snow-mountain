@@ -9,3 +9,5 @@ Thumbs.db
 web-ext-artifacts/
 test/browser/.pages/
 screenshots/
+store/.raw/
+!store/screenshots/

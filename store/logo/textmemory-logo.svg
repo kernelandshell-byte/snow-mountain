@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128">
+  <defs>
+    <linearGradient id="tm-bg" x1="20" y1="0" x2="108" y2="128" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#8a5cff"/>
+      <stop offset="1" stop-color="#3f14c9"/>
+    </linearGradient>
+    <linearGradient id="tm-sheen" x1="0" y1="0" x2="0" y2="128" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#fff" stop-opacity=".22"/>
+      <stop offset=".55" stop-color="#fff" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+  <rect width="128" height="128" rx="30" fill="url(#tm-bg)"/>
+  <rect width="128" height="128" rx="30" fill="url(#tm-sheen)"/>
+  <!-- lines of text you once read, faint behind the stem -->
+  <g fill="#fff" opacity=".34">
+    <rect x="20" y="74" width="24" height="8" rx="4"/>
+    <rect x="84" y="74" width="24" height="8" rx="4"/>
+    <rect x="20" y="92" width="16" height="8" rx="4"/>
+    <rect x="92" y="92" width="16" height="8" rx="4"/>
+  </g>
+  <!-- the stem of the T -->
+  <rect x="52" y="42" width="26" height="66" rx="9" fill="#fff"/>
+  <!-- the crossbar is the highlighter swipe: the passage you were looking for -->
+  <path d="M27 33 L103 27 L101 45 L25 51 Z" fill="#e3ff4f" stroke="#e3ff4f" stroke-width="9" stroke-linejoin="round"/>
+</svg>
