@@ -3,7 +3,7 @@
 Everything the store's dashboard asks for, ready to paste. The images are in
 this folder and are rebuilt from the real extension with `npm run store`.
 
-Upload `dist/textmemory-0.1.1.zip` (built by `npm run package`).
+Upload `dist/textmemory-1.0.0.zip` (built by `npm run package`).
 
 ## Store listing tab
 

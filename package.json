@@ -1,6 +1,6 @@
 {
   "name": "textmemory",
-  "version": "0.1.1",
+  "version": "1.0.0",
   "private": true,
   "type": "module",
   "description": "Search the full text of everything you read, stored on your own computer.",
