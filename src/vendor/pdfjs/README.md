@@ -1,8 +1,13 @@
 # Vendored: pdf.js 6.3.289
 
-`pdf.mjs` and `pdf.worker.mjs` are taken unmodified from
-`pdfjs-dist` 6.3.289's `build/` directory, Apache License 2.0,
-licence text in `LICENSE.md`. `polyfills.js` is ours, not pdf.js's.
+`pdf.mjs` and `pdf.worker.mjs` are taken from `pdfjs-dist` 6.3.289's
+`build/` directory, Apache License 2.0, licence text in `LICENSE.md`.
+`pdf.mjs` is unmodified. `pdf.worker.mjs` has one removal: the Brotli
+decoder, done by `node tools/strip-pdfjs-brotli.mjs` (rerun it after
+copying in a new worker). The decoder only serves the rare PDF 2.0
+`/BrotliDecode` filter and carries a 131KB packed dictionary string that
+reads as obfuscated to the Web Store review; a PDF using that filter is
+skipped like any unknown filter. `polyfills.js` is ours, not pdf.js's.
 
 The unminified files, not `pdf.min.mjs` / `pdf.worker.min.mjs`. The Chrome
 Web Store rejects minified third-party code as obfuscated (violation "Red
@@ -57,5 +62,5 @@ vendored copies via `standardFontDataUrl` / `cmapUrl`, the same fix
 already applied to the worker.
 
 To update: `npm pack pdfjs-dist`, copy `build/pdf.mjs`,
-`build/pdf.worker.mjs` and `LICENSE` (as `LICENSE.md`) out of the
+`build/pdf.worker.mjs` (then run the strip script) and `LICENSE` (as `LICENSE.md`) out of the
 tarball, and run the PDF capture browser suite.
