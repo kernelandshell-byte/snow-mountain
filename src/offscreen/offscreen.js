@@ -5,11 +5,12 @@
 // touches the database -- it only turns bytes into text and hands the
 // answer back.
 
+import '../vendor/pdfjs/polyfills.js';
 import * as pdfjsLib from '../vendor/pdfjs/pdf.mjs';
 import { MSG } from '../shared/messages.js';
 import { MAX_TEXT_BYTES } from '../shared/constants.js';
 
-pdfjsLib.GlobalWorkerOptions.workerSrc = chrome.runtime.getURL('src/vendor/pdfjs/pdf.worker.mjs');
+pdfjsLib.GlobalWorkerOptions.workerSrc = chrome.runtime.getURL('src/offscreen/pdf-worker.js');
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (!message || message.type !== MSG.PARSE_PDF) return false;
@@ -41,12 +42,9 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         const content = await page.getTextContent();
         text += content.items.map((item) => item.str).join(' ') + '\n';
       }
-      // Title deliberately does not come from here. doc.getMetadata() threw
-      // in pdf.js's modern build ("getOrInsertComputed is not a function", a
-      // Map method Chromium does not have yet), which is one of the reasons
-      // the legacy build is vendored now; see src/vendor/pdfjs/README.md.
-      // capture.js gets the title from chrome.tabs, which already has it
-      // correctly and does not depend on pdf.js at all.
+      // Title deliberately does not come from here. capture.js gets the
+      // title from chrome.tabs, which already has it correctly and does not
+      // depend on pdf.js at all.
       sendResponse({ ok: true, text: text.trim(), numPages: doc.numPages });
     } catch (error) {
       // A scanned, image-only PDF has no text layer and getTextContent()
